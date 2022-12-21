@@ -1,0 +1,74 @@
+{
+  "license": "MIT",
+  "scripts": {
+    "build": "rm -rf ./public/build && rm -rf ./build && rm -rf ./dist && npx webpack",
+    "build:win": "del /s /q public\\build && del /s /q build && del /s /q dist && npx webpack",
+    "start": "npx webpack && npx electron .",
+    "dist:win": "npm run build:win && electron-builder -w",
+    "dist:mac": "npm run build && electron-builder -m",
+    "dist:linux": "npm run build && electron-builder -l"
+  },
+  "name": "gpk_fwbuilder",
+  "version": "0.0.1",
+  "description": "GPK FWBuilder",
+  "homepage": "https://github.com/darakuneko",
+  "author": {
+    "name": "darakuneko",
+    "email": "tvkids@gmail.com"
+  },
+  "devDependencies": {
+    "electron": "22.0.0",
+    "electron-builder": "23.6.0",
+    "electron-rebuild": "3.2.9",
+    "webpack-cli": "5.0.1"
+  },
+  "main": "./index.js",
+  "dependencies": {
+    "@babel/core": "7.20.5",
+    "@babel/preset-env": "7.20.2",
+    "@babel/preset-react": "7.18.6",
+    "@emotion/babel-preset-css-prop": "11.10.0",
+    "@emotion/react": "11.10.5",
+    "@emotion/styled": "11.10.5",
+    "@mui/icons-material": "5.11.0",
+    "@mui/material": "5.11.0",
+    "@mui/styles": "5.11.0",
+    "ansi-to-html": "^0.7.2",
+    "axios": "^1.2.1",
+    "babel-loader": "9.1.0",
+    "electron-store": "8.1.0",
+    "html-react-parser": "^3.0.4",
+    "node-loader": "2.0.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "webpack": "5.75.0"
+  },
+  "build": {
+    "productName": "GPK FWBuilder",
+    "appId": "app.darakuneko",
+    "npmRebuild": false,
+    "files": [
+      "public/**/*",
+      "icons/*",
+      "index.js",
+      "preload.js",
+      "command.js",
+      "package.json"
+    ],
+    "extraResources": ["gpk_fwmaker/**/*"],
+    "win": {
+      "target": "nsis",
+      "icon": "icons/icon256.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "icons/icon512.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "icons"
+    }
+  }
+}
