@@ -3,6 +3,8 @@ const childProcess = require('child_process')
 const exec = util.promisify(childProcess.exec)
 const axios = require('axios')
 
+if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`
+
 const appPath = __dirname.replace(/\/app\.asar/g, "")
 const appExe = async (cmd) => await exec(`cd '${appPath}/gpk_fwmaker' && ${cmd}`)
 

@@ -1,10 +1,7 @@
 const {app, BrowserWindow, ipcMain, Tray, Menu} = require("electron")
-const Store = require("electron-store")
 const {command} = require('./command')
 
-let store
 let mainWindow
-let isStopImage = false
 const createWindow = () => {
     mainWindow = new BrowserWindow({
         width: 1024,
@@ -17,8 +14,6 @@ const createWindow = () => {
     })
 
     mainWindow.loadURL(`file://${__dirname}/public/index.html`)
-    mainWindow.setMenu(null)
-
     mainWindow.on('close', (event) => {
         if (!app.isQuiting) {
             closing(event, mainWindow)
@@ -28,11 +23,9 @@ const createWindow = () => {
 }
 
 app.on('ready', () => {
-    if (process.platform === 'darwin') app.dock.hide()
     command.upImage()
-    store = new Store()
     createWindow()
-    //mainWindow.webContents.openDevTools()
+    mainWindow.webContents.openDevTools()
 })
 
 const closing = async(e, mainWindow) => {
