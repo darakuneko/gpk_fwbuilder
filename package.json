@@ -58,11 +58,11 @@
     "extraResources": ["gpk_fwmaker/**/*"],
     "win": {
       "target": "nsis",
-      "icon": "icons/icon256.ico"
+      "icon": "icons/icon.ico"
     },
     "mac": {
       "target": "dmg",
-      "icon": "icons/icon512.png"
+      "icon": "icons/512x512.png"
     },
     "linux": {
       "target": [

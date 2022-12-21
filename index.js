@@ -6,7 +6,7 @@ const createWindow = () => {
     mainWindow = new BrowserWindow({
         width: 1024,
         height: 1000,
-        icon: `${__dirname}/icons/icon256.png`,
+        icon: `${__dirname}/icons/256x256.png`,
         webPreferences: {
             preload: __dirname + '/preload.js',
             backgroundThrottling: false,
@@ -25,7 +25,7 @@ const createWindow = () => {
 app.on('ready', () => {
     command.upImage()
     createWindow()
-    mainWindow.webContents.openDevTools()
+    //mainWindow.webContents.openDevTools()
 })
 
 const closing = async(e, mainWindow) => {
