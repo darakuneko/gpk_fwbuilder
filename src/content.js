@@ -3,7 +3,7 @@ import Box from "@mui/material/Box"
 import {getState, useStateContext} from "./context"
 import Form from "./renderer/form"
 import Logs from "./renderer/logs"
-import {neon, neonKeyFrame} from "./style";
+import {buildBoxHeight, neon, neonKeyFrame} from "./style";
 
 const {api} = window
 
@@ -100,7 +100,7 @@ const Content = () => {
                         <>
                         <Box
                             sx={{
-                                maxHeight: "200px",
+                                height: buildBoxHeight,
                                 borderBottom: 1,
                                 borderColor: 'divider',
                                 '& .MuiTextField-root': { ml: 4, mt: 1, width: '25ch' }
@@ -110,7 +110,7 @@ const Content = () => {
                         <Box
                             sx={{
                                 overflow: "auto",
-                                height: "calc(100vh - 200px)"
+                                height: `calc(100vh - ${buildBoxHeight})`
                             }}>
                             <Logs />
                         </Box>

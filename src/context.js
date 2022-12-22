@@ -13,8 +13,8 @@ export function StateProvider({children}) {
     const [state, _setState] = useState({
         fw: 'qmk',
         tags: [],
-        kb: undefined,
-        km: undefined,
+        kb: '',
+        km: '',
         selectedFW: undefined,
         selectedTag: undefined,
         disabledButton: false,

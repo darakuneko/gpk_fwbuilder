@@ -20,12 +20,19 @@ const Form = () => {
     const [disabledBuildButton, setDisabledBuildButton] = useState(true);
     const [disabledBuildText, setDisabledBuildText] = useState(false);
     const [disabledUpdateButton, setUpdateButton] = useState(false);
+    const [init, setInit] = useState(true);
 
     const validBuildButton = () => {
         const validKeymapStr = (/:|flash/).test(state.km)
         setKeymapStrError(validKeymapStr)
         const validDisableButton = state.kb && state.km && !validKeymapStr
         setDisabledBuildButton(!validDisableButton)
+    }
+
+    const initDisabledBuildButton = () => {
+        validBuildButton()
+        setInit(false)
+        return disabledBuildButton
     }
 
     const handleTextChange = (inputName) => (e) => {
@@ -162,7 +169,7 @@ const Form = () => {
               }} >
           <Button variant="contained"
                   onClick={handleSubmit}
-                  disabled={disabledBuildButton}
+                  disabled={init ? initDisabledBuildButton() : disabledBuildButton }
           >Build</Button>
           </Box>
       </Box>
