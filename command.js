@@ -6,9 +6,9 @@ const axios = require('axios')
 
 if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`
 
-const appPath = __dirname.replace(/\/app\.asar/g, "")
-const appExe = async (cmd) => await exec(`cd '${appPath}/gpk_fwmaker' && ${cmd}`)
-const appSpawn =  (cmd) => `cd '${appPath}/gpk_fwmaker' && ${cmd}`
+const appPath = __dirname.replace(/\/app\.asar/g, "").replace(/\\app\.asar/g, "")
+const appExe = async (cmd) => await exec(`cd "${appPath}/gpk_fwmaker" && ${cmd}`)
+const appSpawn =  (cmd) => `cd "${appPath}/gpk_fwmaker" && ${cmd}`
 
 const tagZeroFill2Int = (str) => {
     const s = str
