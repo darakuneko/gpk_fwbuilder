@@ -94,7 +94,7 @@ const Content = () => {
                             <Box sx={{ minWidth: "100%" }}>
                                 <Box sx={{ p: 4, animation: neon, textAlign: "center"}}>Initializing.....</Box>
                                 <Box sx={{ animation: neon, textAlign: "center" }}>May take more than 10 minutes</Box>
-                                <Box sx={{ textAlign: "left"}}>{parse(state.logs.stdout.replace(/\n/g, "<br>"))}</Box>
+                                <Box sx={{ pt: 2, textAlign: "left"}}>{parse(state.logs.stdout.replace(/\n/g, "<br>"))}</Box>
                             </Box>
                         </Box>
                     )
