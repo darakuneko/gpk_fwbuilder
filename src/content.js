@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react'
 import Box from "@mui/material/Box"
-import {useStateContext} from "./context"
+import {getState, useStateContext} from "./context"
 import Form from "./renderer/form"
 import Logs from "./renderer/logs"
 import {neon, neonKeyFrame} from "./style";
@@ -18,8 +18,16 @@ const Content = () => {
             const checkFn = async () => {
                 const exist = await api.existSever()
                 if(exist){
+                    const reStoreState = await api.getState()
+                    if(reStoreState) {
+                        state.fw = reStoreState.fw
+                        state.kb = reStoreState.kb
+                        state.km = reStoreState.km
+                        state.selectedFW = reStoreState.selectedFW
+                        state.selectedTag = reStoreState.selectedTag
+                    }
                     state.tags = await api.tags()
-                    state.selectedTag = state.tags[0]
+                    state.selectedTag = state.selectedTag ? state.selectedTag : state.tags[0]
                     setState(state)
                     clearInterval(id)
                     setInitServer(false)
@@ -32,7 +40,9 @@ const Content = () => {
     }, [])
 
     useEffect(() => {
-        api.on("close", async() => {
+        api.on("close", async () => {
+            const state = await getState()
+            await api.setState(state)
             setCloseServer(true)
         })
         return () => {}

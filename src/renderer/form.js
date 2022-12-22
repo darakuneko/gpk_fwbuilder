@@ -7,7 +7,7 @@ import FormHelperText from '@mui/material/FormHelperText';
 
 import React, {useState} from "react";
 import {useStateContext} from "../context"
-import {formHelperTextFontSize, inputLabelFontSize} from "../style"
+import {formHelperTextFontSize, inputLabelMiddleFontSize, inputLabelSmallFontSize} from "../style"
 import Button from "@mui/material/Button";
 
 const {api} = window
@@ -21,14 +21,19 @@ const Form = () => {
     const [disabledBuildText, setDisabledBuildText] = useState(false);
     const [disabledUpdateButton, setUpdateButton] = useState(false);
 
-    const handleTextChange = (inputName) => (e) => {
-        inputName === 'kb' ? state.kb = e.target.value : state.km = e.target.value
-        setKeyboardError(!state.kb)
-        setKeymapEmptyError(!state.km)
+    const validBuildButton = () => {
         const validKeymapStr = (/:|flash/).test(state.km)
         setKeymapStrError(validKeymapStr)
         const validDisableButton = state.kb && state.km && !validKeymapStr
         setDisabledBuildButton(!validDisableButton)
+    }
+
+    const handleTextChange = (inputName) => (e) => {
+        inputName === 'kb' ? state.kb = e.target.value : state.km = e.target.value
+        setKeyboardError(!state.kb)
+        setKeymapEmptyError(!state.km)
+        validBuildButton()
+        setState(state)
     }
 
     const handleSelectTags = (e) => {
@@ -42,7 +47,7 @@ const Form = () => {
         setUpdateButton(true)
         state.logs = {
             stderr: "",
-            stdout: "Building...."
+            stdout: "Building....\n\nIt will take some time if the first build or tag has changed."
         }
         setState(state)
         const logs = await api.build(state)
@@ -73,20 +78,20 @@ const Form = () => {
             stdout: "Updated!!"
         }
         setState(state)
+        validBuildButton()
     }
 
     return (
       <Box sx={{
           display: 'flex',
           flexDirection: 'column',
-          width: '1000px'
       }}>
           {state.fw === 'qmk' ? (
               <Box
                   sx={{ p: 2, display: 'flex', float: 'left'
               }} >
                   <Box sx={{ pr: 4}}>
-                      <InputLabel sx={{ fontSize: inputLabelFontSize }} >Firmware</InputLabel>
+                      <InputLabel sx={{ fontSize: inputLabelMiddleFontSize }} >Firmware</InputLabel>
                       <Select
                           id="fw-select"
                           label="Firmware"
@@ -96,7 +101,7 @@ const Form = () => {
                       </Select>
                       </Box>
                   <Box>
-                      <InputLabel sx={{ fontSize: inputLabelFontSize }} >Tag</InputLabel>
+                      <InputLabel sx={{ fontSize: inputLabelMiddleFontSize }} >Tag</InputLabel>
                       <Select
                           id="tags-select"
                           label="Tag"
@@ -115,6 +120,7 @@ const Form = () => {
                         disabled={disabledBuildText}
                         onChange={handleTextChange("kb")}
                         variant="standard"
+                        value={state.kb}
                     />
                   </Box>
                   <Box sx={{ pt: 2}}>
@@ -126,6 +132,7 @@ const Form = () => {
                         disabled={disabledBuildText}
                         onChange={handleTextChange("km")}
                         variant="standard"
+                        value={state.km}
                     />
                       {
                           keymapStrError && <FormHelperText error sx={{ pl: 4, fontSize: formHelperTextFontSize}}>":" "flash" cannot be used</FormHelperText>
@@ -133,15 +140,16 @@ const Form = () => {
 
                   </Box>
                   <Box sx={{
-                      pt: 8,
+                      pt: 4,
+                      pl: 6,
                       pr: 2,
-                      flexGrow: 1,
-                      textAlign: "right"
+                      textAlign: "center"
                   }}>
+                      <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >{state.fw.toUpperCase()} Repository</InputLabel>
                       <Button variant="contained"
                               onClick={handleUpdate}
                               disabled={disabledUpdateButton}
-                      >Repository Update</Button>
+                      >Update</Button>
                   </Box>
               </Box>) : (<div/>)
               }

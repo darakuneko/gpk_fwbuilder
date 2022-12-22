@@ -48,7 +48,7 @@ const Logs = () => {
                     {
                         isQmkError(state.logs.stderr, false) && (
                             <span>
-                                <Box color="primary.main" sx={{ pt: 4 }}>--- Error ---</Box>
+                                <Box color="primary.main" sx={{ pt: 4 }}>--- Warning / Error ---</Box>
                                 {parseHtml(state.logs.stderr, false)}
                             </span>
                         )

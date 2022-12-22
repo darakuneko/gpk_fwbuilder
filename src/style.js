@@ -26,7 +26,8 @@ export const theme = createTheme({
     }
 })
 
-export const inputLabelFontSize = "16px"
+export const inputLabelSmallFontSize = "12px"
+export const inputLabelMiddleFontSize = "16px"
 export const formHelperTextFontSize = "16px"
 
 export const neon = "neon_blink 1s infinite alternate;"
