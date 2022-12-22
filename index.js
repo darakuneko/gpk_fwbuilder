@@ -28,8 +28,8 @@ const createWindow = () => {
 }
 
 app.on('ready', () => {
-    command.upImage()
     createWindow()
+    command.upImage(mainWindow)
     //mainWindow.webContents.openDevTools()
 })
 

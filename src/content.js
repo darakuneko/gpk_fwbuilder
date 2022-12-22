@@ -4,6 +4,7 @@ import {getState, useStateContext} from "./context"
 import Form from "./renderer/form"
 import Logs from "./renderer/logs"
 import {buildBoxHeight, neon, neonKeyFrame} from "./style";
+import parse from 'html-react-parser';
 
 const {api} = window
 
@@ -48,6 +49,14 @@ const Content = () => {
         return () => {}
     }, [])
 
+    useEffect(() => {
+        api.on("upImage", async (log) => {
+            state.logs.stdout = log
+            setState(state)
+        })
+        return () => {}
+    }, [])
+
     return (
         <div>
             <style>
@@ -80,18 +89,12 @@ const Content = () => {
                             sx={{
                                 display: "flex",
                                 justifyContent: "center",
-                                alignItems: "center",
-                                minHeight: "100vh"
+                                p: 4,
                             }} >
-                            <Box
-                                sx={{
-                                    width: "300px",
-                                    height: "200px",
-                                    textAlign: "center"
-                                }}
-                            >
-                                <Box sx={{ p: 4, animation: neon }}>Initializing.....</Box>
-                                <Box sx={{ animation: neon }}>May take more than 10 minutes</Box>
+                            <Box sx={{ minWidth: "100%" }}>
+                                <Box sx={{ p: 4, animation: neon, textAlign: "center"}}>Initializing.....</Box>
+                                <Box sx={{ animation: neon, textAlign: "center" }}>May take more than 10 minutes</Box>
+                                <Box sx={{ p: 4, textAlign: "left", width: "90%"}}>{parse(state.logs.stdout.replace(/\n/g, "<br>"))}</Box>
                             </Box>
                         </Box>
                     )

@@ -1,12 +1,14 @@
 const util = require('util')
 const childProcess = require('child_process')
 const exec = util.promisify(childProcess.exec)
+const spawn = childProcess.spawn
 const axios = require('axios')
 
 if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`
 
 const appPath = __dirname.replace(/\/app\.asar/g, "")
 const appExe = async (cmd) => await exec(`cd '${appPath}/gpk_fwmaker' && ${cmd}`)
+const appSpawn =  (cmd) => `cd '${appPath}/gpk_fwmaker' && ${cmd}`
 
 const tagZeroFill2Int = (str) => {
     const s = str
@@ -20,13 +22,24 @@ const tagZeroFill2Int = (str) => {
 const parseZeroLastDigit = (num) => parseInt(num.toString().slice(0, -1))  * 10
 
 const url = (path) => new URL(`http://127.0.0.1:3123${path}`).href
-
+let isDockerUp = false
 const command = {
-    upImage: async () => await appExe("docker-compose build && docker-compose up -d"),
+    upImage: (mainWindow) => {
+        const result = spawn(appSpawn("docker-compose build && docker-compose up -d"), { shell: true });
+        result.stdout.on('data', (data) => mainWindow.webContents.send("upImage", data.toString()))
+        result.stderr.on('data', (data) => mainWindow.webContents.send("upImage", data.toString()))
+        result.on('close', () => {
+            mainWindow.webContents.send("upImage", '')
+            isDockerUp = true
+        })
+    },
     stopImage: async () => await appExe("docker-compose stop"),
     existSever: async () => {
-        const res = await axios(url("")).catch(e => {})
-        return !!res
+        if(isDockerUp) {
+            const res = await axios(url("")).catch(e => {})
+            return !!res
+        }
+        return isDockerUp
     },
     tags: async () => {
         const res = await axios(url('/tags/qmk '))
