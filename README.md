@@ -1,5 +1,5 @@
 # GPK FWBuilder
-Make QMK Firmware App.   
+Application to create QMK firmware.  
 May correspond to Vial....    
 
 Before use
