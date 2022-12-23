@@ -23,7 +23,7 @@ Firmware Build
 https://user-images.githubusercontent.com/5214078/209295828-5827510e-5371-4826-8ba4-13b20e6d03ed.mov
 
 
-After the application is installed and initialized, an "GPKFW" directory will be created.
+After the application is installed and initialized, "GPKFW" directory will be created.
 
 e.g.   
 windows: C:\Users\xxxx\GPKFW   
