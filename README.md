@@ -18,10 +18,7 @@ https://github.com/darakuneko/gpk_fwbuilder/releases
 
 Firmware Build
 -------
-
-
 https://user-images.githubusercontent.com/5214078/209295828-5827510e-5371-4826-8ba4-13b20e6d03ed.mov
-
 
 After the application is installed and initialized, "GPKFW" directory will be created.
 
@@ -43,3 +40,8 @@ make reviung/reviung41:default
 Parameter  
 keyboard: reviung/reviung41  
 keymap: default 
+
+CUI version
+-------
+GPK FWMaker  
+https://github.com/darakuneko/gpk_fwmaker
