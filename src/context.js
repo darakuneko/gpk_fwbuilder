@@ -10,7 +10,7 @@ let _state
 
 export function StateProvider({children}) {
 
-    const initState = {
+    const [state, _setState] = useState({
         version: '',
         fw: 'qmk',
         tags: [],
@@ -24,9 +24,7 @@ export function StateProvider({children}) {
             stdout: ""
         },
         tabDisabled: false
-    }
-    _state = initState
-    const [state, _setState] = useState(initState)
+    })
 
     const setState = async (obj) => {
         _state = obj
