@@ -11,6 +11,8 @@ process.once('loaded', async () => {
             update: async (fw) => await ipcRenderer.invoke('update', fw),
             getState: async() => await ipcRenderer.invoke('getState'),
             setState: async(obj) => await ipcRenderer.invoke('setState', obj),
+            rebuildImage: async () => await ipcRenderer.invoke('rebuildImage'),
+            appVersion: async () => await ipcRenderer.invoke('appVersion'),
             on: (channel, func) => ipcRenderer.on(channel, (event, ...args) => func(...args))
         })
 })

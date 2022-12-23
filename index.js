@@ -20,9 +20,7 @@ const createWindow = () => {
     mainWindow.loadURL(`file://${__dirname}/public/index.html`)
     mainWindow.setMenu(null)
     mainWindow.on('close', async (event) => {
-        if (!app.isQuiting) {
-            await closing(event, mainWindow)
-        }
+        if (!app.isQuiting) await closing(event, mainWindow)
         return false
     })
 }
@@ -35,10 +33,10 @@ app.on('ready', () => {
 
 const closing = async(e, mainWindow) => {
     e.preventDefault()
-    mainWindow.webContents.send("close", false)
-    await command.stopImage()
     const win = mainWindow.getBounds()
     store.set('window', {w: win.width, h: win.height})
+    mainWindow.webContents.send("close", false)
+    await command.stopImage()
     app.isQuiting = true
     app.quit()
 }
@@ -51,3 +49,5 @@ ipcMain.handle('getState',  async () => await store.get('state'))
 ipcMain.handle('setState',  async (e, obj) => {
     await store.set('state', obj)
 })
+ipcMain.handle('rebuildImage', async () => await command.rebuildImage(mainWindow))
+ipcMain.handle('appVersion',  () => app.getVersion())

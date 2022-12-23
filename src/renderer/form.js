@@ -3,24 +3,23 @@ import MenuItem from "@mui/material/MenuItem"
 import InputLabel from "@mui/material/InputLabel"
 import TextField from "@mui/material/TextField"
 import Box from "@mui/material/Box"
-import FormHelperText from '@mui/material/FormHelperText';
+import FormHelperText from '@mui/material/FormHelperText'
 
-import React, {useState} from "react";
+import React, {useState} from "react"
 import {useStateContext} from "../context"
-import {formHelperTextFontSize, inputLabelMiddleFontSize, inputLabelSmallFontSize} from "../style"
-import Button from "@mui/material/Button";
+import {formHelperTextFontSize, inputLabelMiddleFontSize} from "../style"
+import Button from "@mui/material/Button"
 
 const {api} = window
 
 const Form = () => {
-    const {state, setState} = useStateContext();
-    const [keyboardError, setKeyboardError] = useState(false);
-    const [keymapEmptyError, setKeymapEmptyError] = useState(false);
-    const [keymapStrError, setKeymapStrError] = useState(false);
-    const [disabledBuildButton, setDisabledBuildButton] = useState(true);
-    const [disabledBuildText, setDisabledBuildText] = useState(false);
-    const [disabledUpdateButton, setUpdateButton] = useState(false);
-    const [init, setInit] = useState(true);
+    const {state, setState} = useStateContext()
+    const [keyboardError, setKeyboardError] = useState(false)
+    const [keymapEmptyError, setKeymapEmptyError] = useState(false)
+    const [keymapStrError, setKeymapStrError] = useState(false)
+    const [disabledBuildButton, setDisabledBuildButton] = useState(true)
+    const [disabledBuildText, setDisabledBuildText] = useState(false)
+    const [init, setInit] = useState(true)
 
     const validBuildButton = () => {
         const validKeymapStr = (/:|flash/).test(state.km)
@@ -51,41 +50,18 @@ const Form = () => {
     const handleSubmit = async () => {
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
-        setUpdateButton(true)
         state.logs = {
             stderr: "",
             stdout: "Building....\n\nIt will take some time if the first build or tag has changed."
         }
+        state.tabDisabled = true
         setState(state)
         const logs = await api.build(state)
         setDisabledBuildButton(false)
         setDisabledBuildText(false)
-        setUpdateButton(false)
         state.logs = logs
+        state.tabDisabled = false
         setState(state)
-    }
-
-    const handleUpdate = async () => {
-        setDisabledBuildButton(true)
-        setDisabledBuildText(true)
-        setUpdateButton(true)
-        state.logs = {
-            stderr: "",
-            stdout: "Updating.....\n\nIt will take a few minutes."
-        }
-        setState(state)
-        await api.update(state.fw)
-        state.tags = await api.tags()
-        state.selectedTag = state.tags[0]
-        setState(state)
-        setDisabledBuildText(false)
-        setUpdateButton(false)
-        state.logs = {
-            stderr: "",
-            stdout: "Updated!!"
-        }
-        setState(state)
-        validBuildButton()
     }
 
     return (
@@ -95,8 +71,10 @@ const Form = () => {
       }}>
           {state.fw === 'qmk' ? (
               <Box
-                  sx={{ p: 2, display: 'flex', float: 'left'
-              }} >
+                  sx={{ p: 2,
+                      display: 'flex',
+                      alignContent: 'center',
+                      justifyContent: 'center'}} >
                   <Box sx={{ pr: 4}}>
                       <InputLabel sx={{ fontSize: inputLabelMiddleFontSize }} >Firmware</InputLabel>
                       <Select
@@ -145,18 +123,6 @@ const Form = () => {
                           keymapStrError && <FormHelperText error sx={{ pl: 4, fontSize: formHelperTextFontSize}}>":" "flash" cannot be used</FormHelperText>
                       }
 
-                  </Box>
-                  <Box sx={{
-                      pt: 4,
-                      pl: 6,
-                      pr: 2,
-                      textAlign: "center"
-                  }}>
-                      <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >{state.fw.toUpperCase()} Repository</InputLabel>
-                      <Button variant="contained"
-                              onClick={handleUpdate}
-                              disabled={disabledUpdateButton}
-                      >Update</Button>
                   </Box>
               </Box>) : (<div/>)
               }

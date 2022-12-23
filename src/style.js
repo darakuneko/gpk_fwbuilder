@@ -1,6 +1,4 @@
-import {createTheme} from "@mui/material/styles";
-import {styled} from "@mui/material/styles";
-import {Box, Typography, Switch, IconButton, TextField, TableCell} from "@mui/material";
+import {createTheme} from "@mui/material/styles"
 
 export const theme = createTheme({
     palette: {
@@ -26,7 +24,7 @@ export const theme = createTheme({
     }
 })
 
-export const buildBoxHeight = "190px"
+export const buildBoxHeight = "230px"
 
 export const inputLabelSmallFontSize = "12px"
 export const inputLabelMiddleFontSize = "16px"

@@ -1,14 +1,14 @@
 import Box from "@mui/material/Box"
 
-import React from "react";
+import React from "react"
 import {useStateContext} from "../context"
-import Convert from "ansi-to-html";
+import Convert from "ansi-to-html"
 
-const convert = new Convert({ newline: true });
-import parse from 'html-react-parser';
+const convert = new Convert({ newline: true })
+import parse from 'html-react-parser'
 
 const Logs = () => {
-    const {state} = useStateContext();
+    const {state} = useStateContext()
 
     const preQmkParse = (str) => str.replace(/\n\n/g, "\n")
         .replace(/^\n/g, "")

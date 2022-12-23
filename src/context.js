@@ -11,6 +11,7 @@ let _state
 export function StateProvider({children}) {
 
     const [state, _setState] = useState({
+        version: '',
         fw: 'qmk',
         tags: [],
         kb: '',
@@ -21,19 +22,22 @@ export function StateProvider({children}) {
         logs: {
             stderr: "",
             stdout: ""
-        }
+        },
+        tabDisabled: false
     })
 
     const setState = async (obj) => {
         _state = obj
         _setState({
+            version: obj.version,
             fw: obj.fw,
             tags: obj.tags,
             kb: obj.kb,
             km: obj.km,
             selectedFW: obj.selectedFW,
             selectedTag: obj.selectedTag,
-            logs: obj.logs
+            logs: obj.logs,
+            tabDisabled: obj.tabDisabled,
         })
     }
 

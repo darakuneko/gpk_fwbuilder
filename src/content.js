@@ -1,17 +1,21 @@
 import React, {useEffect, useState} from 'react'
 import Box from "@mui/material/Box"
+import Tabs from "@mui/material/Tabs"
+import Tab from "@mui/material/Tab"
 import {getState, useStateContext} from "./context"
 import Form from "./renderer/form"
 import Logs from "./renderer/logs"
-import {buildBoxHeight, neon, neonKeyFrame} from "./style";
-import parse from 'html-react-parser';
+import {buildBoxHeight, neon, neonKeyFrame} from "./style"
+import parse from 'html-react-parser'
+import Tool from "./renderer/tool"
 
 const {api} = window
 
 const Content = () => {
     const {state, setState} = useStateContext()
-    const [initServer, setInitServer] = useState(true);
-    const [closeServer, setCloseServer] = useState(false);
+    const [initServer, setInitServer] = useState(true)
+    const [closeServer, setCloseServer] = useState(false)
+    const [tab, setTab] = useState(0)
 
     useEffect(  () => {
         const fn = async () => {
@@ -27,6 +31,7 @@ const Content = () => {
                         state.selectedFW = reStoreState.selectedFW
                         state.selectedTag = reStoreState.selectedTag
                     }
+                    state.version = await api.appVersion()
                     state.tags = await api.tags()
                     state.selectedTag = state.selectedTag ? state.selectedTag : state.tags[0]
                     setState(state)
@@ -42,20 +47,23 @@ const Content = () => {
 
     useEffect(() => {
         api.on("close", async () => {
+            setCloseServer(true)
             const state = await getState()
             await api.setState(state)
-            setCloseServer(true)
         })
         return () => {}
     }, [])
 
     useEffect(() => {
         api.on("upImage", async (log) => {
+            const state = await getState()
             state.logs.stdout = log
             setState(state)
         })
         return () => {}
     }, [])
+
+    const handleChange = (_, v) => setTab(v)
 
     return (
         <div>
@@ -108,12 +116,17 @@ const Content = () => {
                                 borderColor: 'divider',
                                 '& .MuiTextField-root': { ml: 4, mt: 1, width: '25ch' }
                             }} >
-                            <Form />
+                            <Tabs value={tab} onChange={handleChange} aria-label="basic tabs" sx={{ pl: 2}}>
+                                <Tab label="Build" disabled={state.tabDisabled}/>
+                                <Tab label="Tool" disabled={state.tabDisabled}/>
+                            </Tabs>
+                            {tab === 0 && <Form />}
+                            {tab === 1 && <Tool />}
                         </Box>
                         <Box
                             sx={{
                                 overflow: "auto",
-                                height: `calc(100vh - ${buildBoxHeight})`
+                                height: `calc(100vh - ${buildBoxHeight})`,
                             }}>
                             <Logs />
                         </Box>
