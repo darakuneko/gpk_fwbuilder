@@ -34,6 +34,7 @@ const Content = () => {
                     state.version = await api.appVersion()
                     state.tags = await api.tags()
                     state.selectedTag = state.selectedTag ? state.selectedTag : state.tags[0]
+                    state.logs.stdout = ''
                     setState(state)
                     clearInterval(id)
                     setInitServer(false)

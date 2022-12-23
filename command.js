@@ -28,7 +28,7 @@ const streamLog = (result, mainWindow) => {
     result.stdout.on('data', (data) => mainWindow.webContents.send("upImage", data.toString()))
     result.stderr.on('data', (data) => mainWindow.webContents.send("upImage", data.toString()))
     result.on('close', () => {
-        mainWindow.webContents.send("upImage", '')
+        mainWindow.webContents.send("upImage", 'finish!!')
         isDockerUp = true
     })
 }
