@@ -37,7 +37,7 @@ Please refer to here when creating a new keyboard file.
 https://github.com/qmk/qmk_firmware/tree/master/keyboards
 
 e.g.    
-For command  
+Command  
 make reviung/reviung41:default  
    
 Parameter  
