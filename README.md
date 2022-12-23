@@ -11,7 +11,12 @@ link: https://www.docker.com
 
 Docker for Windows requires Hyper-V to be enabled. 
 
-Build
+Download
+-------
+
+https://github.com/darakuneko/gpk_fwbuilder/releases
+
+Firmware Build
 -------
 
 
