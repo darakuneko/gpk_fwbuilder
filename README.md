@@ -33,6 +33,9 @@ ubuntu: /home/xxxx/GPKFW
 Copy the keyboard files to "GPKFW" directory.   
 Firmware is also created here.   
 
+Please refer to here when creating a new keyboard file.   
+https://github.com/qmk/qmk_firmware/tree/master/keyboards
+
 e.g.    
 For command  
 make reviung/reviung41:default  
