@@ -22,9 +22,9 @@ const Form = () => {
     const [init, setInit] = useState(true)
 
     const validBuildButton = () => {
-        const validKeymapStr = (/:|flash/).test(state.km)
+        const validKeymapStr = (/:|flash/).test(state.build.km)
         setKeymapStrError(validKeymapStr)
-        const validDisableButton = state.kb && state.km && !validKeymapStr
+        const validDisableButton = state.build.kb && state.build.km && !validKeymapStr
         setDisabledBuildButton(!validDisableButton)
     }
 
@@ -35,15 +35,15 @@ const Form = () => {
     }
 
     const handleTextChange = (inputName) => (e) => {
-        inputName === 'kb' ? state.kb = e.target.value : state.km = e.target.value
-        setKeyboardError(!state.kb)
-        setKeymapEmptyError(!state.km)
+        inputName === 'kb' ? state.build.kb = e.target.value : state.build.km = e.target.value
+        setKeyboardError(!state.build.kb)
+        setKeymapEmptyError(!state.build.km)
         validBuildButton()
         setState(state)
     }
 
     const handleSelectTags = (e) => {
-        state.selectedTag = e.target.value
+        state.build.selectedTag = e.target.value
         setState(state)
     }
 
@@ -56,7 +56,7 @@ const Form = () => {
         }
         state.tabDisabled = true
         setState(state)
-        const logs = await api.build(state)
+        const logs = await api.build(state.build)
         setDisabledBuildButton(false)
         setDisabledBuildText(false)
         state.logs = logs
@@ -69,7 +69,7 @@ const Form = () => {
           display: 'flex',
           flexDirection: 'column',
       }}>
-          {state.fw === 'qmk' ? (
+          {state.build.fw === 'qmk' ? (
               <Box
                   sx={{ p: 2,
                       display: 'flex',
@@ -78,7 +78,7 @@ const Form = () => {
                   <Box sx={{ pr: 4}}>
                       <InputLabel sx={{ fontSize: inputLabelMiddleFontSize }} >Firmware</InputLabel>
                       <Select
-                          id="fw-select"
+                          id="build-fw-select"
                           label="Firmware"
                           value="qmk"
                           required>
@@ -88,41 +88,40 @@ const Form = () => {
                   <Box>
                       <InputLabel sx={{ fontSize: inputLabelMiddleFontSize }} >Tag</InputLabel>
                       <Select
-                          id="tags-select"
+                          id="build-tags-select"
                           label="Tag"
-                          value={state.selectedTag}
+                          value={state.build.selectedTag}
                           onChange={handleSelectTags}
                           required>
-                          {state.tags.map((tag, i) => (<MenuItem key={`tags-${i}`} value={tag}>{tag}</MenuItem>))}
+                          {state.build.tags.map((tag, i) => (<MenuItem key={`tags-${i}`} value={tag}>{tag}</MenuItem>))}
                       </Select>
                   </Box>
                   <Box sx={{ pt: 2}}>
                     <TextField
-                        id="kb"
+                        id="build-kb"
                         label="keyboard"
                         required
                         error={keyboardError}
                         disabled={disabledBuildText}
                         onChange={handleTextChange("kb")}
                         variant="standard"
-                        value={state.kb}
+                        value={state.build.kb}
                     />
                   </Box>
                   <Box sx={{ pt: 2}}>
                     <TextField
-                        id="km"
+                        id="build-km"
                         label="keymap"
                         required
                         error={keymapEmptyError}
                         disabled={disabledBuildText}
                         onChange={handleTextChange("km")}
                         variant="standard"
-                        value={state.km}
+                        value={state.build.km}
                     />
                       {
                           keymapStrError && <FormHelperText error sx={{ pl: 4, fontSize: formHelperTextFontSize}}>":" "flash" cannot be used</FormHelperText>
                       }
-
                   </Box>
               </Box>) : (<div/>)
               }

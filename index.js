@@ -44,7 +44,8 @@ const closing = async(e, mainWindow) => {
 ipcMain.handle('existSever', async () => await command.existSever())
 ipcMain.handle('tags', async () => await command.tags())
 ipcMain.handle('build', async (e, dat) => await command.build(dat))
-ipcMain.handle('update', async (e, fw) => await command.update(fw))
+ipcMain.handle('generateQMKFile', async (e, dat) => await command.generateQMKFile(dat))
+ipcMain.handle('updateRepository', async (e, fw) => await command.updateRepository(fw))
 ipcMain.handle('getState',  async () => await store.get('state'))
 ipcMain.handle('setState',  async (e, obj) => {
     await store.set('state', obj)

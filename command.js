@@ -35,7 +35,7 @@ const streamLog = (result, mainWindow) => {
 
 const command = {
     upImage: (mainWindow) => {
-        const result = spawn(appSpawn("docker-compose up -d"), { shell: true });
+        const result = spawn(appSpawn("docker-compose build && docker-compose up -d"), { shell: true });
         streamLog(result, mainWindow)
     },
     stopImage: async () => await appExe("docker-compose stop"),
@@ -47,27 +47,48 @@ const command = {
     existSever: async () => {
         if(isDockerUp) {
             const res = await axios(url("")).catch(e => {})
-            return !!res
+            return res.status === 200
         }
         return isDockerUp
     },
     tags: async () => {
-        const res = await axios(url('/tags/qmk '))
+        const res = await axios(url('/tags/qmk'))
         const dat = res.data
         const limit = parseZeroLastDigit(tagZeroFill2Int(dat[0]) - 3000)
         const tags = dat.filter(v => tagZeroFill2Int(v) >= limit)
         return tags
     },
     build: async (dat) => {
-        const result = await axios.post(url(`/build/${dat.fw}`), {
+        const u = `/build/${dat.fw}`
+        const res = await axios.post(url(u), {
                 tag: dat.selectedTag,
                 kb: dat.kb,
                 km: dat.km
-            })
-        return result.data
+            }).catch(e => {})
+
+        return res.status === 200 ? res.data : {
+            stderr: `Cannot POST ${u}`,
+            stdout: ""
+        }
     },
-    update: async (fw) => {
-        const result = await axios(url(`/update/${fw}`))
+    generateQMKFile: async (dat) => {
+        const res = await axios.post(url("/generate/qmk/file"), {
+            kb: dat.kb,
+            user: dat.user,
+            mcu: dat.selectedMCU,
+            layout: dat.layout
+        }).catch(e => {})
+
+        return res.status === 200 ? {
+            stderr: "",
+            stdout: "Generate!!\n\nFiles are created in GKPFW directory"
+        } : {
+            stderr: `Cannot POST ${u}`,
+            stdout: ""
+        }
+    },
+    updateRepository: async (fw) => {
+        const result = await axios(url(`/update/repository/${fw}`))
         return result.data
     }
 }

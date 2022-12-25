@@ -8,6 +8,7 @@ import Logs from "./renderer/logs"
 import {buildBoxHeight, neon, neonKeyFrame} from "./style"
 import parse from 'html-react-parser'
 import Tool from "./renderer/tool"
+import Generate from "./renderer/generate";
 
 const {api} = window
 
@@ -24,16 +25,13 @@ const Content = () => {
                 const exist = await api.existSever()
                 if(exist){
                     const reStoreState = await api.getState()
-                    if(reStoreState) {
-                        state.fw = reStoreState.fw
-                        state.kb = reStoreState.kb
-                        state.km = reStoreState.km
-                        state.selectedFW = reStoreState.selectedFW
-                        state.selectedTag = reStoreState.selectedTag
-                    }
                     state.version = await api.appVersion()
-                    state.tags = await api.tags()
-                    state.selectedTag = state.selectedTag ? state.selectedTag : state.tags[0]
+                    if(reStoreState && reStoreState.version === state.version) {
+                        state.build = reStoreState.build
+                        state.generate = reStoreState.generate
+                    }
+                    state.build.tags = await api.tags()
+                    state.build.selectedTag = state.build.selectedTag ? state.build.selectedTag : state.build.tags[0]
                     state.logs.stdout = ''
                     setState(state)
                     clearInterval(id)
@@ -121,10 +119,12 @@ const Content = () => {
                             }} >
                             <Tabs value={tab} onChange={handleChange} aria-label="basic tabs" sx={{ pl: 2}}>
                                 <Tab label="Build" disabled={state.tabDisabled}/>
+                                <Tab label="Generate" disabled={state.tabDisabled}/>
                                 <Tab label="Tool" disabled={state.tabDisabled}/>
                             </Tabs>
                             {tab === 0 && <Form />}
-                            {tab === 1 && <Tool />}
+                            {tab === 1 && <Generate />}
+                            {tab === 2 && <Tool />}
                         </Box>
                         <Box
                             sx={{

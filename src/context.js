@@ -12,13 +12,22 @@ export function StateProvider({children}) {
 
     const [state, _setState] = useState({
         version: '',
-        fw: 'qmk',
-        tags: [],
-        kb: '',
-        km: '',
-        selectedFW: undefined,
-        selectedTag: undefined,
-        disabledButton: false,
+        build : {
+            fw: 'qmk',
+            tags: [],
+            kb: '',
+            km: '',
+            selectedFW: undefined,
+            selectedTag: undefined,
+        },
+        generate : {
+            qmkFile: {
+                kb: '',
+                user: '',
+                layout: 'fullsize_ansi',
+                selectedMCU: 'RP2040',
+            }
+        },
         logs: {
             stderr: "",
             stdout: ""
@@ -29,13 +38,23 @@ export function StateProvider({children}) {
     const setState = async (obj) => {
         _state = obj
         _setState({
+            build : {
+                fw: obj.build.fw,
+                tags: obj.build.tags,
+                kb: obj.build.kb,
+                km: obj.build.km,
+                selectedFW: obj.build.selectedFW,
+                selectedTag: obj.build.selectedTag,
+            },
+            generate : {
+                qmkFile: {
+                    kb: obj.generate.qmkFile.kb,
+                    user: obj.generate.qmkFile.user,
+                    layout: obj.generate.qmkFile.layout,
+                    selectedMCU: obj.generate.qmkFile.selectedMCU,
+                }
+            },
             version: obj.version,
-            fw: obj.fw,
-            tags: obj.tags,
-            kb: obj.kb,
-            km: obj.km,
-            selectedFW: obj.selectedFW,
-            selectedTag: obj.selectedTag,
             logs: obj.logs,
             tabDisabled: obj.tabDisabled,
         })

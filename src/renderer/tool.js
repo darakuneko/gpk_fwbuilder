@@ -25,8 +25,8 @@ const Tool = () => {
         const checkFn = async () => {
             const exist = await api.existSever()
             if(exist){
-                state.tags = await api.tags()
-                state.selectedTag = state.tags[0]
+                state.build.tags = await api.tags()
+                state.build.selectedTag = state.build.tags[0]
                 state.logs = {
                     stderr: "",
                     stdout: msg2
@@ -51,9 +51,14 @@ const Tool = () => {
             <Box sx={{
                 p: 2,
             }}>
-                <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >{state.fw.toUpperCase()} Repository</InputLabel>
+                <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >{state.build.fw.toUpperCase()} Repository</InputLabel>
                 <Button variant="contained"
-                        onClick={handleUpdate("Updating.....\n\nIt will take a few minutes.", "Updated!!", async () => await api.update("qmk"))}
+                        onClick={
+                            handleUpdate("Updating.....\n\nIt will take a few minutes.",
+                                "Updated!!",
+                                async () => await api.updateRepository("qmk")
+                            )
+                        }
                         disabled={disabledUpdateButton}
                 >Update</Button>
             </Box>
