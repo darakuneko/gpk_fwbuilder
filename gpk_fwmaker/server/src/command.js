@@ -15,6 +15,9 @@ const tagZeroFill2Int = (str) => {
     return parseInt(s)
 }
 
+const rmQmk = async () => await exec("rm -rf /root/qmk_firmware")
+const rmQmkKeyboards = async () => await exec("rm -rf /root/qmk_firmware/keyboards/*")
+
 const command = {
     tags: async () => {
         const result = await qmkCmd(`git ls-remote --tags`)
@@ -30,14 +33,14 @@ const command = {
         return result.stdout.split('\n').filter(v => v.match(/^\* /))[0].replace(/^\* /, '')
     },
     checkoutQmk: async (tag) => {
-        await exec("rm -rf /root/qmk_firmware/keyboards/*")
+        await rmQmkKeyboards()
         await qmkCmd(`git reset --hard HEAD^`)
         try {  await qmkCmd(`git checkout -b ${tag} refs/tags/${tag}`) } catch (e){
             await qmkCmd(`git branch -D ${tag}`)
             await qmkCmd(`git checkout -b ${tag} refs/tags/${tag}`)
         }
         await qmkCmd(`make git-submodule`)
-        await exec(`rm -rf /root/qmk_firmware/keyboards/*`)
+        await rmQmkKeyboards()
     },
     buildQmkFirmware: async (kb, km) => {
         await exec(`${findFirmwareLine} -delete`)
@@ -45,12 +48,21 @@ const command = {
         return result
     },
     updateQmk: async () => {
-        await exec("rm -rf /root/qmk_firmware")
-        await exec("cd /root && git clone https://github.com/qmk/qmk_firmware.git")
+        await rmQmk()
+        await exec("cd /root && qmk setup -y")
     },
-    cpConfigs: async (kbDir) => {
-        await exec("rm -rf /root/qmk_firmware/keyboards/*")
+    generateQmkFile: async (kb, mcu, layout, user) => {
+        await rmQmkKeyboards()
+        const result = await exec(`qmk new-keyboard -kb ${kb} -t ${mcu} -l ${layout} -u ${user}`)
+        return result
+    },
+    cpConfigsToQmk: async (kbDir) => {
+        await rmQmkKeyboards()
         await exec(`cp -rf /root/keyboards/${kbDir} /root/qmk_firmware/keyboards`)
+    },
+    mvQmkConfigsToVolume: async (kbDir) => {
+        await exec(`rm -rf /root/keyboards/${kbDir} `)
+        await exec(`mv -f /root/qmk_firmware/keyboards/${kbDir} /root/keyboards`)
     },
     cpFirmware: async () => {
         await exec(`${findFirmwareLine} -type f -exec cp {} /root/keyboards \\;`)
