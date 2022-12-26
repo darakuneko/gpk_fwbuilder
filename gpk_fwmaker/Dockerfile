@@ -20,6 +20,14 @@ RUN ["/bin/bash", "-c", "source $HOME/.bashrc"]
 
 RUN qmk setup -y
 
+WORKDIR /root
+
+RUN git clone https://github.com/vial-kb/vial-qmk.git
+
+WORKDIR /root/vial-qmk
+
+RUN make git-submodule
+
 COPY ./server/ /server
 
 WORKDIR /server

@@ -26,7 +26,7 @@ const Tool = () => {
             const exist = await api.existSever()
             if(exist){
                 state.build.tags = await api.tags()
-                state.build.selectedTag = state.build.tags[0]
+                state.build.tag = state.build.tags[0]
                 state.logs = {
                     stderr: "",
                     stdout: msg2
@@ -51,7 +51,7 @@ const Tool = () => {
             <Box sx={{
                 p: 2,
             }}>
-                <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >{state.build.fw.toUpperCase()} Repository</InputLabel>
+                <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >QMK Repository</InputLabel>
                 <Button variant="contained"
                         onClick={
                             handleUpdate("Updating.....\n\nIt will take a few minutes.",
@@ -64,7 +64,20 @@ const Tool = () => {
             </Box>
             <Box sx={{
                 p: 2,
-                pl: 6
+            }}>
+                <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >Vial Repository</InputLabel>
+                <Button variant="contained"
+                        onClick={
+                            handleUpdate("Updating.....\n\nIt will take a few minutes.",
+                                "Updated!!",
+                                async () => await api.updateRepository("vial")
+                            )
+                        }
+                        disabled={disabledUpdateButton}
+                >Update</Button>
+            </Box>
+            <Box sx={{
+                p: 2,
             }}>
                 <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >Image</InputLabel>
                 <Button variant="contained"

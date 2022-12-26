@@ -1,6 +1,5 @@
 # GPK FWBuilder
-Application to create QMK firmware.  
-May correspond to Vial....    
+Application to create QMK/Vial firmware.  
 
 Before use
 -------
@@ -41,6 +40,14 @@ Parameter
 keyboard: reviung/reviung41  
 keymap: default 
 
+Update Repository
+-------
+Clone again to the latest state.    
+If you get an error like this, please update the repository.     
+```
+error: branch 'x.x.x' not found.
+```
+ 
 CUI version
 -------
 GPK FWMaker  

@@ -14,18 +14,18 @@ export function StateProvider({children}) {
         version: '',
         build : {
             fw: 'qmk',
+            tag: '',
             tags: [],
             kb: '',
             km: '',
-            selectedFW: undefined,
-            selectedTag: undefined,
+            commit: ''
         },
         generate : {
             qmkFile: {
                 kb: '',
                 user: '',
                 layout: 'fullsize_ansi',
-                selectedMCU: 'RP2040',
+                mcu: 'RP2040',
             }
         },
         logs: {
@@ -40,18 +40,18 @@ export function StateProvider({children}) {
         _setState({
             build : {
                 fw: obj.build.fw,
+                tag: obj.build.tag,
                 tags: obj.build.tags,
                 kb: obj.build.kb,
                 km: obj.build.km,
-                selectedFW: obj.build.selectedFW,
-                selectedTag: obj.build.selectedTag,
+                commit: obj.build.commit
             },
             generate : {
                 qmkFile: {
                     kb: obj.generate.qmkFile.kb,
                     user: obj.generate.qmkFile.user,
                     layout: obj.generate.qmkFile.layout,
-                    selectedMCU: obj.generate.qmkFile.selectedMCU,
+                    mcu: obj.generate.qmkFile.mcu,
                 }
             },
             version: obj.version,

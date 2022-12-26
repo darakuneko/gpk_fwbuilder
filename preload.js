@@ -10,6 +10,7 @@ process.once('loaded', async () => {
             build: async (dat) => await ipcRenderer.invoke('build', dat),
             updateRepository: async (fw) => await ipcRenderer.invoke('updateRepository', fw),
             generateQMKFile: async (dat) => await ipcRenderer.invoke('generateQMKFile', dat),
+            generateVialId: async () => await ipcRenderer.invoke('generateVialId'),
             getState: async() => await ipcRenderer.invoke('getState'),
             setState: async(obj) => await ipcRenderer.invoke('setState', obj),
             rebuildImage: async () => await ipcRenderer.invoke('rebuildImage'),

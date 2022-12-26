@@ -7,9 +7,14 @@ let mainWindow
 
 const createWindow = () => {
     const win  = store.get('window')
+    const state  = store.get('state')
+    const isRestored = win && state.version === app.getVersion()
+
     mainWindow = new BrowserWindow({
-        width: win ? win.w : 920,
-        height: win ? win.h : 1000,
+        x: isRestored ? win.x : undefined,
+        y: isRestored ? win.y : undefined,
+        width: isRestored ? win.w : 1024,
+        height: isRestored ? win.h : 1024,
         icon: `${__dirname}/icons/256x256.png`,
         webPreferences: {
             preload: __dirname + '/preload.js',
@@ -34,7 +39,7 @@ app.on('ready', () => {
 const closing = async(e, mainWindow) => {
     e.preventDefault()
     const win = mainWindow.getBounds()
-    store.set('window', {w: win.width, h: win.height})
+    store.set('window', {x: win.x, y: win.y, w: win.width, h: win.height})
     mainWindow.webContents.send("close", false)
     await command.stopImage()
     app.isQuiting = true
@@ -45,6 +50,7 @@ ipcMain.handle('existSever', async () => await command.existSever())
 ipcMain.handle('tags', async () => await command.tags())
 ipcMain.handle('build', async (e, dat) => await command.build(dat))
 ipcMain.handle('generateQMKFile', async (e, dat) => await command.generateQMKFile(dat))
+ipcMain.handle('generateVialId', async () => await command.generateVialId())
 ipcMain.handle('updateRepository', async (e, fw) => await command.updateRepository(fw))
 ipcMain.handle('getState',  async () => await store.get('state'))
 ipcMain.handle('setState',  async (e, obj) => {

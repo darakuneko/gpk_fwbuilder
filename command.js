@@ -60,12 +60,17 @@ const command = {
     },
     build: async (dat) => {
         const u = `/build/${dat.fw}`
-        const res = await axios.post(url(u), {
-                tag: dat.selectedTag,
-                kb: dat.kb,
-                km: dat.km
-            }).catch(e => {})
-
+        console.log(u)
+        const params = dat.fw === "qmk" ? {
+            kb: dat.kb,
+            km: dat.km,
+            tag: dat.tag,
+        } : {
+            kb: dat.kb,
+            km: dat.km,
+            commit: dat.commit,
+        }
+        const res = await axios.post(url(u), params).catch(e => {})
         return res.status === 200 ? res.data : {
             stderr: `Cannot POST ${u}`,
             stdout: ""
@@ -75,7 +80,7 @@ const command = {
         const res = await axios.post(url("/generate/qmk/file"), {
             kb: dat.kb,
             user: dat.user,
-            mcu: dat.selectedMCU,
+            mcu: dat.mcu,
             layout: dat.layout
         }).catch(e => {})
 
@@ -86,6 +91,10 @@ const command = {
             stderr: `Cannot POST ${u}`,
             stdout: ""
         }
+    },
+    generateVialId: async () => {
+        const result = await axios(url(`/generate/vial/id`))
+        return result.data
     },
     updateRepository: async (fw) => {
         const result = await axios(url(`/update/repository/${fw}`))

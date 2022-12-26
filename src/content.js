@@ -3,7 +3,7 @@ import Box from "@mui/material/Box"
 import Tabs from "@mui/material/Tabs"
 import Tab from "@mui/material/Tab"
 import {getState, useStateContext} from "./context"
-import Form from "./renderer/form"
+import Build from "./renderer/build"
 import Logs from "./renderer/logs"
 import {buildBoxHeight, neon, neonKeyFrame} from "./style"
 import parse from 'html-react-parser'
@@ -31,7 +31,7 @@ const Content = () => {
                         state.generate = reStoreState.generate
                     }
                     state.build.tags = await api.tags()
-                    state.build.selectedTag = state.build.selectedTag ? state.build.selectedTag : state.build.tags[0]
+                    state.build.tag = state.build.tag ? state.build.tag : state.build.tags[0]
                     state.logs.stdout = ''
                     setState(state)
                     clearInterval(id)
@@ -122,7 +122,7 @@ const Content = () => {
                                 <Tab label="Generate" disabled={state.tabDisabled}/>
                                 <Tab label="Tool" disabled={state.tabDisabled}/>
                             </Tabs>
-                            {tab === 0 && <Form />}
+                            {tab === 0 && <Build />}
                             {tab === 1 && <Generate />}
                             {tab === 2 && <Tool />}
                         </Box>

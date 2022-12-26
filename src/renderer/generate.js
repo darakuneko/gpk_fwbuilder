@@ -60,11 +60,11 @@ const Generate = () => {
     }
 
     const handleSelectMCU = (e) => {
-        state.generate.qmkFile.selectedMCU = e.target.value
+        state.generate.qmkFile.mcu = e.target.value
         setState(state)
     }
 
-    const handleSubmit = async () => {
+    const handleSubmit =  (key) => async () => {
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
         state.logs = {
@@ -73,7 +73,11 @@ const Generate = () => {
         }
         state.tabDisabled = true
         setState(state)
-        const logs = await api.generateQMKFile(state.generate.qmkFile)
+
+        const logs = key === "qmkFile" ?
+            await api.generateQMKFile(state.generate.qmkFile) :
+            await api.generateVialId()
+
         setDisabledBuildButton(false)
         setDisabledBuildText(false)
         state.logs = logs
@@ -86,24 +90,21 @@ const Generate = () => {
         <Box sx={{
             display: 'flex',
             flexDirection: 'column',
+            width: '960px',
         }}>
-            <Box sx={{
-                display: 'flex',
-                alignContent: 'center',
-                justifyContent: 'center'
-            }} >- QMK Keyboard File -</Box>
             <Box
                 sx={{
                     pt: 2,
                     display: 'flex',
                     alignContent: 'center',
-                    justifyContent: 'center'}} >
+                    justifyContent: 'space-between'}} >
+                <Box sx={{ pt: 3, textAlign: "center", width: "150px"}} >QMK<br />Keyboard File</Box>
                 <Box>
                     <InputLabel sx={{ fontSize: inputLabelMiddleFontSize }} >MCU</InputLabel>
                     <Select
                         id="generate-qmkFile-mcu-select"
                         label="MCU"
-                        value={state.generate.qmkFile.selectedMCU}
+                        value={state.generate.qmkFile.mcu}
                         onChange={handleSelectMCU}
                         required>
                         <MenuItem key="generate-qmkFile-mcu-rp2040" value="RP2040">RP2040</MenuItem>
@@ -145,7 +146,26 @@ const Generate = () => {
                         alignItems: 'center'
                 }} >
                     <Button variant="contained"
-                            onClick={handleSubmit}
+                            onClick={handleSubmit("qmkFile")}
+                            disabled={init ? initDisabledBuildButton() : disabledBuildButton }
+                    >Generate</Button>
+                </Box>
+            </Box>
+            <Box
+                sx={{
+                    pt: 2,
+                    display: 'flex',
+                    alignContent: 'center',
+                    justifyContent: 'space-between'}} >
+                <Box sx={{ textAlign: "center", width: "150px"}} >Vial<br />Unique ID</Box>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }} >
+                    <Button variant="contained"
+                            onClick={handleSubmit("VialId")}
                             disabled={init ? initDisabledBuildButton() : disabledBuildButton }
                     >Generate</Button>
                 </Box>

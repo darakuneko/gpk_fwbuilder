@@ -1,6 +1,6 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-const cmd = require('./command')
+const {cmd, qmkDir, vialDir} = require('./command')
 const app = express()
 
 const server = app.listen(3000, async() =>console.log("Node.js is listening to PORT:" + server.address().port))
@@ -16,7 +16,12 @@ app.get('/tags/qmk', async (req, res) => {
 })
 
 app.get('/update/repository/qmk', async (req, res) => {
-    await cmd.updateQmk()
+    await cmd.updateRepositoryQmk()
+    res.send('success')
+})
+
+app.get('/update/repository/vial', async (req, res) => {
+    await cmd.updateRepositoryVial()
     res.send('success')
 })
 
@@ -30,7 +35,26 @@ app.post('/build/qmk', async (req, res) => {
         if(tag !== currentTag) await cmd.checkoutQmk(tag)
         await cmd.cpConfigsToQmk(kbDir)
         const result = await cmd.buildQmkFirmware(kb, km)
-        await cmd.cpFirmware()
+        await cmd.cpFirmware(qmkDir)
+        res.send(result)
+    } catch (e) {
+        res.send(e)
+    }
+})
+  
+app.post('/build/vial', async (req, res) => {
+    try {
+        const kb = req.body.kb
+        const kbDir = kb.replace(/\/.*/g, "")
+        const km = req.body.km.replace(/:.*|flash/g, "")
+
+        if("commit" in req.body) {
+            const commit = req.body.commit
+            if(commit) await cmd.checkoutVial(commit)
+        }
+        await cmd.cpConfigsToVial(kbDir)
+        const result = await cmd.buildVialFirmware(kb, km)
+        await cmd.cpFirmware(vialDir)
         res.send(result)
     } catch (e) {
         res.send(e)
@@ -46,6 +70,15 @@ app.post('/generate/qmk/file', async (req, res) => {
         const user = req.body.user
         const result = await cmd.generateQmkFile(kb, mcu, layout, user)
         await cmd.mvQmkConfigsToVolume(kbDir)
+        res.send(result)
+    } catch (e) {
+        res.send(e)
+    }
+})
+
+app.get('/generate/vial/id', async (req, res) => {
+    try {
+        const result = await cmd.generateVialId()
         res.send(result)
     } catch (e) {
         res.send(e)
