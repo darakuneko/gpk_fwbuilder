@@ -60,7 +60,6 @@ const command = {
     },
     build: async (dat) => {
         const u = `/build/${dat.fw}`
-        console.log(u)
         const params = dat.fw === "qmk" ? {
             kb: dat.kb,
             km: dat.km,

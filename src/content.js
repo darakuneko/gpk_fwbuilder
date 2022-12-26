@@ -55,11 +55,8 @@ const Content = () => {
 
     useEffect(() => {
         api.on("upImage", async (log) => {
-            const state = await getState()
-            if(state) {
-                state.logs.stdout = log
-                setState(state)
-            }
+            state.logs.stdout = log
+            setState(state)
         })
         return () => {}
     }, [])
