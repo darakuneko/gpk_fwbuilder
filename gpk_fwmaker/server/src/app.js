@@ -40,7 +40,9 @@ app.post('/build/vial', async (req, res) => {
 
         if("commit" in req.body) {
             const commit = req.body.commit
-            if(commit) await cmd.checkoutVial(commit)
+            if(commit.length > 0) await cmd.checkoutVial(commit)
+        } else {
+            await cmd.checkoutVial()
         }
         await cmd.cpConfigsToVial(kbDir)
         await cmd.buildVialFirmware(res,kb, km)

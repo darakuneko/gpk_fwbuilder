@@ -12,23 +12,18 @@ const Tool = () => {
     const {state, setState} = useStateContext()
 
     const handleUpdate = (msg1, msg2, fn) => async () => {
-        state.logs = {
-            stderr: "",
-            stdout: msg1
-        }
+        state.logs = msg1
         state.tabDisabled = true
         setState(state)
         await fn()
         let id
         const checkFn = async () => {
+            const buildCompleted = await api.buildCompleted()
             const exist = await api.existSever()
-            if(exist){
+            if(buildCompleted && exist){
                 state.build.tags = await api.tags()
                 state.build.tag = state.build.tags[0]
-                state.logs = {
-                    stderr: "",
-                    stdout: msg2
-                }
+                state.logs = msg2
                 state.tabDisabled = false
                 setState(state)
                 clearInterval(id)
@@ -51,7 +46,7 @@ const Tool = () => {
                 <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >QMK Repository</InputLabel>
                 <Button variant="contained"
                         onClick={
-                            handleUpdate("Updating.....\n\nIt will take a few minutes.",
+                            handleUpdate("Updating.....\n\nIt will take a few minutes.\n\n",
                                 "Updated!!",
                                 async () => await api.updateRepository("qmk")
                             )
@@ -64,7 +59,7 @@ const Tool = () => {
                 <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >Vial Repository</InputLabel>
                 <Button variant="contained"
                         onClick={
-                            handleUpdate("Updating.....\n\nIt will take a few minutes.",
+                            handleUpdate("Updating.....\n\nIt will take a few minutes.\n\n",
                                 "Updated!!",
                                 async () => await api.updateRepository("vial")
                             )
@@ -76,7 +71,7 @@ const Tool = () => {
             }}>
                 <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >Image</InputLabel>
                 <Button variant="contained"
-                        onClick={handleUpdate("Rebuilding.....", "Rebuilded!!", async () => await api.rebuildImage())}
+                        onClick={handleUpdate("Building.....\n\n", "Rebuild!!", async () => await api.rebuildImage())}
                 >Rebuild</Button>
             </Box>
         </Box>

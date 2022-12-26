@@ -66,7 +66,6 @@ const Content = () => {
         api.on("streamBuildLog", async (log) => {
             const state =  await getState()
             state.logs = state.logs + log
-            console.log(state)
             setState(state)
         })
         return () => {}

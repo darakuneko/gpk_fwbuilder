@@ -33,12 +33,12 @@ const streamLog = (res, mainWindow, init) => {
     })
 }
 
-let builded = false
-const responseStreamLog = async (res, mainWindow) => {
-    builded = false
+let buildCompleted = false
+const responseStreamLog = async (res, mainWindow, channel) => {
+    buildCompleted = false
     const stream = res.data
-    stream.on('data', data => mainWindow.webContents.send("streamBuildLog", data.toString()))
-    stream.on('end', () => builded = true)
+    stream.on('data', data => mainWindow.webContents.send(channel, data.toString()))
+    stream.on('end', () => buildCompleted = true)
 }
 
 const command = {
@@ -82,10 +82,10 @@ const command = {
             responseType: 'stream',
             data: data
         }).catch(e => {})
-        return res.status === 200 ? responseStreamLog(res, mainWindow) :
+        return res.status === 200 ? responseStreamLog(res, mainWindow, "streamBuildLog") :
         mainWindow.webContents.send("streamLog",  `Cannot POST ${u}`)  
     },
-    builded: async () => await builded,
+    buildCompleted: () => buildCompleted,
     generateQMKFile: async (dat) => {
         const res = await axios.post(url("/generate/qmk/file"), {
             kb: dat.kb,
@@ -104,7 +104,7 @@ const command = {
     },
     updateRepository: async (fw, mainWindow) => {
         const res = await axios(url(`/update/repository/${fw}`), {responseType: 'stream'})
-        responseStreamLog(res, mainWindow)
+        await responseStreamLog(res, mainWindow, "streamLog")
     }
 }
 

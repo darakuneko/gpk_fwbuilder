@@ -58,14 +58,14 @@ const Build = () => {
     const handleSubmit = async () => {
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
-        state.logs = "Building....\n\nIt will take some time if the first build or tag has changed."
+        state.logs = "Building....\n\nIt will take some time if the first build or tag has changed.\n\n"
         state.tabDisabled = true
         setState(state)
         await api.build(state.build)
         let id
         const checkFn = async () => {
-            const builded = await api.builded()
-            if(builded){
+            const buildCompleted = await api.buildCompleted()
+            if(buildCompleted){
                 setDisabledBuildButton(false)
                 setDisabledBuildText(false)
                 state.tabDisabled = false
