@@ -1,6 +1,6 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-const {cmd, qmkDir, vialDir} = require('./command')
+const {cmd, streamError} = require('./command')
 const app = express()
 
 const server = app.listen(3000, async() =>console.log("Node.js is listening to PORT:" + server.address().port))
@@ -15,15 +15,9 @@ app.get('/tags/qmk', async (req, res) => {
     res.send(tags)
 })
 
-app.get('/update/repository/qmk', async (req, res) => {
-    await cmd.updateRepositoryQmk()
-    res.send('success')
-})
+app.get('/update/repository/qmk', async (req, res) => await cmd.updateRepositoryQmk(res))
 
-app.get('/update/repository/vial', async (req, res) => {
-    await cmd.updateRepositoryVial()
-    res.send('success')
-})
+app.get('/update/repository/vial', async (req, res) => await cmd.updateRepositoryVial(res))
 
 app.post('/build/qmk', async (req, res) => {
     try {
@@ -34,12 +28,8 @@ app.post('/build/qmk', async (req, res) => {
         const currentTag = await cmd.currentTag()
         if(tag !== currentTag) await cmd.checkoutQmk(tag)
         await cmd.cpConfigsToQmk(kbDir)
-        const result = await cmd.buildQmkFirmware(kb, km)
-        await cmd.cpFirmware(qmkDir)
-        res.send(result)
-    } catch (e) {
-        res.send(e)
-    }
+        await cmd.buildQmkFirmware(res, kb, km)
+    } catch (e) { streamError(res, e) }
 })
   
 app.post('/build/vial', async (req, res) => {
@@ -53,12 +43,8 @@ app.post('/build/vial', async (req, res) => {
             if(commit) await cmd.checkoutVial(commit)
         }
         await cmd.cpConfigsToVial(kbDir)
-        const result = await cmd.buildVialFirmware(kb, km)
-        await cmd.cpFirmware(vialDir)
-        res.send(result)
-    } catch (e) {
-        res.send(e)
-    }
+        await cmd.buildVialFirmware(res,kb, km)
+    } catch (e) { streamError(res, e) }
 })
   
 app.post('/generate/qmk/file', async (req, res) => {

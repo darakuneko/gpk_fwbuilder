@@ -14,8 +14,6 @@ const Logs = () => {
         .replace(/^\n/g, "")
         .replace(/.*Compiling keymap with.*\n/, "")
 
-    const isQmkError = (str) => preQmkParse(str).length > 0
-
     const parseHtml = (str, isStdOut) => {
         const html = convert.toHtml(
             preQmkParse(str)
@@ -37,23 +35,7 @@ const Logs = () => {
             display: 'flex',
             flexDirection: 'column'
         }}>
-            {state.logs.stdout.length === 0 ? (
-                <Box>
-                    {state.logs.stderr.length > 0 && <Box color="primary.error">Building Error</Box>}
-                    {parseHtml(state.logs.stderr, false)}
-                </Box>
-                ) :  (
-                <Box>
-                    {parseHtml(state.logs.stdout, true)}
-                    {
-                        isQmkError(state.logs.stderr, false) && (
-                            <span>
-                                <Box color="primary.main" sx={{ pt: 4 }}>--- Warning / Error ---</Box>
-                                {parseHtml(state.logs.stderr, false)}
-                            </span>
-                        )
-                    }
-                </Box>)}
+            <Box>{state.logs && state.logs.length > 0 && parseHtml(state.logs, true)}</Box>
         </Box>
     )
 }

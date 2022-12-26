@@ -28,10 +28,7 @@ export function StateProvider({children}) {
                 mcu: 'RP2040',
             }
         },
-        logs: {
-            stderr: "",
-            stdout: ""
-        },
+        logs: "",
         tabDisabled: false
     })
 

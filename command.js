@@ -23,26 +23,33 @@ const tagZeroFill2Int = (str) => {
 
 const parseZeroLastDigit = (num) => parseInt(num.toString().slice(0, -1))  * 10
 
-
-const streamLog = (result, mainWindow) => {
-    result.stdout.on('data', (data) => mainWindow.webContents.send("upImage", data.toString()))
-    result.stderr.on('data', (data) => mainWindow.webContents.send("upImage", data.toString()))
-    result.on('close', () => {
-        mainWindow.webContents.send("upImage", 'finish!!')
+const streamLog = (res, mainWindow, init) => {
+    isDockerUp = false
+    res.stdout.on('data', (data) => mainWindow.webContents.send("streamLog", data.toString(), init))
+    res.stderr.on('data', (data) => mainWindow.webContents.send("streamLog", data.toString(), init))
+    res.on('close', () => {
+        mainWindow.webContents.send("streamLog", 'finish!!', init)
         isDockerUp = true
     })
 }
 
+let builded = false
+const responseStreamLog = async (res, mainWindow) => {
+    builded = false
+    const stream = res.data
+    stream.on('data', data => mainWindow.webContents.send("streamBuildLog", data.toString()))
+    stream.on('end', () => builded = true)
+}
+
 const command = {
     upImage: (mainWindow) => {
-        const result = spawn(appSpawn("docker-compose build && docker-compose up -d"), { shell: true });
-        streamLog(result, mainWindow)
+        const res = spawn(appSpawn("docker-compose build && docker-compose up -d"), { shell: true });
+        streamLog(res, mainWindow, true)
     },
     stopImage: async () => await appExe("docker-compose stop"),
     rebuildImage: async (mainWindow) => {
-        isDockerUp = false
-        const result = spawn(appSpawn("docker-compose build --no-cache && docker-compose up -d"), { shell: true });
-        streamLog(result, mainWindow)
+        const res = spawn(appSpawn("docker-compose build --no-cache && docker-compose up -d"), { shell: true });
+        streamLog(res, mainWindow)
     },
     existSever: async () => {
         if(isDockerUp) {
@@ -58,9 +65,9 @@ const command = {
         const tags = dat.filter(v => tagZeroFill2Int(v) >= limit)
         return tags
     },
-    build: async (dat) => {
+    build: async (dat, mainWindow) => {
         const u = `/build/${dat.fw}`
-        const params = dat.fw === "qmk" ? {
+        const data = dat.fw === "qmk" ? {
             kb: dat.kb,
             km: dat.km,
             tag: dat.tag,
@@ -69,12 +76,16 @@ const command = {
             km: dat.km,
             commit: dat.commit,
         }
-        const res = await axios.post(url(u), params).catch(e => {})
-        return res.status === 200 ? res.data : {
-            stderr: `Cannot POST ${u}`,
-            stdout: ""
-        }
+        const res = await axios({
+            url: url(u),
+            method: 'post',
+            responseType: 'stream',
+            data: data
+        }).catch(e => {})
+        return res.status === 200 ? responseStreamLog(res, mainWindow) :
+        mainWindow.webContents.send("streamLog",  `Cannot POST ${u}`)  
     },
+    builded: async () => await builded,
     generateQMKFile: async (dat) => {
         const res = await axios.post(url("/generate/qmk/file"), {
             kb: dat.kb,
@@ -83,21 +94,17 @@ const command = {
             layout: dat.layout
         }).catch(e => {})
 
-        return res.status === 200 ? {
-            stderr: "",
-            stdout: "Generate!!\n\nFiles are created in GKPFW directory"
-        } : {
-            stderr: `Cannot POST ${u}`,
-            stdout: ""
-        }
+        return res.status === 200 
+         ? "Generate!!\n\nFiles are created in GKPFW directory"
+         : `Cannot POST ${u}`
     },
     generateVialId: async () => {
-        const result = await axios(url(`/generate/vial/id`))
-        return result.data
+        const res = await axios(url(`/generate/vial/id`))
+        return res.data
     },
-    updateRepository: async (fw) => {
-        const result = await axios(url(`/update/repository/${fw}`))
-        return result.data
+    updateRepository: async (fw, mainWindow) => {
+        const res = await axios(url(`/update/repository/${fw}`), {responseType: 'stream'})
+        responseStreamLog(res, mainWindow)
     }
 }
 

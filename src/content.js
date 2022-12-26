@@ -18,7 +18,7 @@ const Content = () => {
     const [closeServer, setCloseServer] = useState(false)
     const [tab, setTab] = useState(0)
 
-    useEffect(  () => {
+    useEffect(() => {
         const fn = async () => {
             let id
             const checkFn = async () => {
@@ -32,7 +32,7 @@ const Content = () => {
                     }
                     state.build.tags = await api.tags()
                     state.build.tag = state.build.tag ? state.build.tag : state.build.tags[0]
-                    state.logs.stdout = ''
+                    state.logs = ''
                     setState(state)
                     clearInterval(id)
                     setInitServer(false)
@@ -54,8 +54,19 @@ const Content = () => {
     }, [])
 
     useEffect(() => {
-        api.on("upImage", async (log) => {
-            state.logs.stdout = log
+        api.on("streamLog", async (log, init) => {
+            const s = init ? state : await getState()
+            s.logs = log
+            setState(s)
+        })
+        return () => {}
+    }, [])
+
+    useEffect(() => {
+        api.on("streamBuildLog", async (log) => {
+            const state =  await getState()
+            state.logs = state.logs + log
+            console.log(state)
             setState(state)
         })
         return () => {}
@@ -100,7 +111,7 @@ const Content = () => {
                             <Box sx={{ minWidth: "100%" }}>
                                 <Box sx={{ p: 4, animation: neon, textAlign: "center"}}>Initializing.....</Box>
                                 <Box sx={{ animation: neon, textAlign: "center" }}>May take more than 10 minutes</Box>
-                                <Box sx={{ pt: 2, textAlign: "left"}}>{parse(state.logs.stdout.replace(/\n/g, "<br>"))}</Box>
+                                <Box sx={{ pt: 2, textAlign: "left"}}>{parse(state.logs.replace(/\n/g, "<br>"))}</Box>
                             </Box>
                         </Box>
                     )

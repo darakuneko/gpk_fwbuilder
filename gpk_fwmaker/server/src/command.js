@@ -23,6 +23,19 @@ const rmVial = async () => await exec(`rm -rf ${vialDir}`)
 const rmQmkKeyboards = async () => await exec(`rm -rf ${qmkDir}/keyboards/*`)
 const rmVialKeyboards = async () => await exec(`rm -rf ${vialDir}/keyboards/*`)
 
+const streamLog = (fn, res) => {
+    res.writeHead(200, { "Content-Type": "text/event-stream"})
+    const response = fn()
+    response.stdout.on('data', (data) => res.write(data.toString()))
+    response.stderr.on('data', (data) => res.write(data.toString()))
+    response.on('close', () => res.end(''))
+}
+
+const streamError = (res, e) => {
+    res.writeHead(200, { "Content-Type": "text/event-stream"})
+    res.end(e.toString())
+}
+
 const cmd = {
     tags: async () => {
         const result = await qmkCmd(`git ls-remote --tags`)
@@ -54,24 +67,27 @@ const cmd = {
         await vialCmd(`make git-submodule`)
         await rmVialKeyboards()
     },
-    buildQmkFirmware: async (kb, km) => {
+    buildQmkFirmware: async (res, kb, km) => {
         await exec(`${findFirmwareLine(qmkDir)} -delete`)
-        const result = await exec(`qmk compile -kb ${kb} -km ${km}`)
-        return result
+        const fn = () => childProcess.spawn(`qmk compile -kb ${kb} -km ${km} && ${findFirmwareLine(qmkDir)} -type f -exec cp {} /root/keyboards \\;`, { shell: true })
+        streamLog(fn, res)
     },
-    buildVialFirmware: async (kb, km) => {
+    buildVialFirmware: async (res, kb, km) => {
         await exec(`${findFirmwareLine(vialDir)} -delete`)
-        const result = await vialCmd(`make ${kb}:${km}`)
-        return result
+        const fn = () => childProcess.spawn(`cd ${vialDir} && make ${kb}:${km} && ${findFirmwareLine(vialDir)} -type f -exec cp {} /root/keyboards \\;`, { shell: true })
+        streamLog(fn, res)       
     },
-    updateRepositoryQmk: async () => {
+    updateRepositoryQmk: async (res) => {
         await rmQmk()
-        await exec("cd /root && qmk setup -y")
+        const fn = () => childProcess.spawn("cd /root && qmk setup -y", { shell: true })
+        streamLog(fn, res)
     },
-    updateRepositoryVial: async () => {
+    updateRepositoryVial: async (res) => {
         await rmVial()
-        await exec("cd /root && git clone https://github.com/vial-kb/vial-qmk.git")
-        await vialCmd(`make git-submodule`)
+        const fn = () => childProcess.spawn(
+            `cd /root && git clone https://github.com/vial-kb/vial-qmk.git && cd ${vialDir} && make git-submodule`,
+             { shell: true })
+        streamLog(fn, res)
     },
     generateQmkFile: async (kb, mcu, layout, user) => {
         await rmQmkKeyboards()
@@ -80,7 +96,7 @@ const cmd = {
     },
     generateVialId: async () => {
         const result = await vialCmd("python3 util/vial_generate_keyboard_uid.py")
-        return result
+        return result.stdout
     },
     cpConfigsToQmk: async (kbDir) => {
         await rmQmkKeyboards()
@@ -93,12 +109,8 @@ const cmd = {
     mvQmkConfigsToVolume: async (kbDir) => {
         await exec(`rm -rf /root/keyboards/${kbDir} `)
         await exec(`mv -f ${qmkDir}/keyboards/${kbDir} /root/keyboards`)
-    },
-    cpFirmware: async (dir) => {
-        await exec(`${findFirmwareLine(dir)} -type f -exec cp {} /root/keyboards \\;`)
     }
 }
 
 module.exports.cmd = cmd
-module.exports.qmkDir = qmkDir
-module.exports.vialDir = vialDir
+module.exports.streamError = streamError

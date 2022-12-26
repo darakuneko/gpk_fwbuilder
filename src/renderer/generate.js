@@ -31,9 +31,6 @@ const Generate = () => {
 
         if(qmkFile.kb.length > 0){
             validKeyboardStrError = (reg).test(qmkFile.kb)
-            console.log(qmkFile.kb)
-            console.log(validKeyboardStrError)
-
             setKeyboardStrError(!validKeyboardStrError)
         }
         if(qmkFile.user.length > 0){
@@ -64,22 +61,28 @@ const Generate = () => {
         setState(state)
     }
 
-    const handleSubmit =  (key) => async () => {
+    const generateMsg =  "Generating...."
+    const handleQmkFileSubmit =  (key) => async () => {
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
-        state.logs = {
-            stderr: "",
-            stdout: "Generating...."
-        }
+        state.logs = generateMsg
         state.tabDisabled = true
         setState(state)
 
-        const logs = key === "qmkFile" ?
-            await api.generateQMKFile(state.generate.qmkFile) :
-            await api.generateVialId()
+        const logs = await api.generateQMKFile(state.generate.qmkFile)
 
         setDisabledBuildButton(false)
         setDisabledBuildText(false)
+        state.logs = logs
+        state.tabDisabled = false
+        setState(state)
+    }
+
+    const handleVailIdSubmit =  (key) => async () => {
+        state.logs = generateMsg
+        state.tabDisabled = true
+        setState(state)
+        const logs = await api.generateVialId()
         state.logs = logs
         state.tabDisabled = false
         setState(state)
@@ -146,7 +149,7 @@ const Generate = () => {
                         alignItems: 'center'
                 }} >
                     <Button variant="contained"
-                            onClick={handleSubmit("qmkFile")}
+                            onClick={handleQmkFileSubmit("qmkFile")}
                             disabled={init ? initDisabledBuildButton() : disabledBuildButton }
                     >Generate</Button>
                 </Box>
@@ -165,8 +168,7 @@ const Generate = () => {
                         alignItems: 'center'
                     }} >
                     <Button variant="contained"
-                            onClick={handleSubmit("VialId")}
-                            disabled={init ? initDisabledBuildButton() : disabledBuildButton }
+                            onClick={handleVailIdSubmit("VialId")}
                     >Generate</Button>
                 </Box>
             </Box>

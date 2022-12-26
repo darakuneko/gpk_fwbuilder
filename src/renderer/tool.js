@@ -10,10 +10,8 @@ const {api} = window
 
 const Tool = () => {
     const {state, setState} = useStateContext()
-    const [disabledUpdateButton, setDisabledUpdateButton] = useState(false)
 
     const handleUpdate = (msg1, msg2, fn) => async () => {
-        setDisabledUpdateButton(true)
         state.logs = {
             stderr: "",
             stdout: msg1
@@ -33,7 +31,6 @@ const Tool = () => {
                 }
                 state.tabDisabled = false
                 setState(state)
-                setDisabledUpdateButton(false)
                 clearInterval(id)
             }
         }
@@ -59,7 +56,6 @@ const Tool = () => {
                                 async () => await api.updateRepository("qmk")
                             )
                         }
-                        disabled={disabledUpdateButton}
                 >Update</Button>
             </Box>
             <Box sx={{
@@ -73,7 +69,6 @@ const Tool = () => {
                                 async () => await api.updateRepository("vial")
                             )
                         }
-                        disabled={disabledUpdateButton}
                 >Update</Button>
             </Box>
             <Box sx={{
@@ -82,7 +77,6 @@ const Tool = () => {
                 <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >Image</InputLabel>
                 <Button variant="contained"
                         onClick={handleUpdate("Rebuilding.....", "Rebuilded!!", async () => await api.rebuildImage())}
-                        disabled={disabledUpdateButton}
                 >Rebuild</Button>
             </Box>
         </Box>

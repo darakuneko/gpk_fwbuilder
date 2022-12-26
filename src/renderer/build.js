@@ -58,18 +58,22 @@ const Build = () => {
     const handleSubmit = async () => {
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
-        state.logs = {
-            stderr: "",
-            stdout: "Building....\n\nIt will take some time if the first build or tag has changed."
-        }
+        state.logs = "Building....\n\nIt will take some time if the first build or tag has changed."
         state.tabDisabled = true
         setState(state)
-        const logs = await api.build(state.build)
-        setDisabledBuildButton(false)
-        setDisabledBuildText(false)
-        state.logs = logs
-        state.tabDisabled = false
-        setState(state)
+        await api.build(state.build)
+        let id
+        const checkFn = async () => {
+            const builded = await api.builded()
+            if(builded){
+                setDisabledBuildButton(false)
+                setDisabledBuildText(false)
+                state.tabDisabled = false
+                setState(state)
+                clearInterval(id)
+            }
+        }
+        id = setInterval(checkFn, 1000)
     }
 
     return (
