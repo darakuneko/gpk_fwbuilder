@@ -21,7 +21,9 @@ const Generate = () => {
 
     const [disabledBuildButton, setDisabledBuildButton] = useState(true)
     const [disabledBuildText, setDisabledBuildText] = useState(false)
-    const [init, setInit] = useState(true)
+    const [disabledVialID, setDisabledVialID] = useState(false)
+
+    const [qmkFile, setQmkFile] = useState(true)
 
     const validBuildButton = () => {
         const qmkFile = state.generate.qmkFile
@@ -42,9 +44,9 @@ const Generate = () => {
         setDisabledBuildButton(!validDisableButton)
     }
 
-    const initDisabledBuildButton = () => {
+    const qmkFileDisabledBuildButton = () => {
         validBuildButton()
-        setInit(false)
+        setQmkFile(false)
         return disabledBuildButton
     }
 
@@ -62,9 +64,10 @@ const Generate = () => {
     }
 
     const generateMsg =  "Generating...."
-    const handleQmkFileSubmit =  (key) => async () => {
+    const handleQmkFileSubmit =  () => async () => {
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
+        setDisabledVialID(true)
         state.logs = generateMsg
         state.tabDisabled = true
         setState(state)
@@ -73,12 +76,13 @@ const Generate = () => {
 
         setDisabledBuildButton(false)
         setDisabledBuildText(false)
+        setDisabledVialID(false)
         state.logs = logs
         state.tabDisabled = false
         setState(state)
     }
 
-    const handleVailIdSubmit =  (key) => async () => {
+    const handleVailIdSubmit =  () => async () => {
         state.logs = generateMsg
         state.tabDisabled = true
         setState(state)
@@ -149,8 +153,8 @@ const Generate = () => {
                         alignItems: 'center'
                 }} >
                     <Button variant="contained"
-                            onClick={handleQmkFileSubmit("qmkFile")}
-                            disabled={init ? initDisabledBuildButton() : disabledBuildButton }
+                            onClick={handleQmkFileSubmit()}
+                            disabled={qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton }
                     >Generate</Button>
                 </Box>
             </Box>
@@ -169,6 +173,7 @@ const Generate = () => {
                     }} >
                     <Button variant="contained"
                             onClick={handleVailIdSubmit("VialId")}
+                            disabled={ disabledVialID }
                     >Generate</Button>
                 </Box>
             </Box>

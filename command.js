@@ -38,7 +38,10 @@ const responseStreamLog = async (res, mainWindow, channel) => {
     buildCompleted = false
     const stream = res.data
     stream.on('data', data => mainWindow.webContents.send(channel, data.toString()))
-    stream.on('end', () => buildCompleted = true)
+    stream.on('end', () => {
+        buildCompleted = true
+        mainWindow.webContents.send(channel, "finish!!")
+    })
 }
 
 const command = {
@@ -53,10 +56,10 @@ const command = {
     },
     existSever: async () => {
         if(isDockerUp) {
-            const res = await axios(url("")).catch(e => {})
-            return res.status === 200
+            const res = await axios(url("")).catch(e => e)
+            return res.status ? res.status : 404
         }
-        return isDockerUp
+        return 403
     },
     tags: async () => {
         const res = await axios(url('/tags/qmk'))
@@ -82,7 +85,9 @@ const command = {
             responseType: 'stream',
             data: data
         }).catch(e => {})
-        return res.status === 200 ? responseStreamLog(res, mainWindow, "streamBuildLog") :
+        const channel = "streamBuildLog"
+        mainWindow.webContents.send(channel, "@@@@@init@@@@")
+        return res.status === 200 ? responseStreamLog(res, mainWindow, channel) :
         mainWindow.webContents.send("streamLog",  `Cannot POST ${u}`)  
     },
     buildCompleted: () => buildCompleted,

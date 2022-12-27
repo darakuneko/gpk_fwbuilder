@@ -33,48 +33,59 @@ const Tool = () => {
     }
 
     return (
-        <Box sx={{
-            display: 'flex',
-            flexFlow: 'wrap',
-            alignContent: 'center',
-            justifyContent: 'center',
-            height: '180px'
-        }}>
+        <>
             <Box sx={{
-                p: 2,
+                display: 'flex',
+                flexFlow: 'wrap',
+                alignContent: 'center',
+                justifyContent: 'center',
+                height: '140px'
             }}>
-                <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >QMK Repository</InputLabel>
-                <Button variant="contained"
-                        onClick={
-                            handleUpdate("Updating.....\n\nIt will take a few minutes.\n\n",
-                                "Updated!!",
-                                async () => await api.updateRepository("qmk")
-                            )
-                        }
-                >Update</Button>
+                <Box sx={{
+                    p: 2,
+                }}>
+                    <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >QMK Repository</InputLabel>
+                    <Button variant="contained"
+                            onClick={
+                                handleUpdate("Updating.....\n\nIt will take a few minutes.\n\n",
+                                    "Updated!!",
+                                    async () => await api.updateRepository("qmk")
+                                )
+                            }
+                    >Update</Button>
+                </Box>
+                <Box sx={{
+                    p: 2,
+                }}>
+                    <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >Vial Repository</InputLabel>
+                    <Button variant="contained"
+                            onClick={
+                                handleUpdate("Updating.....\n\nIt will take a few minutes.\n\n",
+                                    "Updated!!",
+                                    async () => await api.updateRepository("vial")
+                                )
+                            }
+                    >Update</Button>
+                </Box>
+                <Box sx={{
+                    p: 2,
+                }}>
+                    <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >Image</InputLabel>
+                    <Button variant="contained"
+                            onClick={handleUpdate("Building.....\n\n", "Rebuild!!", async () => await api.rebuildImage())}
+                    >Rebuild</Button>
+                </Box>
             </Box>
-            <Box sx={{
-                p: 2,
-            }}>
-                <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >Vial Repository</InputLabel>
-                <Button variant="contained"
-                        onClick={
-                            handleUpdate("Updating.....\n\nIt will take a few minutes.\n\n",
-                                "Updated!!",
-                                async () => await api.updateRepository("vial")
-                            )
-                        }
-                >Update</Button>
+            <Box
+                sx={{
+                    height: '40px',
+                    textAlign: "center"
+                }}
+            >
+                If it stops due to a network error or other problem, please press the button again.
             </Box>
-            <Box sx={{
-                p: 2,
-            }}>
-                <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >Image</InputLabel>
-                <Button variant="contained"
-                        onClick={handleUpdate("Building.....\n\n", "Rebuild!!", async () => await api.rebuildImage())}
-                >Rebuild</Button>
-            </Box>
-        </Box>
+        </>
+
     )
 }
 export default Tool

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useCallback, useEffect, useRef, useState} from 'react'
 import Box from "@mui/material/Box"
 import Tabs from "@mui/material/Tabs"
 import Tab from "@mui/material/Tab"
@@ -23,7 +23,7 @@ const Content = () => {
             let id
             const checkFn = async () => {
                 const exist = await api.existSever()
-                if(exist){
+                if(exist === 200){
                     const reStoreState = await api.getState()
                     state.version = await api.appVersion()
                     if(reStoreState && reStoreState.version === state.version) {
@@ -36,6 +36,9 @@ const Content = () => {
                     setState(state)
                     clearInterval(id)
                     setInitServer(false)
+                } else if(exist === 404) {
+                    state.logs = 'connecting....\nIf the connection does not work for a long time, please start up again or delete the docker image once.'
+                    setState(state)
                 }
             }
             id = setInterval(await checkFn, 1000)
@@ -65,7 +68,7 @@ const Content = () => {
     useEffect(() => {
         api.on("streamBuildLog", async (log) => {
             const state =  await getState()
-            state.logs = state.logs + log
+            log.match(/@@@@@init@@@@/m) ? state.logs = '' : state.logs = state.logs + log
             setState(state)
         })
         return () => {}

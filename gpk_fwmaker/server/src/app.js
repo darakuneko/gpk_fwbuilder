@@ -5,6 +5,11 @@ const app = express()
 
 const server = app.listen(3000, async() =>console.log("Node.js is listening to PORT:" + server.address().port))
 
+const streamResponce = async (res, fn) => {
+    res.writeHead(200, { "Content-Type": "text/event-stream"})
+    await fn()
+}
+
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 
@@ -20,33 +25,37 @@ app.get('/update/repository/qmk', async (req, res) => await cmd.updateRepository
 app.get('/update/repository/vial', async (req, res) => await cmd.updateRepositoryVial(res))
 
 app.post('/build/qmk', async (req, res) => {
-    try {
-        const kb = req.body.kb
-        const kbDir = kb.replace(/\/.*/g, "")
-        const km = req.body.km.replace(/:.*|flash/g, "")
-        const tag = req.body.tag
-        const currentTag = await cmd.currentTag()
-        if(tag !== currentTag) await cmd.checkoutQmk(tag)
-        await cmd.cpConfigsToQmk(kbDir)
-        await cmd.buildQmkFirmware(res, kb, km)
-    } catch (e) { streamError(res, e) }
+    const fn = async () => {
+        try {
+            const kb = req.body.kb
+            const kbDir = kb.replace(/\/.*/g, "")
+            const km = req.body.km.replace(/:.*|flash/g, "")
+            const tag = req.body.tag
+            const currentTag = await cmd.currentTag()
+            if (tag !== currentTag) await cmd.checkoutQmk(res, tag)
+            await cmd.cpConfigsToQmk(kbDir)
+            await cmd.buildQmkFirmware(res, kb, km)
+        } catch (e) {
+            streamError(res, e)
+        }
+    }
+    await streamResponce(res, fn)
 })
   
 app.post('/build/vial', async (req, res) => {
-    try {
-        const kb = req.body.kb
-        const kbDir = kb.replace(/\/.*/g, "")
-        const km = req.body.km.replace(/:.*|flash/g, "")
+    const fn = async () => {
+        try {
+            const kb = req.body.kb
+            const kbDir = kb.replace(/\/.*/g, "")
+            const km = req.body.km.replace(/:.*|flash/g, "")
+            const commit = "commit" in req.body && req.body.commit.length > 0 ? req.body.commit : "vial"
+            await cmd.checkoutVial(res, commit)
+            await cmd.cpConfigsToVial(kbDir)
+            await cmd.buildVialFirmware(res, kb, km)
+        } catch (e) { streamError(res, e) }
+    }
 
-        if("commit" in req.body) {
-            const commit = req.body.commit
-            if(commit.length > 0) await cmd.checkoutVial(commit)
-        } else {
-            await cmd.checkoutVial()
-        }
-        await cmd.cpConfigsToVial(kbDir)
-        await cmd.buildVialFirmware(res,kb, km)
-    } catch (e) { streamError(res, e) }
+    await streamResponce(res, fn)
 })
   
 app.post('/generate/qmk/file', async (req, res) => {
