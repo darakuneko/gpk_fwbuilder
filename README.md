@@ -40,6 +40,25 @@ Parameter
 keyboard: reviung/reviung41  
 keymap: default 
 
+Convert to via.json
+-------
+QMK info.json and KLE json are used to create via.json.   
+
+info.json - required fields  
+```
+{
+  "keyboard_name": "Your Keyboard's Name",
+  "usb": {
+    "vid": "0xFEED",
+    "pid": "0x0001",
+  },
+  "matrix_size": {
+    "cols": 1,
+    "rows": 1
+  }
+}
+ ```
+
 Update Repository
 -------
 Clone again to the latest state.    
