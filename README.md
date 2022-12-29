@@ -59,6 +59,9 @@ info.json - required fields
 }
  ```
 
+KLE json edited like VIA  
+https://www.caniusevia.com/docs/layouts 
+
 Update Repository
 -------
 Clone again to the latest state.    
