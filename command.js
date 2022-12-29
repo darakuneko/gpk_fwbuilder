@@ -3,6 +3,9 @@ const childProcess = require('child_process')
 const exec = util.promisify(childProcess.exec)
 const spawn = childProcess.spawn
 const axios = require('axios')
+const fs = require('fs');
+const json = (path) => JSON.parse(fs.readFileSync(path))
+const FormData = require('form-data')
 
 if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`
 
@@ -33,6 +36,7 @@ const streamLog = (res, mainWindow, init) => {
     })
 }
 
+const createdMsg  = "Files are created in GKPFW directory"
 let buildCompleted = false
 const responseStreamLog = async (res, mainWindow, channel) => {
     buildCompleted = false
@@ -40,7 +44,7 @@ const responseStreamLog = async (res, mainWindow, channel) => {
     stream.on('data', data => mainWindow.webContents.send(channel, data.toString()))
     stream.on('end', () => {
         buildCompleted = true
-        mainWindow.webContents.send(channel, "finish!!")
+        mainWindow.webContents.send(channel, "<span style='display: none'>@@@@finish@@@@</span>")
     })
 }
 
@@ -86,7 +90,7 @@ const command = {
             data: data
         }).catch(e => {})
         const channel = "streamBuildLog"
-        mainWindow.webContents.send(channel, "@@@@@init@@@@")
+        mainWindow.webContents.send(channel, "@@@@init@@@@")
         return res.status === 200 ? responseStreamLog(res, mainWindow, channel) :
         mainWindow.webContents.send("streamLog",  `Cannot POST ${u}`)  
     },
@@ -100,8 +104,8 @@ const command = {
         }).catch(e => {})
 
         return res.status === 200 
-         ? "Generate!!\n\nFiles are created in GKPFW directory"
-         : `Cannot POST ${u}`
+         ? `Generate!!\n\n${createdMsg}`
+         : `Cannot POST`
     },
     generateVialId: async () => {
         const res = await axios(url(`/generate/vial/id`))
@@ -110,6 +114,23 @@ const command = {
     updateRepository: async (fw, mainWindow) => {
         const res = await axios(url(`/update/repository/${fw}`), {responseType: 'stream'})
         await responseStreamLog(res, mainWindow, "streamLog")
+    },
+    convertViaJson: async (file) => {
+        const data = new FormData()
+        const dataAppend = (key, obj) => {
+            const buffer = fs.readFileSync(obj.path);
+            data.append(key, buffer, {
+                filename: obj.name,
+                contentType: 'application/json',
+                knownLength: buffer.length
+            })
+        }
+        dataAppend('info', file.info)
+        dataAppend('kle', file.kle)
+
+        const res = await axios.post(url("/convert/via/json"), data,
+            {headers: {"Content-Type": "multipart/form-data"}})
+        return res.data === "convert" ? `Converted!!\n\n${createdMsg}` : res.data
     }
 }
 

@@ -9,7 +9,7 @@
     "dist:linux": "npm run build && electron-builder -l"
   },
   "name": "gpk_fwbuilder",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "GPK FWBuilder",
   "homepage": "https://github.com/darakuneko",
   "author": {
@@ -37,6 +37,7 @@
     "axios": "^1.2.1",
     "babel-loader": "9.1.0",
     "electron-store": "8.1.0",
+    "form-data": "4.0.0",
     "html-react-parser": "3.0.4",
     "node-loader": "2.0.0",
     "react": "18.2.0",

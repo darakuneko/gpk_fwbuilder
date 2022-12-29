@@ -2,6 +2,8 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const {cmd, streamError} = require('./command')
 const app = express()
+const multer = require("multer")
+const fs = require('fs');
 
 const server = app.listen(3000, async() =>console.log("Node.js is listening to PORT:" + server.address().port))
 
@@ -9,6 +11,8 @@ const streamResponce = async (res, fn) => {
     res.writeHead(200, { "Content-Type": "text/event-stream"})
     await fn()
 }
+
+const bufferToJson = (buf) => JSON.parse(buf.toString())
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
@@ -82,4 +86,35 @@ app.get('/generate/vial/id', async (req, res) => {
     }
 })
 
+app.post('/convert/via/json', multer().fields([{ name: 'info' }, { name: 'kle' }]), async (req, res) => {
+    try {
+        const info = bufferToJson(req.files['info'][0].buffer)
+        const kle = bufferToJson(req.files['kle'][0].buffer)
+        const km = kle.filter(v => Array.isArray(v))
+
+        if (!info.keyboard_name) throw new Error("No Property: keyboard_name");
+        if (!info.usb.vid) throw new Error("No Property: usb.vid");
+        if (!info.usb.pid) throw new Error("No Property: usb.pid");
+        if (!info.matrix_size.rows) throw new Error("No Property: matrix_size.rows");
+        if (!info.matrix_size.cols) throw new Error("No Property: matrix_size.cols");
+
+        const via = {
+            name: info.keyboard_name,
+            vendorId: info.usb.vid,
+            productId: info.usb.pid,
+            lighting: "none",
+            matrix: {
+                rows: info.matrix_size.rows,
+                cols: info.matrix_size.cols,
+            },
+            layouts: {
+                keymap: km
+            }
+        }
+        fs.writeFileSync('/root/keyboards/via.json', JSON.stringify(via, null, 2  ));
+        res.send('convert')
+    } catch (e) {
+        res.send(e.toString())
+    }
+})
 module.exports = app

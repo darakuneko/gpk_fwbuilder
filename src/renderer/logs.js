@@ -20,7 +20,7 @@ const Logs = () => {
 
     useEffect(() => {
         const fn = async () => {
-            if(countState === 5 || state.logs.match(/finish!!/m)){
+            if(countState === 5 || state.logs.match(/@@@@finish@@@@/m)){
                 scrollToBottom()
                 setCountState(0)
             } else {
@@ -41,7 +41,6 @@ const Logs = () => {
             .replace(/\n\n/g, "\n")
             .replace(/^\n/g, "")
             .replace(/.*Compiling keymap with.*\n/, "")
-            .replace(/ /g, "&nbsp;")
             .replace(/\n/g, "<br />"))
 
         const h = isStdOut ? html.replace(/\<span style=\"color:/g, "<div style=\"float: right; color:") : html

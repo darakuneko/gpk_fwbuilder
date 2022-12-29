@@ -9,6 +9,7 @@ import {buildBoxHeight, neon, neonKeyFrame} from "./style"
 import parse from 'html-react-parser'
 import Tool from "./renderer/tool"
 import Generate from "./renderer/generate";
+import Convert from "./renderer/convert";
 
 const {api} = window
 
@@ -67,8 +68,8 @@ const Content = () => {
 
     useEffect(() => {
         api.on("streamBuildLog", async (log) => {
-            const state =  await getState()
-            log.match(/@@@@@init@@@@/m) ? state.logs = '' : state.logs = state.logs + log
+            const state = await getState()
+            log.match(/@@@@init@@@@/m) ? state.logs = '' : state.logs = state.logs + log
             setState(state)
         })
         return () => {}
@@ -130,11 +131,13 @@ const Content = () => {
                             <Tabs value={tab} onChange={handleChange} aria-label="basic tabs" sx={{ pl: 2}}>
                                 <Tab label="Build" disabled={state.tabDisabled}/>
                                 <Tab label="Generate" disabled={state.tabDisabled}/>
+                                <Tab label="Convert" disabled={state.tabDisabled}/>
                                 <Tab label="Tool" disabled={state.tabDisabled}/>
                             </Tabs>
                             {tab === 0 && <Build />}
                             {tab === 1 && <Generate />}
-                            {tab === 2 && <Tool />}
+                            {tab === 2 && <Convert />}
+                            {tab === 3 && <Tool />}
                         </Box>
                         <Box
                             sx={{

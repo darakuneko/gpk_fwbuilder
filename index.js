@@ -58,4 +58,5 @@ ipcMain.handle('setState',  async (e, obj) => {
     await store.set('state', obj)
 })
 ipcMain.handle('rebuildImage', async () => await command.rebuildImage(mainWindow))
+ipcMain.handle('convertViaJson',  async (e, file) => await command.convertViaJson(file))
 ipcMain.handle('appVersion',  () => app.getVersion())
