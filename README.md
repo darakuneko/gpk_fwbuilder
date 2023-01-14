@@ -65,6 +65,10 @@ https://www.caniusevia.com/docs/layouts
 
 Convert (KLE json to QMK/Vial)
 -------
+It is based on Firmware 'scripts'.   
+zykrah's Nice project👍      
+https://github.com/zykrah/firmware-scripts    
+
 https://user-images.githubusercontent.com/5214078/212449688-c9263962-5a9b-4e65-ae74-3c8a1c443887.mp4
 
 #### KLE Guidelines
