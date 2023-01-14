@@ -28,6 +28,18 @@ export function StateProvider({children}) {
                 mcu: 'RP2040',
             }
         },
+        convert : {
+            kle: {
+                kb: '',
+                user: '',
+                vid: '0xFEED',
+                pid: '0x0000',
+                mcu: 'RP2040',
+                cols: '',
+                rows: '',
+                option: 0,
+            }
+        },
         logs: "",
         tabDisabled: false
     })
@@ -49,6 +61,18 @@ export function StateProvider({children}) {
                     user: obj.generate.qmkFile.user,
                     layout: obj.generate.qmkFile.layout,
                     mcu: obj.generate.qmkFile.mcu,
+                }
+            },
+            convert : {
+                kle: {
+                    kb: obj.convert.kle.kb,
+                    user: obj.convert.kle.user,
+                    pid: obj.convert.kle.pid,
+                    vid: obj.convert.kle.vid,
+                    mcu: obj.convert.kle.mcu,
+                    cols: obj.convert.kle.cols,
+                    rows: obj.convert.kle.rows,
+                    option: obj.convert.kle.option,
                 }
             },
             version: obj.version,

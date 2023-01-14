@@ -59,4 +59,6 @@ ipcMain.handle('setState',  async (e, obj) => {
 })
 ipcMain.handle('rebuildImage', async () => await command.rebuildImage(mainWindow))
 ipcMain.handle('convertViaJson',  async (e, file) => await command.convertViaJson(file))
+ipcMain.handle('convertKleJson',  async (e, obj) => await command.convertKleJson(obj))
+ipcMain.handle('readJson',  async (e, path) => await command.readJson(path))
 ipcMain.handle('appVersion',  () => app.getVersion())

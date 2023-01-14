@@ -25,6 +25,7 @@ export const theme = createTheme({
 })
 
 export const buildBoxHeight = "230px"
+export const convertBoxHeight = "690px"
 
 export const inputLabelSmallFontSize = "12px"
 export const inputLabelMiddleFontSize = "16px"

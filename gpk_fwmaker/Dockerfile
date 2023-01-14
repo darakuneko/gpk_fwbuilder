@@ -28,6 +28,8 @@ WORKDIR /root/vial-qmk
 
 RUN make git-submodule
 
+COPY ./firmware-scripts/ /firmware-scripts
+
 COPY ./server/ /server
 
 WORKDIR /server

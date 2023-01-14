@@ -5,7 +5,7 @@ import Tab from "@mui/material/Tab"
 import {getState, useStateContext} from "./context"
 import Build from "./renderer/build"
 import Logs from "./renderer/logs"
-import {buildBoxHeight, neon, neonKeyFrame} from "./style"
+import {buildBoxHeight, convertBoxHeight, neon, neonKeyFrame} from "./style"
 import parse from 'html-react-parser'
 import Tool from "./renderer/tool"
 import Generate from "./renderer/generate";
@@ -30,6 +30,7 @@ const Content = () => {
                     if(reStoreState && reStoreState.version === state.version) {
                         state.build = reStoreState.build
                         state.generate = reStoreState.generate
+                        state.convert = reStoreState.convert
                     }
                     state.build.tags = await api.tags()
                     state.build.tag = state.build.tag ? state.build.tag : state.build.tags[0]
@@ -75,7 +76,11 @@ const Content = () => {
         return () => {}
     }, [])
 
-    const handleChange = (_, v) => setTab(v)
+    const handleChange = (_, v) => {
+        setTab(v)
+        state.logs = ''
+        setState(state)
+    }
 
     return (
         <div>
@@ -123,7 +128,7 @@ const Content = () => {
                         <>
                         <Box
                             sx={{
-                                height: buildBoxHeight,
+                                height: tab === 2 ? convertBoxHeight : buildBoxHeight,
                                 borderBottom: 1,
                                 borderColor: 'divider',
                                 '& .MuiTextField-root': { ml: 4, mt: 1, width: '25ch' }
@@ -142,7 +147,7 @@ const Content = () => {
                         <Box
                             sx={{
                                 overflow: "auto",
-                                height: `calc(100vh - ${buildBoxHeight})`,
+                                height: `calc(100vh - ${tab === 2 ? convertBoxHeight : buildBoxHeight})`,
                             }}>
                             <Logs />
                         </Box>

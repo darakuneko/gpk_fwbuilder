@@ -1,13 +1,16 @@
 const util = require('util')
 const childProcess = require('child_process')
 const exec = util.promisify(childProcess.exec)
+const fs = require('fs');
 
-const dirQMK = `/root/qmk_firmware`
-const dirVial = `/root/vial-qmk`
+const dirQMK = '/root/qmk_firmware'
+const dirVial = '/root/vial-qmk'
+const dirFirmFiles = '/firmware-scripts/'
 
-const execFW = async (dir, line) => await exec(`cd ${dir} && ${line}`)
-const execQMK = async (line) => await execFW(dirQMK, line)
-const execVial = async (line) => await execFW(dirVial, line)
+const execCd = async (dir, line) => await exec(`cd ${dir} && ${line}`)
+const execQMK = async (line) => await execCd(dirQMK, line)
+const execVial = async (line) => await execCd(dirVial, line)
+const execFirmFiles = async (line) => await execCd(dirFirmFiles, line)
 
 const spawn = (line) => childProcess.spawn(line, { shell: true })
 
@@ -104,6 +107,14 @@ const cmd = {
         const result = await execVial("python3 util/vial_generate_keyboard_uid.py")
         return result.stdout
     },
+    generateFirmFiles: async (jsonPath) => {
+        await execFirmFiles(`python3 ./run.py ${jsonPath}`)
+    },
+    readFirmFiles: async (filePath) => (await fs.readFileSync(`${dirFirmFiles}${filePath}`)).toString(),
+    readQmkFile: async (kb, filePath) => (await fs.readFileSync(`${dirQMK}/keyboards/${kb}/${filePath}`)).toString(),
+    write: async (filePath, obj) => await fs.writeFileSync(filePath, obj),
+    writeFirmFiles: async (filePath, obj) => await fs.writeFileSync(`${dirFirmFiles}${filePath}`, obj),
+    writeQmkFile: async (kb, filePath, obj) => await fs.writeFileSync(`${dirQMK}/keyboards/${kb}/${filePath}`, obj),
     cpConfigsToQmk: async (kbDir) => {
         await exec(rmKeyboardsL(dirQMK))
         await exec(`cp -rf /root/keyboards/${kbDir} ${dirQMK}/keyboards`)
@@ -111,6 +122,10 @@ const cmd = {
     cpConfigsToVial: async (kbDir) => {
         await exec(rmKeyboardsL(dirVial))
         await exec(`cp -rf /root/keyboards/${kbDir} ${dirVial}/keyboards`)
+    },
+    cpDefaultToVail: async (kbDir) => {
+        await exec(`mkdir -p ${dirQMK}/keyboards/${kbDir}/keymaps/vial`)
+        await exec(`cp -rf ${dirQMK}/keyboards/${kbDir}/keymaps/default/* ${dirQMK}/keyboards/${kbDir}/keymaps/vial`)
     },
     mvQmkConfigsToVolume: async (kbDir) => {
         await exec(`rm -rf /root/keyboards/${kbDir} `)

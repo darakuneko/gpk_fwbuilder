@@ -16,6 +16,8 @@ process.once('loaded', async () => {
             setState: async(obj) => await ipcRenderer.invoke('setState', obj),
             rebuildImage: async () => await ipcRenderer.invoke('rebuildImage'),
             convertViaJson: async (file) => await ipcRenderer.invoke('convertViaJson', file),
+            convertKleJson: async (obj) => await ipcRenderer.invoke('convertKleJson', obj),
+            readJson: async (path) => await ipcRenderer.invoke('readJson', path),
             appVersion: async () => await ipcRenderer.invoke('appVersion'),
             on: (channel, func) => ipcRenderer.on(channel, (event, ...args) => func(...args))
         })

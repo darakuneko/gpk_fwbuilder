@@ -3,8 +3,8 @@ const childProcess = require('child_process')
 const exec = util.promisify(childProcess.exec)
 const spawn = childProcess.spawn
 const axios = require('axios')
-const fs = require('fs');
-const json = (path) => JSON.parse(fs.readFileSync(path))
+const fs = require('fs')
+const {Blob} = require('buffer')
 const FormData = require('form-data')
 
 if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`
@@ -25,6 +25,15 @@ const tagZeroFill2Int = (str) => {
 }
 
 const parseZeroLastDigit = (num) => parseInt(num.toString().slice(0, -1))  * 10
+
+const fileAppend = (data, key, obj) => {
+    const buffer = fs.readFileSync(obj.path)
+    data.append(key, buffer, {
+        filename: obj.name,
+        contentType: 'application/json',
+        knownLength: buffer.length
+    })
+}
 
 const streamLog = (res, mainWindow, init) => {
     isDockerUp = false
@@ -117,20 +126,24 @@ const command = {
     },
     convertViaJson: async (file) => {
         const data = new FormData()
-        const dataAppend = (key, obj) => {
-            const buffer = fs.readFileSync(obj.path);
-            data.append(key, buffer, {
-                filename: obj.name,
-                contentType: 'application/json',
-                knownLength: buffer.length
-            })
-        }
-        dataAppend('info', file.info)
-        dataAppend('kle', file.kle)
+        fileAppend(data, 'info', file.info)
+        fileAppend(data,'kle', file.kle)
 
         const res = await axios.post(url("/convert/via/json"), data,
             {headers: {"Content-Type": "multipart/form-data"}})
         return res.data === "convert" ? `Converted!!\n\n${createdMsg}` : res.data
+    },
+    convertKleJson: async (obj) => {
+        const data = new FormData()
+        fileAppend(data,'kle', obj.file)
+        data.append('params', JSON.stringify(obj.params))
+        const res = await axios.post(url("/convert/kle/qmk"), data,
+            {headers: {"Content-Type": "multipart/form-data"}})
+        return res.data === "convert" ? `Converted!!\n\n${createdMsg}` : res.data
+    },
+    readJson: async (path) => {
+        const buffer = await fs.readFileSync(path)
+        return JSON.parse(buffer.toString())
     }
 }
 

@@ -27,7 +27,7 @@ const Generate = () => {
 
     const validBuildButton = () => {
         const qmkFile = state.generate.qmkFile
-        const reg = /^[a-z0-9_/]+$/
+        const reg = /^[A-Za-z0-9_/-]+$/
         let validKeyboardStrError = false
         let validUsernameStrError = false
 
@@ -92,7 +92,7 @@ const Generate = () => {
         setState(state)
     }
 
-    const VaildTextField = (<FormHelperText error sx={{ pl: 4, fontSize: formHelperTextFontSize}}>[a-z][0-9] _ / can used</FormHelperText>)
+    const ValidTextField = (<FormHelperText error sx={{ pl: 4, fontSize: formHelperTextFontSize}}>A-Za-z0-9_/- can used</FormHelperText>)
     return (
         <Box sx={{
             display: 'flex',
@@ -129,7 +129,7 @@ const Generate = () => {
                         variant="standard"
                         value={state.generate.qmkFile.kb}
                     />
-                    {keyboardStrError && VaildTextField}
+                    {keyboardStrError && ValidTextField}
                 </Box>
                 <Box sx={{ pt: 2}}>
                     <TextField
@@ -142,7 +142,7 @@ const Generate = () => {
                         variant="standard"
                         value={state.generate.qmkFile.user}
                     />
-                    {usernameStrError && VaildTextField}
+                    {usernameStrError && ValidTextField}
                 </Box>
                 <Box
                     sx={{
