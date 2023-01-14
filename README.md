@@ -92,7 +92,7 @@ If Keyboard Name and Author are entered, keyboard and username will be automatic
 - 11: Col
 
 0 can use label.　　　　   
-If the label of keycodes matches the 0 value of KLE Json, it is converted to "aliases" or "key" at layer 0. 
+If the label of keycodes matches the 0 value of KLE Json, it is converted to "aliases" or "key" at layer 0.     
 In info.json, it is used as is.    
 https://keyboards.qmk.fm/v1/constants/keycodes_0.0.1.json     
 In 0, 1, and 8, a blank space is KC_NO.    
