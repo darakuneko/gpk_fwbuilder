@@ -1,6 +1,11 @@
 # GPK FWBuilder
 Application to create QMK/Vial firmware.  
 
+CUI version
+-------
+GPK FWMaker  
+https://github.com/darakuneko/gpk_fwmaker
+
 Before use
 -------
 Install Docker Desktop    
@@ -208,8 +213,3 @@ If you get an error like this, please update the repository.
 ```
 error: branch 'x.x.x' not found.
 ```
- 
-CUI version
--------
-GPK FWMaker  
-https://github.com/darakuneko/gpk_fwmaker
