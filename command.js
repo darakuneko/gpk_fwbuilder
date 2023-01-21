@@ -59,12 +59,12 @@ const responseStreamLog = async (res, mainWindow, channel) => {
 
 const command = {
     upImage: (mainWindow) => {
-        const res = spawn(appSpawn("docker-compose build && docker-compose up -d"), { shell: true });
+        const res = spawn(appSpawn("docker compose build && docker compose up -d"), { shell: true });
         streamLog(res, mainWindow, true)
     },
-    stopImage: async () => await appExe("docker-compose stop"),
+    stopImage: async () => await appExe("docker compose stop"),
     rebuildImage: async (mainWindow) => {
-        const res = spawn(appSpawn("docker-compose build --no-cache && docker-compose up -d"), { shell: true });
+        const res = spawn(appSpawn("docker compose build --no-cache && docker compose up -d"), { shell: true });
         streamLog(res, mainWindow)
     },
     existSever: async () => {

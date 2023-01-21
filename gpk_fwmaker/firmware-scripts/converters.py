@@ -488,8 +488,8 @@ def kbd_to_layout_macro(kbd: Keyboard) -> str:
 # GENERATE KEYMAP
 
 def kbd_to_keymap(kbd: Keyboard, layers:int=4, lbl_ndx:int=1) -> str:
-    keycodes_json = open('keycodes_0.0.1.json', 'r')
-    keycodes = json.load(keycodes_json)["keycodes"]
+    keycodes_json = open('keycodes.json', 'r')
+    keycodes = json.load(keycodes_json)
 
     """Generates a keymap.c file"""
     # Removes all multilayout options except max layouts.
@@ -517,12 +517,12 @@ def kbd_to_keymap(kbd: Keyboard, layers:int=4, lbl_ndx:int=1) -> str:
                 if kc == "" :
                     kc = 'KC_NO'
                 else:
-                    for k in keycodes.keys():
-                        if(set(keycodes[k]) >= {'label'} and keycodes[k]['label'] == kc):
-                            if(set(keycodes[k]) >= {'aliases'}):
-                                kc = keycodes[k]['aliases'][0]
+                    for v in keycodes:
+                        if(v['label'] == kc):
+                            if(set(v) >= {'aliases'}):
+                                kc = v['aliases'][0]
                             else:
-                                kc = keycodes[k]['key'] 
+                                kc = v['key'] 
             else:
                 kc = 'KC_NO'
 
