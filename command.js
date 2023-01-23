@@ -104,7 +104,7 @@ const command = {
         mainWindow.webContents.send("streamLog",  `Cannot POST ${u}`)  
     },
     buildCompleted: () => buildCompleted,
-    buildCache: (homePath) => {
+    buildCache: (homePath, isWin) => {
         const fwDir = `${homePath}/GPKFW/`
         const d = []
         const searchFiles = (dirPath) => {
@@ -114,16 +114,23 @@ const command = {
                 if (v.isDirectory()) {
                     const fp = path.join(dirPath, v.name)
                     f.push(searchFiles(fp))
-                    if(fp.match(/\/keymaps\//)) d.push(fp)
+                    if(isWin) {
+                        if(fp.match(/\\keymaps\\/)) d.push(fp)
+                    } else {
+                        if(fp.match(/\/keymaps\//)) d.push(fp)
+                    }
                 }
             })
         }
         searchFiles(fwDir)
-        const keymapsDirs = d.flat().map(v => v.replace(fwDir, '').split("/keymaps/"))
+        const fd = fwDir.replace(/\//g, '\\')
+        const keymapsDirs = d.flat().map(v => isWin ? v.replace(fd, '').split("\\keymaps\\") : 
+        v.replace(fwDir, '').split("/keymaps/"))
         const kb = Array.from(new Set(keymapsDirs.map(v => v[0])))
+
         return kb.map(k => {
             return {
-                kb: k,
+                kb: k.replace(/\\/g, '/'),
                 km: keymapsDirs.filter(v => v[0] === k).map(v => v[1])
             }
         })
