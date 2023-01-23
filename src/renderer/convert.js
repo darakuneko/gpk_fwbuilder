@@ -309,8 +309,8 @@ const Convert = () => {
                     <Box sx={{ pt: 2}}>
                         <InputLabel sx={{ fontSize: inputLabelMiddleFontSize }} >Option</InputLabel>
                         <FormGroup>
-                            <FormControlLabel control={<Checkbox checked={KleOptions.vial} onChange={handleKleOptionChange(1)} />} label="Add Vial Settings" />
-                            <FormControlLabel control={<Checkbox checked={KleOptions.via} onChange={handleKleOptionChange(2)} />} label="Only via.json" />
+                            <FormControlLabel control={<Checkbox checked={state.convert.kle.option === 1} onChange={handleKleOptionChange(1)} />} label="Add Vial Settings" />
+                            <FormControlLabel control={<Checkbox checked={state.convert.kle.option === 2} onChange={handleKleOptionChange(2)} />} label="Only via.json" />
                         </FormGroup>
                     </Box>
                 </Box>

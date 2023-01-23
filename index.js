@@ -33,7 +33,7 @@ const createWindow = () => {
 app.on('ready', () => {
     createWindow()
     command.upImage(mainWindow)
-    // mainWindow.webContents.openDevTools()
+    mainWindow.webContents.openDevTools()
 })
 
 const closing = async(e, mainWindow) => {
@@ -50,6 +50,7 @@ ipcMain.handle('existSever', async () => await command.existSever())
 ipcMain.handle('tags', async () => await command.tags())
 ipcMain.handle('build', async (e, dat) => await command.build(dat, mainWindow))
 ipcMain.handle('buildCompleted',  () => command.buildCompleted())
+ipcMain.handle('buildCache',  () => command.buildCache(app.getPath('home')))
 ipcMain.handle('generateQMKFile', async (e, dat) => await command.generateQMKFile(dat))
 ipcMain.handle('generateVialId', async () => await command.generateVialId())
 ipcMain.handle('updateRepository', async (e, fw) => await command.updateRepository(fw, mainWindow))

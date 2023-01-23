@@ -235,7 +235,7 @@
   {
     "group": "basic",
     "key": "KC_LEFT_BRACKET",
-    "label": "]",
+    "label": "[",
     "aliases": [
       "KC_LBRC"
     ]
@@ -243,7 +243,7 @@
   {
     "group": "basic",
     "key": "KC_RIGHT_BRACKET",
-    "label": "[",
+    "label": "]",
     "aliases": [
       "KC_RBRC"
     ]

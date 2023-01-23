@@ -9,6 +9,7 @@ process.once('loaded', async () => {
             tags: async () => await ipcRenderer.invoke('tags'),
             build: async (dat) => await ipcRenderer.invoke('build', dat),
             buildCompleted: async () =>  await ipcRenderer.invoke('buildCompleted'),
+            buildCache: async () =>  await ipcRenderer.invoke('buildCache'),
             updateRepository: async (fw) => await ipcRenderer.invoke('updateRepository', fw),
             generateQMKFile: async (dat) => await ipcRenderer.invoke('generateQMKFile', dat),
             generateVialId: async () => await ipcRenderer.invoke('generateVialId'),

@@ -18,7 +18,11 @@ export function StateProvider({children}) {
             tags: [],
             kb: '',
             km: '',
-            commit: ''
+            commit: '',
+        },
+        buildCache : {
+            kb: [],
+            km: [],
         },
         generate : {
             qmkFile: {
@@ -54,6 +58,10 @@ export function StateProvider({children}) {
                 kb: obj.build.kb,
                 km: obj.build.km,
                 commit: obj.build.commit
+            },
+            buildCache : {
+                kb: obj.buildCache.kb,
+                km: obj.buildCache.km,
             },
             generate : {
                 qmkFile: {

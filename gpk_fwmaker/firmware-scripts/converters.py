@@ -2,8 +2,10 @@ from copy import deepcopy
 from serial import Keyboard, KeyboardMetadata, serialize, deserialize, sort_keys
 from collections import OrderedDict
 
-from util import gen_uid, max_x_y, min_x_y, write_file, replace_chars
+from util import gen_uid, max_x_y, min_x_y, write_file, replace_chars, extract_matrix_pins
 import json
+from json import JSONDecodeError
+import re
 
 
 # GENERATE INFO.JSON
@@ -149,10 +151,22 @@ def get_layout_all(kbd: Keyboard) -> Keyboard:
 
     return kbd
 
-def kbd_to_qmk_info(kbd: Keyboard, name=None, maintainer=None, url=None, vid=None, pid=None, ver=None, mcu=None, bootloader=None) -> dict:
+def kbd_to_qmk_info(kbd: Keyboard, name=None, maintainer=None, url=None, vid=None, pid=None, ver=None, mcu=None, bootloader=None, board=None, pin_dict=None, diode_dir="COL2ROW") -> dict:
     """Converts a Keyboard into a QMK info.json (dict)"""
     # Removes all multilayout options except max layouts.
     kbd = get_layout_all(kbd)
+
+    rows = 0
+    cols = 0
+
+    for key in kbd.keys:
+        row = int(key.labels[9]) # TO-DO: add errorcase
+        col = int(key.labels[11]) # TO-DO: add errorcase
+
+        if row + 1 > rows:
+            rows = row + 1
+        if col + 1 > cols:
+            cols = col + 1
 
     # The final list that will actually be used in the info.json
     qmk_layout_all = []
@@ -228,12 +242,22 @@ def kbd_to_qmk_info(kbd: Keyboard, name=None, maintainer=None, url=None, vid=Non
             'mousekey': True,
             'nkro': True
         }
+        if board:
+            keyboard["board"] = board
 
     if url:
         keyboard["url"] = url
 
     if usb:
         keyboard["usb"] = usb
+
+    keyboard["diode_direction"] = diode_dir
+    if pin_dict:
+        if len(pin_dict["cols"]) != cols or len(pin_dict["rows"]) != rows:
+            raise Exception("Number of columns/rows in netlist does not match the KLE!")
+        keyboard["matrix_pins"] = pin_dict
+    else:
+        keyboard["matrix_pins"] = {'cols': ['X', ] * cols, 'rows': ['X', ] * rows}
 
     return keyboard
 
@@ -398,9 +422,9 @@ def kbd_to_vial(kbd: Keyboard, vial_uid:str=None, vendor_id:str=None, product_id
         del vial_dict["productId"]
 
     # Generation of config.h file
-    config_h = "\n"
+    config_h = "/* SPDX-License-Identifier: GPL-2.0-or-later */\n\n#pragma once"
     if vial_uid:
-        config_h += f"{vial_uid}"
+        config_h += f"\n\n{vial_uid}"
     if vial_unlock_rows and vial_unlock_cols:
         u_rows = ', '.join([str(r) for r in vial_unlock_rows])
         u_cols = ', '.join([str(c) for c in vial_unlock_cols])
@@ -487,52 +511,154 @@ def kbd_to_layout_macro(kbd: Keyboard) -> str:
 
 # GENERATE KEYMAP
 
-def kbd_to_keymap(kbd: Keyboard, layers:int=4, lbl_ndx:int=1) -> str:
+def generate_keycode_conversion_dict(string:str) -> str:
+    """For updating deprecated keycodes that .vil files still uses"""
+    conversion_dict = {}
+    for line in string.split("\n"):
+        split_line = line.split()
+        if not split_line:
+            continue
+        conversion_dict[split_line[0]] = split_line[1]
+    return conversion_dict
+
+def keycodes_md_to_keycode_dict(k_md:str) -> dict:
+    kc_dict = {}
+
+    lines = k_md.split('\n')
+    for line in lines:
+        split_line = line.split('|')
+
+        if len(split_line) <= 3:
+            continue
+
+        key = split_line[1].strip()
+        aliases = split_line[2].strip()
+
+        if not (key.startswith('`') and key.endswith('`')):
+            continue
+
+        if not (aliases.startswith('`') and aliases.endswith('`')):
+            continue
+
+        key = key.strip('`')
+
+        aliases_split = aliases.split(', ')
+        #if aliases_split > 1:
+        alias = aliases_split[0].strip('`')
+
+        #print(key, alias)
+
+        kc_dict[key] = alias
+
+    return kc_dict
+
+def layout_str_to_layout_dict(string:str) -> dict:
+    try:
+        obj = json.loads(string)
+    except JSONDecodeError as e:
+        raise Exception(f'Invalid VIAL/VIA layout file input, {e}')
+    return obj
+
+
+def kbd_to_keymap(kbd: Keyboard, layers:int=4, lbl_ndx:int=1, layout_dict:dict=None, keycode_dict:dict=None, conversion_dict:dict=None) -> str:
+    """Generates a keymap.c file"""
     keycodes_json = open('keycodes.json', 'r')
     keycodes = json.load(keycodes_json)
-
-    """Generates a keymap.c file"""
     # Removes all multilayout options except max layouts.
     # For parity with info.json and keymap.c
     kbd = get_layout_all(kbd)
 
     # Which key label index to read keycodes off
-    # keycode_label_no = lbl_ndx
+    keycode_label_no = lbl_ndx
 
     # This following code is based off qmk's generation.
     keymap_lines = []
 
     layout_name = "LAYOUT"
+    max_kc_len = 9
 
     keymap_keys = [[] for i in range(layers)]
     
+    # Calculates total rows and cols
+    rows = 0
+    cols = 0
+    for key in kbd.keys:
+        row = int(key.labels[9])
+        col = int(key.labels[11])
+
+        if row + 1 > rows:
+            rows = row + 1
+        if col + 1 > cols:
+            cols = col + 1
+
     for i, layer_keys in enumerate(keymap_keys):
 
+        # Used to indicate when to newline
         current_y = 0
-        
-        for key in kbd.keys:        
-            if i == 0 or i == 1 or i == 2 : # First layer
-                
-                kc = key.labels[8 if i == 2 else i] # Keycode
-                if kc == "" :
-                    kc = 'KC_NO'
-                else:
-                    for v in keycodes:
-                        if(v['label'] == kc):
-                            if(set(v) >= {'aliases'}):
-                                kc = v['aliases'][0]
-                            else:
-                                kc = v['key'] 
-            else:
-                kc = 'KC_NO'
 
+        for _, key in enumerate(kbd.keys):
+            
+            if layout_dict: # Check for layout_dict
+                if "layout" in layout_dict.keys():  # VIAL layout file
+                    vial_layout_dict = layout_dict["layout"]
+                    if i+1 > len(vial_layout_dict):
+                        kc = 'KC_TRNS'
+                    else:
+                        try:
+                            row = int(key.labels[9])
+                            col = int(key.labels[11])
+                            kc = vial_layout_dict[i][row][col]
+                        except IndexError:
+                            raise Exception('Invalid .vil file/layout dictionary provided')
+
+                elif "layers" in layout_dict.keys():  # VIA layout file
+                    via_layout_dict = layout_dict["layers"]
+                    if i+1 > len(via_layout_dict):
+                        kc = 'KC_TRNS'
+                    else:
+                        try:
+                            row = int(key.labels[9])
+                            col = int(key.labels[11])
+                            kc = via_layout_dict[i][col + row*cols]
+                        except IndexError:
+                            raise Exception('Invalid VIA layout file provided')
+
+            else: # Default to label
+                if i == 0 or i == 1 or i == 2 : # First layer
+                    kc = key.labels[8 if i == 2 else i] # Keycode
+
+                    if kc == "" :
+                        kc = 'KC_NO'
+                    else:
+                        for v in keycodes:
+                            if(v['label'].upper() == kc.upper()):
+                                if(set(v) >= {'aliases'}):
+                                    kc = v['aliases'][0]     
+                                else:
+                                    kc = v['key']           
+
+            # Convert (VIALs) deprecated keycodes into updated ones if required
+            # if conversion_dict:
+            #     if kc in conversion_dict.keys():
+            #         kc = conversion_dict[kc]
+
+            # Convert lengthened keycodes into shortened aliases if required
+            # if keycode_dict:
+            #     if kc in keycode_dict.keys():
+            #         kc = keycode_dict[kc]
+
+            # Newline if the y value changes, just to make things neater
             if key.y != current_y:
                 current_y = key.y
-                layer_keys.append(f'\n\t\t{kc}')
-            else:        
-                layer_keys.append(kc)
+                layer_keys.append('\n\t\t')
+            layer_keys.append(f'{kc},'.ljust(max_kc_len))
+        
         #keymap_lines.append(f'#define ')
-        keymap_lines.append('\t[%s] = %s(\n\t\t%s\n\t),\n\n' % (i, layout_name, ', '.join(layer_keys)))
+        #keymap_lines.append(f'\t[{i}] = {layout_name}(\n\t\t{"".join(layer_keys)}\n\t),\n\n')
+        l = layer_keys[-1].split(',')
+        l[-1] = ""
+        layer_keys[-1] = "".join(l)
+        keymap_lines.append('\t[{}] = {}(\n\t\t{}\n\t),\n\n'.format(i, layout_name, ''.join(layer_keys)))
 
     keymap_lines.append('};\n')
 
@@ -540,44 +666,25 @@ def kbd_to_keymap(kbd: Keyboard, layers:int=4, lbl_ndx:int=1) -> str:
     for line in keymap_lines:
         keymap_all += line
 
-    return keymap_all
+    return "\n".join([x.rstrip() for x in keymap_all.split("\n")])
 
 
 # GENERATE MAIN CONFIG.H
 
-def kbd_to_main_config(kbd: Keyboard) -> str:
-    rows = 0
-    cols = 0
-
-    for key in kbd.keys:
-        row = int(key.labels[9]) # TO-DO: add errorcase
-        col = int(key.labels[11]) # TO-DO: add errorcase
-
-        if row + 1 > rows:
-            rows = row + 1
-        if col + 1 > cols:
-            cols = col + 1
-        
+def kbd_to_main_config(kbd: Keyboard, layers:int=4) -> str:
     config_lines = []
 
-    config_lines.append('/* key matrix size */')
-    config_lines.append('\n')
-    config_lines.append('#define MATRIX_ROWS %s' % (rows))
-    config_lines.append('\n')
-    config_lines.append('#define MATRIX_COLS %s' % (cols))
-    config_lines.append('\n\n')
+    if layers != 4 and layers > 0 and layers <= 32:
+        #config_lines.append('\n')
+        config_lines.append(f'#define DYNAMIC_KEYMAP_LAYER_COUNT {layers}')
+        config_lines.append('\n')
+    else:
+        #config_lines.append('\n')
+        config_lines.append(f'/* This file is empty and unrequired */')
+        config_lines.append('\n')
 
-    config_lines.append('#define MATRIX_ROW_PINS {%s}' % (','.join(['X'] * rows)) )
-    config_lines.append('\n')
-    config_lines.append('#define MATRIX_COL_PINS {%s}' % (','.join(['X'] * cols)) )
-    config_lines.append('\n\n')
 
-    config_lines.append('/* COL2ROW or ROW2COL */')
-    config_lines.append('\n')
-    config_lines.append('#define DIODE_DIRECTION %s' % ('COL2ROW'))
-    config_lines.append('\n')
-
-    config_all = "#pragma once\n\n#include \"config_common.h\"\n\n"
+    config_all = "/* SPDX-License-Identifier: GPL-2.0-or-later */\n\n#pragma once\n\n#include \"config_common.h\"\n\n"
     for line in config_lines:
         config_all += line
 

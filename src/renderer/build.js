@@ -9,18 +9,19 @@ import React, {useState} from "react"
 import {useStateContext} from "../context"
 import {formHelperTextFontSize, inputLabelMiddleFontSize} from "../style"
 import Button from "@mui/material/Button"
+import Autocomplete from "@mui/material/Autocomplete"
 
 const {api} = window
 
 const Build = () => {
     const {state, setState} = useStateContext()
-    const [keyboardError, setKeyboardError] = useState(false)
+    const [keyboardEmptyError, setKeyboardEmptyError] = useState(false)
     const [keymapEmptyError, setKeymapEmptyError] = useState(false)
     const [keymapStrError, setKeymapStrError] = useState(false)
     const [disabledBuildButton, setDisabledBuildButton] = useState(true)
     const [disabledBuildText, setDisabledBuildText] = useState(false)
     const [init, setInit] = useState(true)
-
+    const [buildCache, setBuildCache] = useState([])
     const handleSelectFW = (e) => {
         state.build.fw = e.target.value
         setState(state)
@@ -39,14 +40,31 @@ const Build = () => {
         return disabledBuildButton
     }
 
-    const handleTextChange = (inputName) => (e) => {
-        if(inputName === 'kb') state.build.kb = e.target.value
-        if(inputName === 'km') state.build.km = e.target.value
+    const handleTextChange = (inputName) => (e, v) => {
+        if(inputName === 'kb') state.build.kb = v ? v.label : ''
+        if(inputName === 'km') state.build.km = v ? v.label : ''
         if(inputName === 'commit') state.build.commit = e.target.value
 
-        setKeyboardError(!state.build.kb)
+        setKeyboardEmptyError(!state.build.kb)
         setKeymapEmptyError(!state.build.km)
         validBuildButton()
+        setState(state)
+    }
+
+    const handleKbFocus = async () => {
+        const c = await api.buildCache()
+        state.buildCache.kb = c.map(v => {
+            return {label: v.kb}
+        })
+        setBuildCache(c)
+        setState(state)
+    }
+
+    const handleKmFocus = async () => {
+        const obj = buildCache.find(v => v.kb === state.build.kb)
+        state.buildCache.km = obj ? obj.km.map(v => {
+                return {label: v}
+            }) : []
         setState(state)
     }
 
@@ -124,28 +142,45 @@ const Build = () => {
                        </Box>
                    )}
                   <Box sx={{ pt: 2}}>
-                    <TextField
-                        id="build-kb"
-                        label="keyboard"
-                        required
-                        error={keyboardError}
-                        disabled={disabledBuildText}
-                        onChange={handleTextChange("kb")}
-                        variant="standard"
-                        value={state.build.kb}
-                    />
+                      <Autocomplete
+                          fullWidth
+                          options={state.buildCache.kb}
+                          renderInput={(params) =>
+                              <TextField
+                                  id="build-kb"
+                                  label="keyboard"
+                                  required
+                                  error={keyboardEmptyError}
+                                  onFocus={handleKbFocus}
+                                  variant="standard"
+                                  value={state.build.kb}
+                                  {...params}
+                              />
+                          }
+                          disabled={disabledBuildText}
+                          onChange={handleTextChange("kb")}
+                      />
+
                   </Box>
                   <Box sx={{ pt: 2}}>
-                    <TextField
-                        id="build-km"
-                        label="keymap"
-                        required
-                        error={keymapEmptyError}
-                        disabled={disabledBuildText}
-                        onChange={handleTextChange("km")}
-                        variant="standard"
-                        value={state.build.km}
-                    />
+                      <Autocomplete
+                          fullWidth
+                          options={state.buildCache.km}
+                          renderInput={(params) =>
+                              <TextField
+                                  id="build-km"
+                                  label="keymap"
+                                  required
+                                  error={keymapEmptyError}
+                                  onFocus={handleKmFocus}
+                                  variant="standard"
+                                  value={state.build.km}
+                                  {...params}
+                              />
+                          }
+                          disabled={disabledBuildText}
+                          onChange={handleTextChange("km")}
+                      />
                       {
                           keymapStrError && <FormHelperText error sx={{ pl: 4, fontSize: formHelperTextFontSize}}>":" "flash" cannot be used</FormHelperText>
                       }

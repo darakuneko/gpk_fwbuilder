@@ -1,10 +1,11 @@
 #Package import
 from flask import Flask, render_template, send_file, make_response, url_for, Response, redirect, request, jsonify
 from serial import serialize, deserialize
-from util import read_file, write_file, gen_uid
-from converters import kbd_to_keymap, kbd_to_qmk_info, kbd_to_via, kbd_to_vial, kbd_to_layout_macro, kbd_to_main_config
+from util import read_file, write_file, gen_uid, MCU_PRESETS, MCU_DICT
+from converters import kbd_to_keymap, kbd_to_qmk_info, kbd_to_vial, kbd_to_layout_macro, kbd_to_main_config, layout_str_to_layout_dict, keycodes_md_to_keycode_dict, generate_keycode_conversion_dict, extract_matrix_pins
 import json
 import re
+import requests
 
 
 from json_encoders import * # from qmk_firmware/lib/python/qmk/json_encoders.py, for generating info.json
@@ -14,8 +15,6 @@ from json_encoders import * # from qmk_firmware/lib/python/qmk/json_encoders.py,
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
 
-
-MCU_PRESETS = ['None', 'RP2040', '32U4']
 
 #decorator for homepage 
 @app.route('/' )
@@ -42,14 +41,21 @@ def run_script():
     product_id = form_data['product-id']
     device_ver = form_data['device-ver']
     mcu_choice = form_data.get('mcu-preset')
+    try:
+        layers = int(form_data.get('layers'))
+    except ValueError as e:
+        raise Exception(f'Number of Layers needs to be an integer, {e}')
+    layout_file = form_data.get('layout-file')
 
+    uploaded_file = request.files.get('file')
 
-    uploaded_file = request.files['file']
-    if 'file' in request.files.keys():
-        uploaded_file = request.files['file']
+    uploaded_netlist = request.files.get('netlist')
+
+    if uploaded_netlist:
+        netlist = str(uploaded_netlist.read(), 'utf-8')
     else:
-        uploaded_file = None
-    
+        netlist = None
+
     if uploaded_file or kle_raw:
         if uploaded_file:
             content = uploaded_file.read()
@@ -57,11 +63,9 @@ def run_script():
         elif kle_raw:
             text = '[' + re.sub("(\w+):", r'"\1":',  kle_raw) + ']'
 
-
         try:
             # print(text)
-            write_file('test-text.json', text)
-
+            # write_file('test-text.json', text)
 
             # Deserialize json
             deserialized_path = 'deserialized.json'
@@ -74,19 +78,28 @@ def run_script():
 
             # MCU PRESET
 
-            if mcu_choice == 'RP2040':
-                mcu = 'RP2040'
-                bootloader = 'rp2040'
-            elif mcu_choice == '32U4':
-                mcu = 'atmega32u4'
-                bootloader = 'atmel-dfu'
+            mcu_dict = MCU_DICT[mcu_choice]
+            mcu = mcu_dict['mcu']
+            board = mcu_dict['board']
+            bootloader = mcu_dict['bootloader']
+            if netlist:
+                output_pin_pref = mcu_dict['output_pin_pref']
+                schem_pin_pref = mcu_dict['schem_pin_pref']
+
+            diode_dir = "COL2ROW"
+            if mcu_choice != 'None' and netlist:
+                try:
+                    pin_dict = extract_matrix_pins(netlist, mcu, output_pin_pref, schem_pin_pref)
+                except Exception as e:
+                    raise Exception(f"Invalid netlist provided!, {e}")
+            elif mcu_choice == 'None' and netlist:
+                raise Exception("You need to choose a MCU preset to utilise the netlist function!")
             else:
-                mcu = None
-                bootloader = None
+                pin_dict = {}
 
             # Generate a QMK info.json file used for QMK Configurator
             qmk_info_path = 'info.json'
-            qmk_info_json = kbd_to_qmk_info(keyboard, board_name, maintainer, url, vendor_id, product_id, device_ver, mcu, bootloader)
+            qmk_info_json = kbd_to_qmk_info(keyboard, board_name, maintainer, url, vendor_id, product_id, device_ver, mcu, bootloader, board, pin_dict, diode_dir)
             qmk_info_content = json.dumps(qmk_info_json, indent=4, separators=(', ', ': '), sort_keys=False, cls=InfoJSONEncoder)
             # write_file(qmk_info_path, qmk_info_content)
 
@@ -107,9 +120,18 @@ def run_script():
 
             keyboard_h_content = kbd_to_layout_macro(keyboard)
 
-            keymap_content = kbd_to_keymap(keyboard)
+            if layout_file:
+                layout_dict = layout_str_to_layout_dict(layout_file)
+                # keycodes_dict = keycodes_md_to_keycode_dict(read_file('keycodes.md')) # Local fallback
+                link = "https://raw.githubusercontent.com/qmk/qmk_firmware/master/docs/keycodes.md"
+                keycodes_dict = keycodes_md_to_keycode_dict(requests.get(link).text)
+                conversion_dict = generate_keycode_conversion_dict(read_file('deprecated_keycodes.txt'))
 
-            main_config_h_content = kbd_to_main_config(keyboard)
+                keymap_content = kbd_to_keymap(keyboard, layers, 1, layout_dict, keycodes_dict, conversion_dict)
+            else:
+                keymap_content = kbd_to_keymap(keyboard, layers, 1)
+
+            main_config_h_content = kbd_to_main_config(keyboard, layers)
 
             print("Successfully completed compilation of a board!")
 

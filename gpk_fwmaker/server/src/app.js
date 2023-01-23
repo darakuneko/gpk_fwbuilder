@@ -185,7 +185,7 @@ app.post('/convert/kle/qmk', multer().single('kle'), async (req, res) => {
         const kbFirm = await cmd.readFirmFiles('kb.h')
         await cmd.writeQmkFile(fileKb, `${fileKb}.h`, kbFirm)
 
-        const kmFirm = await cmd.readFirmFiles('km.c')
+        const kmFirm = await cmd.readFirmFiles('keymap.c')
         await cmd.writeQmkFile(fileKb, 'keymaps/default/keymap.c', kmFirm)
 
         if(option === 1){

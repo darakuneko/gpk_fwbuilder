@@ -4,8 +4,8 @@ const exec = util.promisify(childProcess.exec)
 const spawn = childProcess.spawn
 const axios = require('axios')
 const fs = require('fs')
-const {Blob} = require('buffer')
 const FormData = require('form-data')
+const path = require('path')
 
 if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`
 
@@ -104,6 +104,30 @@ const command = {
         mainWindow.webContents.send("streamLog",  `Cannot POST ${u}`)  
     },
     buildCompleted: () => buildCompleted,
+    buildCache: (homePath) => {
+        const fwDir = `${homePath}/GPKFW/`
+        const d = []
+        const searchFiles = (dirPath) => {
+            const allDirents = fs.readdirSync(dirPath, { withFileTypes: true })
+            const f = []
+            allDirents.map(v => {
+                if (v.isDirectory()) {
+                    const fp = path.join(dirPath, v.name)
+                    f.push(searchFiles(fp))
+                    if(fp.match(/\/keymaps\//)) d.push(fp)
+                }
+            })
+        }
+        searchFiles(fwDir)
+        const keymapsDirs = d.flat().map(v => v.replace(fwDir, '').split("/keymaps/"))
+        const kb = Array.from(new Set(keymapsDirs.map(v => v[0])))
+        return kb.map(k => {
+            return {
+                kb: k,
+                km: keymapsDirs.filter(v => v[0] === k).map(v => v[1])
+            }
+        })
+    },
     generateQMKFile: async (dat) => {
         const res = await axios.post(url("/generate/qmk/file"), {
             kb: dat.kb,
