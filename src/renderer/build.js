@@ -153,10 +153,10 @@ const Build = () => {
                                   error={keyboardEmptyError}
                                   onFocus={handleKbFocus}
                                   variant="standard"
-                                  value={state.build.kb}
                                   {...params}
                               />
                           }
+                          value={state.build.kb}
                           disabled={disabledBuildText}
                           onChange={handleTextChange("kb")}
                       />
@@ -174,10 +174,10 @@ const Build = () => {
                                   error={keymapEmptyError}
                                   onFocus={handleKmFocus}
                                   variant="standard"
-                                  value={state.build.km}
                                   {...params}
                               />
                           }
+                          value={state.build.km}
                           disabled={disabledBuildText}
                           onChange={handleTextChange("km")}
                       />
