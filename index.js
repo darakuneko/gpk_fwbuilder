@@ -33,7 +33,7 @@ const createWindow = () => {
 app.on('ready', () => {
     createWindow()
     command.upImage(mainWindow)
-    mainWindow.webContents.openDevTools()
+    // mainWindow.webContents.openDevTools()
 })
 
 const closing = async(e, mainWindow) => {
