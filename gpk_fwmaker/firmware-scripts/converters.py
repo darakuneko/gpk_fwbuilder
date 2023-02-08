@@ -602,7 +602,7 @@ def kbd_to_keymap(kbd: Keyboard, layers:int=4, lbl_ndx:int=1, layout_dict:dict=N
                 if "layout" in layout_dict.keys():  # VIAL layout file
                     vial_layout_dict = layout_dict["layout"]
                     if i+1 > len(vial_layout_dict):
-                        kc = 'KC_TRNS'
+                        kc = 'KC_NO'
                     else:
                         try:
                             row = int(key.labels[9])
@@ -614,7 +614,7 @@ def kbd_to_keymap(kbd: Keyboard, layers:int=4, lbl_ndx:int=1, layout_dict:dict=N
                 elif "layers" in layout_dict.keys():  # VIA layout file
                     via_layout_dict = layout_dict["layers"]
                     if i+1 > len(via_layout_dict):
-                        kc = 'KC_TRNS'
+                        kc = 'KC_NO'
                     else:
                         try:
                             row = int(key.labels[9])
@@ -624,7 +624,7 @@ def kbd_to_keymap(kbd: Keyboard, layers:int=4, lbl_ndx:int=1, layout_dict:dict=N
                             raise Exception('Invalid VIA layout file provided')
 
             else: # Default to label
-                if i == 0 or i == 1 or i == 2 : # First layer
+                if i == 0 or i == 1 or i == 2 : # First/Second/Third layer
                     kc = key.labels[8 if i == 2 else i] # Keycode
 
                     if kc == "" :
@@ -635,8 +635,9 @@ def kbd_to_keymap(kbd: Keyboard, layers:int=4, lbl_ndx:int=1, layout_dict:dict=N
                                 if(set(v) >= {'aliases'}):
                                     kc = v['aliases'][0]     
                                 else:
-                                    kc = v['key']           
-
+                                    kc = v['key']
+            if i == 3:
+                kc = 'KC_NO'
             # Convert (VIALs) deprecated keycodes into updated ones if required
             # if conversion_dict:
             #     if kc in conversion_dict.keys():
@@ -652,12 +653,10 @@ def kbd_to_keymap(kbd: Keyboard, layers:int=4, lbl_ndx:int=1, layout_dict:dict=N
                 current_y = key.y
                 layer_keys.append('\n\t\t')
             layer_keys.append(f'{kc},'.ljust(max_kc_len))
-        
+
+        layer_keys[-1] = layer_keys[-1].strip().rstrip(',')
         #keymap_lines.append(f'#define ')
         #keymap_lines.append(f'\t[{i}] = {layout_name}(\n\t\t{"".join(layer_keys)}\n\t),\n\n')
-        l = layer_keys[-1].split(',')
-        l[-1] = ""
-        layer_keys[-1] = "".join(l)
         keymap_lines.append('\t[{}] = {}(\n\t\t{}\n\t),\n\n'.format(i, layout_name, ''.join(layer_keys)))
 
     keymap_lines.append('};\n')
