@@ -42,6 +42,10 @@ export function StateProvider({children}) {
                 cols: '',
                 rows: '',
                 option: 0,
+            },
+            pins: {
+                rp2040: ["GP0","GP1","GP2","GP3","GP4","GP5","GP6","GP7","GP8","GP9","GP10","GP11","GP12","GP13","GP14","GP15","GP16","GP17","GP18","GP19","GP20","GP21","GP22","GP23","GP24","GP25","GP26","GP27","GP28","GP29"],
+                promicro: ["D3", "D2", "D1", "D0", "D4", "C6", "D7", "E6", "B4", "B5", "B6", "B2", "B3", "B1", "F7", "F6", "F5", "F4", "B0", "D5"]
             }
         },
         logs: "",
@@ -81,6 +85,10 @@ export function StateProvider({children}) {
                     cols: obj.convert.kle.cols,
                     rows: obj.convert.kle.rows,
                     option: obj.convert.kle.option,
+                },
+                pins: {
+                    rp2040: obj.convert.pins.rp2040,
+                    promicro: obj.convert.pins.promicro,
                 }
             },
             version: obj.version,

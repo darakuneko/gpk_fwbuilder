@@ -11,12 +11,15 @@ import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormGroup from "@mui/material/FormGroup";
 import FormHelperText from "@mui/material/FormHelperText";
+import Chip from "@mui/material/Chip";
+import OutlinedInput from "@mui/material/OutlinedInput";
+import FormControl from "@mui/material/FormControl";
 
 const {api} = window
 
 const Convert = () => {
     const {state, setState} = useStateContext()
-    const [viaJson, setViaJson] = useState({
+    const [viaObj, setViaObj] = useState({
         info: {
             name : "",
             path : "",
@@ -26,10 +29,13 @@ const Convert = () => {
             path : "",
         },
     })
-    const [kleJson, setKLEJson] = useState({
+    const [kleObj, setKleObj] = useState({
         name : "",
         path : "",
     })
+    const [pinCols, setPinCols] = React.useState([]);
+    const [pinRows, setPinRows] = React.useState([]);
+
     const [disabledViaCovertButton, setDisabledViaCovertButton] = useState(true)
 
     const [keyboardError, setKeyboardError] = useState(false)
@@ -43,8 +49,6 @@ const Convert = () => {
     const [usernameStrError, setUsernameStrError] = useState(false)
     const [vidStrError, setVidStrError] = useState(false)
     const [pidStrError, setPidStrError] = useState(false)
-    const [rowStrError, setRowsStrError] = useState(false)
-    const [colStrError, setColsStrError] = useState(false)
 
     const [pidSameError, setPidSameError] = useState(false)
 
@@ -59,14 +63,11 @@ const Convert = () => {
         const kle = state.convert.kle
         const reg1 = /^[A-Za-z0-9 _/-]+$/
         const reg2 = /^[A-Z0-9x]+$/
-        const reg3 = /^[A-Z0-9,]+$/
-        const isViaJson = state.convert.kle.option === 2
+        const isViaObj = state.convert.kle.option === 2
         let validKeyboardStrError = false
         let validUsernameStrError = false
         let validVidStrError = false
         let validPidStrError = false
-        let validRowsStrError = false
-        let validColsStrError = false
         let validPidSameError = false
 
         if(kle.kb.length > 0){
@@ -87,22 +88,15 @@ const Convert = () => {
             validPidSameError = kle.pid !== "0x0000"
             setPidSameError(!validPidSameError)
         }
-        if(kle.rows.length > 0 || isViaJson){
-            validRowsStrError = isViaJson ? true : (reg3).test(kle.rows)
-            setRowsStrError(!validRowsStrError)
-        }
-        if(kle.cols.length > 0 || isViaJson){
-            validColsStrError = isViaJson ? true : (reg3).test(kle.cols)
-            setColsStrError(!validColsStrError)
-        }
-        const uploadedKleFile = kleJson.name.length > 0
+        const uploadedKleFile = kleObj.name.length > 0
 
         const validDisableButton = (m2) => {
-            const m1 = kle.kb && kle.user && kle.vid && kle.pid && validKeyboardStrError && validUsernameStrError && validVidStrError && validPidStrError && validPidSameError &&
-            validRowsStrError && validColsStrError && uploadedKleFile
+            const m1 = kle.kb && kle.user && kle.vid && kle.pid && validKeyboardStrError && validUsernameStrError && validVidStrError
+                && validPidStrError && validPidSameError && uploadedKleFile
             return m1 && m2
         }
-        setDisabledKleConvertButton(isViaJson ? !validDisableButton(true) : !validDisableButton(kle.rows && kle.cols))
+
+        setDisabledKleConvertButton(isViaObj ? !validDisableButton(true) : !validDisableButton(kle.rows && kle.cols))
     }
 
     const validKleEmpty = () => {
@@ -115,12 +109,19 @@ const Convert = () => {
     }
 
     const handleTextChange = (inputName) => (e) => {
-        if(inputName === 'kb') state.convert.kle.kb = e.target.value
-        if(inputName === 'user') state.convert.kle.user = e.target.value
-        if(inputName === 'vid') state.convert.kle.vid = e.target.value
-        if(inputName === 'pid') state.convert.kle.pid = e.target.value
-        if(inputName === 'rows') state.convert.kle.rows = e.target.value
-        if(inputName === 'cols') state.convert.kle.cols = e.target.value
+        const v =e.target.value
+        if(inputName === 'kb') state.convert.kle.kb = v
+        if(inputName === 'user') state.convert.kle.user = v
+        if(inputName === 'vid') state.convert.kle.vid = v
+        if(inputName === 'pid') state.convert.kle.pid = v
+        if(inputName === 'rows') {
+            state.convert.kle.rows = v.length > 0 ? v.join(',') : undefined
+            setPinRows(v)
+        }
+        if(inputName === 'cols') {
+            state.convert.kle.cols = v.length > 0 ? v.join(',') : undefined
+            setPinCols(v)
+        }
 
         validKleEmpty()
         validKleConvertButton()
@@ -130,6 +131,8 @@ const Convert = () => {
     const handleSelectMCU = (e) => {
         state.convert.kle.mcu = e.target.value
         setState(state)
+        setPinRows([])
+        setPinCols([])
     }
 
     const convertMsg =  "Convert...."
@@ -140,7 +143,7 @@ const Convert = () => {
         state.tabDisabled = true
         setState(state)
 
-        const logs = await api.convertKleJson({params: state.convert.kle, file: kleJson})
+        const logs = await api.convertKleJson({params: state.convert.kle, file: kleObj})
 
         setDisabledKleConvertButton(false)
         setDisabledConvertText(false)
@@ -152,9 +155,9 @@ const Convert = () => {
     const handleKleFileUpload = async (e) => {
         const file = e.target.files[0]
         if (file){
-            kleJson.name = file.name
-            kleJson.path = file.path
-            setKLEJson({...kleJson, kleJson })
+            kleObj.name = file.name
+            kleObj.path = file.path
+            setKleObj({...kleObj, kleObj })
 
             const json = await api.readJson(file.path)
             const obj = json.filter(v => !Array.isArray(v))[0]
@@ -191,15 +194,14 @@ const Convert = () => {
 
     const ValidKBUSRTextField = ValidTextField('A-Za-z0-9 _/- can used')
     const ValidVidPidTextField = ValidTextField('A-Z0-9x can used')
-    const ValidRowColTextField = ValidTextField('A-Z0-9, can used')
     const ValidPidSameTextField = ValidTextField('other than 0x0000')
 
-    const handleViaJsonSubmit = async () => {
+    const handleviaObjSubmit = async () => {
         state.logs = convertMsg
         state.tabDisabled = true
         setState(state)
         setDisabledViaCovertButton(true)
-        const log = await api.convertViaJson(viaJson)
+        const log = await api.convertviaObj(viaObj)
         state.logs = log
         state.tabDisabled = false
         setState(state)
@@ -214,10 +216,10 @@ const Convert = () => {
                 name: file.name,
                 path: file.path
             }
-            id === "info" ? viaJson.info = obj : viaJson.kle = obj
-            setViaJson({...viaJson, viaJson })
+            id === "info" ? viaObj.info = obj : viaObj.kle = obj
+            setViaObj({...viaObj, viaObj })
         }
-        if (viaJson.info.name.length > 0 && viaJson.kle.name.length > 0) setDisabledViaCovertButton(false)
+        if (viaObj.info.name.length > 0 && viaObj.kle.name.length > 0) setDisabledViaCovertButton(false)
     }
 
     return (
@@ -243,7 +245,7 @@ const Convert = () => {
                         info json
                         <input id="info" type="file" accept=".json" hidden onChange={handleViaFileUpload} />
                     </Button>
-                    <InputLabel sx={{ textAlign: "center", fontSize: inputLabelMiddleFontSize }} >{viaJson.info.name}</InputLabel>
+                    <InputLabel sx={{ textAlign: "center", fontSize: inputLabelMiddleFontSize }} >{viaObj.info.name}</InputLabel>
                 </Box>
                 <Box>
                     <Button
@@ -254,7 +256,7 @@ const Convert = () => {
                         kle Json
                         <input id="kle" type="file" accept=".json" hidden onChange={handleViaFileUpload} />
                     </Button>
-                    <InputLabel sx={{ textAlign: "center", fontSize: inputLabelMiddleFontSize }} >{viaJson.kle.name}</InputLabel>
+                    <InputLabel sx={{ textAlign: "center", fontSize: inputLabelMiddleFontSize }} >{viaObj.kle.name}</InputLabel>
                 </Box>
                 <Box
                     sx={{
@@ -263,7 +265,7 @@ const Convert = () => {
                         alignItems: 'center'
                     }} >
                     <Button variant="contained"
-                            onClick={handleViaJsonSubmit}
+                            onClick={handleviaObjSubmit}
                             disabled={ disabledViaCovertButton }
                     >Convert</Button>
                 </Box>
@@ -278,7 +280,7 @@ const Convert = () => {
                     kle Json
                     <input id="kle" type="file" accept=".json" hidden onChange={handleKleFileUpload} />
                 </Button>
-                <InputLabel sx={{ textAlign: "center", fontSize: inputLabelMiddleFontSize }} >{kleJson.name}</InputLabel>
+                <InputLabel sx={{ textAlign: "center", fontSize: inputLabelMiddleFontSize }} >{kleObj.name}</InputLabel>
             </Box>
             <Box sx={{
                 display: 'flex',
@@ -372,46 +374,68 @@ const Convert = () => {
                         {pidSameError && ValidPidSameTextField}
                     </Box>
                 </Box>
-                <Box sx={{
+            </Box>
+            <Box
+                sx={{
+                    pt: 4,
                     display: 'flex',
                     flexDirection: 'column',
-                }}>
-                    <Box>
-                        <TextField
-                            id="convert-kle-row"
+                    textAlign: "center",
+                    alignItems: "center"
+                }} >
+                <Box>
+                    <FormControl sx={{ m: 1, minWidth: 800 }}>
+                        <InputLabel id="convert-kle-rows-label">matrix pins - rows</InputLabel>
+                        <Select
+                            labelId="convert-kle-rows-label"
+                            id="convert-kle-rows"
                             label="matrix pins - rows"
-                            required
+                            onChange={handleTextChange("rows")}
                             error={rowsEmptyError}
                             disabled={state.convert.kle.option === 2 ? true : disabledConvertText }
-                            onChange={handleTextChange("rows")}
-                            variant="standard"
-                            value={state.convert.kle.rows}
-                        />
-                        {rowStrError && ValidRowColTextField}
-                    </Box>
-                    <Box>
-                        <TextField
-                            id="col"
-                            label="matrix pins - cols"
                             required
-                            error={colsEmptyError}
-                            disabled={state.convert.kle.option === 2 ? true : disabledConvertText }
+                            multiple
+                            autoWidth
+                            value={pinRows}
+                            renderValue={(selected) => (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {pinRows.map((v) => ( <Chip key={v} label={v} />))}
+                                </Box>
+                            )}
+                        >
+                            {   state.convert.kle.mcu === 'promicro' ?
+                                state.convert.pins.promicro.map((v) => ( <MenuItem key={v} value={v}>{v}</MenuItem> )) :
+                                state.convert.pins.rp2040.map((v) => ( <MenuItem key={v} value={v}>{v}</MenuItem> ))
+                            }
+                        </Select>
+                    </FormControl>
+                </Box>
+                <Box>
+                    <FormControl sx={{ m: 1, minWidth: 800 }}>
+                        <InputLabel id="convert-kle-cols-label">matrix pins - cols</InputLabel>
+                        <Select
+                            labelId="convert-kle-cols-label"
+                            id="convert-kle-cols"
+                            label="matrix pins - cols"
                             onChange={handleTextChange("cols")}
-                            variant="standard"
-                            value={state.convert.kle.cols}
-                        />
-                        {colStrError && ValidRowColTextField}
-                    </Box>
-                    <Box>
-                        <TextField
-                            id="pin"
-                            label="e.g."
-                            variant="standard"
-                            value={state.convert.kle.mcu === "RP2040" ? "GP0,GP1,GP2" : "D0,D1,D2"}
-                            disabled={true}
-                        />
-                        {colStrError && ValidRowColTextField}
-                    </Box>
+                            error={rowsEmptyError}
+                            disabled={state.convert.kle.option === 2 ? true : disabledConvertText }
+                            required
+                            multiple
+                            autoWidth
+                            value={pinCols}
+                            renderValue={(selected) => (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {pinCols.map((v) => ( <Chip key={v} label={v} />))}
+                                </Box>
+                            )}
+                        >
+                            {   state.convert.kle.mcu === 'promicro' ?
+                                state.convert.pins.promicro.map((v) => ( <MenuItem key={v} value={v}>{v}</MenuItem> )) :
+                                state.convert.pins.rp2040.map((v) => ( <MenuItem key={v} value={v}>{v}</MenuItem> ))
+                            }
+                        </Select>
+                    </FormControl>
                 </Box>
             </Box>
             <Box
