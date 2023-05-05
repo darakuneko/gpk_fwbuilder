@@ -15,6 +15,11 @@ link: https://www.docker.com
 
 Docker for Windows requires Hyper-V to be enabled. 
 
+If you have GPK FWMaker on another server, set it up.    
+<img width="1015" alt="スクリーンショット 2023-05-05 11 16 11" src="https://user-images.githubusercontent.com/5214078/236365021-39ff4fb2-c74f-4b5c-9d0e-01b7201a075b.png">
+
+
+
 Download
 -------
 
