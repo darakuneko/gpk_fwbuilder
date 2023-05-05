@@ -5,6 +5,7 @@ process.once('loaded', async () => {
 
     contextBridge.exposeInMainWorld(
         "api", {
+            setSkipCheckDocker: async (skip) => await ipcRenderer.invoke('setSkipCheckDocker', skip),
             existSever: async () => await ipcRenderer.invoke('existSever'),
             tags: async () => await ipcRenderer.invoke('tags'),
             build: async (dat) => await ipcRenderer.invoke('build', dat),
@@ -20,6 +21,7 @@ process.once('loaded', async () => {
             convertKleJson: async (obj) => await ipcRenderer.invoke('convertKleJson', obj),
             readJson: async (path) => await ipcRenderer.invoke('readJson', path),
             appVersion: async () => await ipcRenderer.invoke('appVersion'),
+            getLocalFWdir: async () => await ipcRenderer.invoke('getLocalFWdir'),
             on: (channel, func) => ipcRenderer.on(channel, (event, ...args) => func(...args))
         })
 })

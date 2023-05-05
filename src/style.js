@@ -30,6 +30,8 @@ export const convertBoxHeight = "820px"
 export const inputLabelSmallFontSize = "12px"
 export const inputLabelMiddleFontSize = "16px"
 export const formHelperTextFontSize = "16px"
+export const textFieldLongWidth = 400
+export const textFieldMiddleWidth = 250
 
 export const neon = "neon_blink 1s infinite alternate;"
 

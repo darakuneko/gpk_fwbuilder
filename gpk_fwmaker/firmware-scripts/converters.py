@@ -5,7 +5,6 @@ from collections import OrderedDict
 from util import gen_uid, max_x_y, min_x_y, write_file, replace_chars, extract_matrix_pins
 import json
 from json import JSONDecodeError
-import re
 
 
 # GENERATE INFO.JSON
@@ -43,12 +42,19 @@ def get_layout_all(kbd: Keyboard) -> Keyboard:
     qmk_keys = [] 
     # Add non-multilayout keys to the list for now
     for key in [k for k in kbd.keys if k not in ml_keys]:
+        # Ignore VIAL Encoder keys
+        if key.labels[4] == 'e':
+            continue
         qmk_keys.append(key)
 
     # Generate a dict of all multilayouts
     # E.g. Used to test and figure out the multilayout value with the maximum amount of keys
     ml_dict = {}
     for key in [k for k in kbd.keys if k in ml_keys]:
+        # Ignore VIAL Encoder keys
+        if key.labels[4] == 'e':
+            continue
+
         ml_ndx = int(key.labels[3])
         ml_val = int(key.labels[5])
 
@@ -133,6 +139,22 @@ def get_layout_all(kbd: Keyboard) -> Keyboard:
         # Add the key to the final list
         qmk_keys.append(key)
 
+
+    # Special case to handle when a key isn't in the max multilayout but is required for a separate multilayout
+    # E.g. Multilayout where a split spacebar layout doesn't include the original matrix value for full spacebar,
+    # since that split multilayout will have more keys and will be picked by default.
+    for key in [k for k in kbd.keys if k in ml_keys]:
+        ml_ndx = int(key.labels[3])
+        ml_val = int(key.labels[5])
+        max_val = ml_dict[ml_ndx]['max']
+        matrix_list = [(key.labels[9], key.labels[11]) for key in ml_dict[ml_ndx][max_val]]
+        if (key.labels[9], key.labels[11]) not in matrix_list:
+            #print(key)
+            ml_dict[ml_ndx][max_val].append(key)
+            # Temporary, currently just adds the first key it sees into the layout_all, may cause issues but is a niche scenario
+            qmk_keys.append(key)
+
+
     # Offset all the remaining keys (align against the top left)
     x_offset, y_offset = min_x_y(qmk_keys)
     for key in qmk_keys:
@@ -151,8 +173,20 @@ def get_layout_all(kbd: Keyboard) -> Keyboard:
 
     return kbd
 
-def kbd_to_qmk_info(kbd: Keyboard, name=None, maintainer=None, url=None, vid=None, pid=None, ver=None, mcu=None, bootloader=None, board=None, pin_dict=None, diode_dir="COL2ROW") -> dict:
+def kbd_to_qmk_info(kbd: Keyboard, name=None, maintainer=None, url=None, vid=None, pid=None, ver=None, mcu=None, bootloader=None, board=None, pin_dict=None, diode_dir="COL2ROW", manufacturer=None) -> dict:
     """Converts a Keyboard into a QMK info.json (dict)"""
+    # Check for encoder keys (Both VIA and VIAL)
+    encoders_num = 0
+    for key in kbd.keys:
+        # Toggle encoders if a key with encoders detected
+        if key.labels[4].startswith('e'):
+            if key.labels[4] == 'e': # VIAL
+                enc_val = int(key.labels[9])
+
+            if len(key.labels[4]) > 1 and key.labels[4][1].isnumeric(): # VIA
+                enc_val = int(key.labels[4][1])
+            encoders_num = max(encoders_num, enc_val+1)
+    
     # Removes all multilayout options except max layouts.
     kbd = get_layout_all(kbd)
 
@@ -180,8 +214,8 @@ def kbd_to_qmk_info(kbd: Keyboard, name=None, maintainer=None, url=None, vid=Non
         # Initialize a key (dict)
         qmk_key = OrderedDict(
             label = "",
-            x = key.x,
-            y = key.y,
+            x = int(key.x) if int(key.x) == key.x else key.x,
+            y = int(key.y) if int(key.y) == key.y else key.y,
         )
 
         if key.width != 1:
@@ -210,6 +244,9 @@ def kbd_to_qmk_info(kbd: Keyboard, name=None, maintainer=None, url=None, vid=Non
     if not maintainer:
         maintainer = 'qmk'
 
+    if not manufacturer:
+        manufacturer = 'MANUFACTURER'
+
     if not url:
         url = ''
 
@@ -224,6 +261,7 @@ def kbd_to_qmk_info(kbd: Keyboard, name=None, maintainer=None, url=None, vid=Non
         #'url': url,
         'maintainer': maintainer,
         #'usb': usb,
+        'manufacturer': manufacturer,
         'layouts': {
             'LAYOUT': {
                 'layout': qmk_layout_all
@@ -259,6 +297,14 @@ def kbd_to_qmk_info(kbd: Keyboard, name=None, maintainer=None, url=None, vid=Non
     else:
         keyboard["matrix_pins"] = {'cols': ['X', ] * cols, 'rows': ['X', ] * rows}
 
+    if encoders_num:
+        if not keyboard.get('features'):
+            keyboard["features"] = {}
+        keyboard["features"]["encoder"] = True
+        keyboard["encoder"] = {'rotary': []}
+        for i in range(encoders_num):
+            keyboard["encoder"]['rotary'].append({"pin_a": "X", "pin_b": "X"})
+
     return keyboard
 
 
@@ -291,12 +337,15 @@ def kbd_to_vial(kbd: Keyboard, vial_uid:str=None, vendor_id:str=None, product_id
     
     for key in vial_kbd.keys:
         og_key = deepcopy(key)
-        key.color = "#cccccc" # Set to default colour to remove clutter from the KLE
-        # key.color = og_key.color
+        # key.color = "#cccccc" # Set to default colour to remove clutter from the KLE (DISABLED)
+        key.color = og_key.color
         key.labels = [None] * 12 # Empty labels
         key.textSize = [None] * 12 # Reset text size
 
         if og_key.labels[4] == "e": # encoder; VIAL ONLY
+            key.labels[4] = og_key.labels[4]
+
+        elif og_key.labels[4].startswith("e"): # encoder; VIA (I know this is included in the VIAL converter, will have to change later)
             key.labels[4] = og_key.labels[4]
 
         # Matrix coords
@@ -564,6 +613,18 @@ def kbd_to_keymap(kbd: Keyboard, layers:int=4, lbl_ndx:int=1, layout_dict:dict=N
     """Generates a keymap.c file"""
     keycodes_json = open('keycodes.json', 'r')
     keycodes = json.load(keycodes_json)
+    # Check for encoder keys (Both VIA and VIAL)
+    encoders_num = 0
+    for key in kbd.keys:
+        # Toggle encoders if a key with encoders detected
+        if key.labels[4].startswith('e'):
+            if key.labels[4] == 'e': # VIAL
+                enc_val = int(key.labels[9])
+
+            if len(key.labels[4]) > 1 and key.labels[4][1].isnumeric(): # VIA
+                enc_val = int(key.labels[4][1])
+            encoders_num = max(encoders_num, enc_val+1)
+
     # Removes all multilayout options except max layouts.
     # For parity with info.json and keymap.c
     kbd = get_layout_all(kbd)
@@ -664,6 +725,60 @@ def kbd_to_keymap(kbd: Keyboard, layers:int=4, lbl_ndx:int=1, layout_dict:dict=N
     keymap_all = "/* SPDX-License-Identifier: GPL-2.0-or-later */\n\n#include QMK_KEYBOARD_H\n\nconst uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {\n\n"
     for line in keymap_lines:
         keymap_all += line
+
+    if encoders_num:
+        encoder_kc = {}
+
+        if layout_dict:
+            if "encoder_layout" in layout_dict.keys():  # VIAL layout file
+                for i in range(encoders_num):
+                    enc = []
+                    for n in range(layers):
+                        _enc = layout_dict["encoder_layout"][n][i]
+                        for n, kc in enumerate(_enc):
+                            # Convert (VIALs) deprecated keycodes into updated ones if required
+                            if conversion_dict:
+                                if kc in conversion_dict.keys():
+                                    _enc[n] = conversion_dict[kc]
+
+                            # Convert lengthened keycodes into shortened aliases if required
+                            if keycode_dict:
+                                if kc in keycode_dict.keys():
+                                    _enc[n] = keycode_dict[kc]
+                        enc.append(_enc)
+                    encoder_kc[i] = enc
+
+            elif "encoders" in layout_dict.keys():  # VIA layout file
+                for i in range(encoders_num):
+                    #encoder_kc[i] = layout_dict["encoders"][i]
+
+                    kcs = layout_dict["encoders"][i]
+                    for _ in range(len(kcs)):
+                        for n, kc in enumerate(kcs[_]):
+                            # Convert lengthened keycodes into shortened aliases if required
+                            if keycode_dict:
+                                if kc in keycode_dict.keys():
+                                    kcs[_][n] = keycode_dict[kc]
+                    
+                    encoder_kc[i] = kcs
+                    
+
+        else:
+            for i in range(encoders_num):
+                encoder_kc[i] = []
+                for x in range(layers):
+                    encoder_kc[i].append(["KC_TRNS", "KC_TRNS"])
+
+        keymap_all += "\n\n/* `ENCODER_MAP_ENABLE = yes` must be added to the rules.mk at the KEYMAP level. See QMK docs. */\n"
+        keymap_all += "/* Remove the following code if you do not enable it in your keymap (e.g. default keymap). */\n"
+        keymap_all += "#if defined(ENCODER_MAP_ENABLE)\nconst uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {\n"
+        for i in range(layers):
+            enc_line = []
+            for n in range(encoders_num):
+                enc_line.append(f"ENCODER_CCW_CW({encoder_kc[n][i][0]}, {encoder_kc[n][i][1]})")
+            cont = ', '.join(enc_line)
+            keymap_all += f"\t[{i}] = {{ {cont} }}\n"
+        keymap_all += "};\n#endif\n"
 
     return "\n".join([x.rstrip() for x in keymap_all.split("\n")])
 

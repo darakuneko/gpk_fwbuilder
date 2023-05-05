@@ -6,7 +6,7 @@ import Box from "@mui/material/Box"
 
 import React, {useState} from "react"
 import {useStateContext} from "../context"
-import {formHelperTextFontSize, inputLabelMiddleFontSize} from "../style"
+import {formHelperTextFontSize, inputLabelMiddleFontSize, textFieldMiddleWidth} from "../style"
 import Button from "@mui/material/Button"
 import FormHelperText from "@mui/material/FormHelperText";
 
@@ -95,9 +95,11 @@ const Generate = () => {
     const ValidTextField = (<FormHelperText error sx={{ pl: 4, fontSize: formHelperTextFontSize}}>A-Za-z0-9_/- can used</FormHelperText>)
     return (
         <Box sx={{
+            pl: 4,
+            pr: 4,
             display: 'flex',
             flexDirection: 'column',
-            width: '960px',
+            justifyContent: 'center'
         }}>
             <Box
                 sx={{
@@ -127,6 +129,7 @@ const Generate = () => {
                         disabled={disabledBuildText}
                         onChange={handleTextChange("kb")}
                         variant="standard"
+                        style = {{width: textFieldMiddleWidth}}
                         value={state.generate.qmkFile.kb}
                     />
                     {keyboardStrError && ValidTextField}
@@ -140,6 +143,7 @@ const Generate = () => {
                         disabled={disabledBuildText}
                         onChange={handleTextChange("user")}
                         variant="standard"
+                        style = {{width: textFieldMiddleWidth}}
                         value={state.generate.qmkFile.user}
                     />
                     {usernameStrError && ValidTextField}

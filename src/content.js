@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react'
 import Box from "@mui/material/Box"
 import Tabs from "@mui/material/Tabs"
 import Tab from "@mui/material/Tab"
+import Button from "@mui/material/Button"
 import {getState, useStateContext} from "./context"
 import Build from "./renderer/build"
 import Logs from "./renderer/logs"
@@ -10,6 +11,7 @@ import parse from 'html-react-parser'
 import Tool from "./renderer/tool"
 import Generate from "./renderer/generate";
 import Convert from "./renderer/convert";
+import Setting from "./renderer/setting";
 
 const {api} = window
 
@@ -24,17 +26,17 @@ const Content = () => {
             let id
             const checkFn = async () => {
                 const exist = await api.existSever()
-                if(exist === 200){
+                if(exist === 200 || exist === 503){
                     const reStoreState = await api.getState()
                     state.version = await api.appVersion()
-                    if(reStoreState && reStoreState.version === state.version) {
-                        state.build = reStoreState.build
-                        state.generate = reStoreState.generate
-                        state.convert = reStoreState.convert
-                    }
+                    if(reStoreState?.build) state.build = reStoreState.build
+                    if(reStoreState?.generate) state.generate = reStoreState.generate
+                    if(reStoreState?.convert) state.convert = reStoreState.convert
+                    if(reStoreState?.setting) state.setting = reStoreState.setting
+                    state.setting.fwDir = state.setting.fwDir ? state.setting.fwDir : await api.getLocalFWdir()
                     state.build.tags = await api.tags()
                     state.build.tag = state.build.tag ? state.build.tag : state.build.tags[0]
-                    state.logs = ''
+                    state.logs = exist === 503 ? `Skipped docker check` : ""
                     setState(state)
                     clearInterval(id)
                     setInitServer(false)
@@ -76,6 +78,10 @@ const Content = () => {
         return () => {}
     }, [])
 
+    const handleSkipDockerCheck = async () => {
+        await api.setSkipCheckDocker(true)
+    }
+
     const handleChange = (_, v) => {
         setTab(v)
         state.logs = ''
@@ -116,9 +122,13 @@ const Content = () => {
                                 justifyContent: "center",
                                 p: 4,
                             }} >
-                            <Box sx={{ minWidth: "100%" }}>
+                            <Box sx={{ minWidth: "100%", textAlign: "center" }}>
                                 <Box sx={{ p: 4, animation: neon, textAlign: "center"}}>Initializing.....</Box>
                                 <Box sx={{ animation: neon, textAlign: "center" }}>May take more than 10 minutes</Box>
+                                <Button variant="contained"
+                                        sx={{ m: 4 }}
+                                        onClick={handleSkipDockerCheck}
+                                    >Skip Docker Check</Button>
                                 <Box sx={{ pt: 2, textAlign: "left"}}>{parse(state.logs.replace(/\n/g, "<br>"))}</Box>
                             </Box>
                         </Box>
@@ -138,11 +148,13 @@ const Content = () => {
                                 <Tab label="Generate" disabled={state.tabDisabled}/>
                                 <Tab label="Convert" disabled={state.tabDisabled}/>
                                 <Tab label="Tool" disabled={state.tabDisabled}/>
+                                <Tab label="Setting" disabled={state.tabDisabled}/>
                             </Tabs>
                             {tab === 0 && <Build />}
                             {tab === 1 && <Generate />}
                             {tab === 2 && <Convert />}
                             {tab === 3 && <Tool />}
+                            {tab === 4 && <Setting />}
                         </Box>
                         <Box
                             sx={{

@@ -48,6 +48,10 @@ export function StateProvider({children}) {
                 promicro: ["D3", "D2", "D1", "D0", "D4", "C6", "D7", "E6", "B4", "B5", "B6", "B2", "B3", "B1", "F7", "F6", "F5", "F4", "B0", "D5"]
             }
         },
+        setting : {
+            fwMakerUrl: "",
+            fwDir: ""
+        },
         logs: "",
         tabDisabled: false
     })
@@ -90,6 +94,10 @@ export function StateProvider({children}) {
                     rp2040: obj.convert.pins.rp2040,
                     promicro: obj.convert.pins.promicro,
                 }
+            },
+            setting : {
+                fwMakerUrl: obj.setting.fwMakerUrl,
+                fwDir: obj.setting.fwDir
             },
             version: obj.version,
             logs: obj.logs,

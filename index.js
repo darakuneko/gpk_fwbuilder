@@ -46,11 +46,12 @@ const closing = async(e, mainWindow) => {
     app.quit()
 }
 
+ipcMain.handle('setSkipCheckDocker', async (e, skip) => await command.setSkipCheckDocker(skip))
 ipcMain.handle('existSever', async () => await command.existSever())
 ipcMain.handle('tags', async () => await command.tags())
 ipcMain.handle('build', async (e, dat) => await command.build(dat, mainWindow))
 ipcMain.handle('buildCompleted',  () => command.buildCompleted())
-ipcMain.handle('buildCache',  () => command.buildCache(app.getPath('home'), process.platform==='win32'))
+ipcMain.handle('buildCache',  () => command.buildCache(process.platform==='win32'))
 ipcMain.handle('generateQMKFile', async (e, dat) => await command.generateQMKFile(dat))
 ipcMain.handle('generateVialId', async () => await command.generateVialId())
 ipcMain.handle('updateRepository', async (e, fw) => await command.updateRepository(fw, mainWindow))
@@ -63,3 +64,5 @@ ipcMain.handle('convertViaJson',  async (e, file) => await command.convertViaJso
 ipcMain.handle('convertKleJson',  async (e, obj) => await command.convertKleJson(obj))
 ipcMain.handle('readJson',  async (e, path) => await command.readJson(path))
 ipcMain.handle('appVersion',  () => app.getVersion())
+
+ipcMain.handle('getLocalFWdir',  () => command.getLocalFWdir())

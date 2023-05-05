@@ -72,6 +72,7 @@ const Tool = () => {
                 }}>
                     <InputLabel sx={{ fontSize: inputLabelSmallFontSize }} >Image</InputLabel>
                     <Button variant="contained"
+                            disabled={state.setting.fwMakerUrl.length > 0}
                             onClick={handleUpdate("Building.....\n\n", "Rebuild!!", async () => await api.rebuildImage())}
                     >Rebuild</Button>
                 </Box>

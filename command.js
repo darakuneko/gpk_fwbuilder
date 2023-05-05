@@ -6,14 +6,32 @@ const axios = require('axios')
 const fs = require('fs')
 const FormData = require('form-data')
 const path = require('path')
+const Store = require("electron-store")
+const store = new Store()
+const {app} = require("electron")
 
 if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`
+const instance = axios.create();
+instance.defaults.timeout = 2500;
+//store.clear('state')
+const state  = store.get('state')
+const localFWMakerUrl = "http://127.0.0.1:3123"
+const localFWdir = `${app.getPath('home')}/GPKFW/`
+
+const fwMakerUrl = state?.setting?.fwMakerUrl ? state.setting.fwMakerUrl : localFWMakerUrl
+const fwDir = state?.setting?.fwDir ? state.setting.fwDir : localFWdir
 
 const appPath = __dirname.replace(/\/app\.asar/g, "").replace(/\\app\.asar/g, "")
-const appExe = async (cmd) => await exec(`cd "${appPath}/gpk_fwmaker" && ${cmd}`)
-const appSpawn =  (cmd) => `cd "${appPath}/gpk_fwmaker" && ${cmd}`
-const url = (path) => new URL(`http://127.0.0.1:3123${path}`).href
+const fwMakerUrlMassage = "The docker command will not be issued unless the docker URL is 127.0.0.1."
+const appExe = async (cmd) =>
+    fwMakerUrl.includes("127.0.0.1") ? await exec(`cd "${appPath}/gpk_fwmaker" && ${cmd}`) : fwMakerUrlMassage
+
+const appSpawn =  (cmd) =>
+    fwMakerUrl.includes("127.0.0.1") ? `cd "${appPath}/gpk_fwmaker" && ${cmd}` : fwMakerUrlMassage
+
+const url = (path) => new URL(`${fwMakerUrl}${path}`).href
 let isDockerUp = false
+let skipCheckDocker = !fwMakerUrl.includes("127.0.0.1") ? !fwMakerUrl.includes("127.0.0.1")  : false
 
 const tagZeroFill2Int = (str) => {
     const s = str
@@ -59,27 +77,37 @@ const responseStreamLog = async (res, mainWindow, channel) => {
 
 const command = {
     upImage: (mainWindow) => {
-        const res = spawn(appSpawn("docker compose build && docker compose up -d"), { shell: true });
-        streamLog(res, mainWindow, true)
+        if(!skipCheckDocker){
+            const res = spawn(appSpawn("docker compose build && docker compose up -d"), { shell: true })
+            streamLog(res, mainWindow, true)
+        }
     },
-    stopImage: async () => await appExe("docker compose stop"),
+    stopImage: async () => {
+        if(!skipCheckDocker) await appExe("docker compose stop")
+    },
     rebuildImage: async (mainWindow) => {
         const res = spawn(appSpawn("docker compose build --no-cache && docker compose up -d"), { shell: true });
         streamLog(res, mainWindow)
     },
+    setSkipCheckDocker: async (skip) => skipCheckDocker = skip,
     existSever: async () => {
+        if(skipCheckDocker) return 503
         if(isDockerUp) {
-            const res = await axios(url("")).catch(e => e)
+            const res = await instance(url("")).catch(e => e)
             return res.status ? res.status : 404
         }
         return 403
     },
     tags: async () => {
-        const res = await axios(url('/tags/qmk'))
-        const dat = res.data
-        const limit = parseZeroLastDigit(tagZeroFill2Int(dat[0]) - 3000)
-        const tags = dat.filter(v => tagZeroFill2Int(v) >= limit)
-        return tags
+        const res = await instance(url('/tags/qmk')).catch(e => e)
+        if(res.status === 200) {
+            const dat = res.data
+            const limit = parseZeroLastDigit(tagZeroFill2Int(dat[0]) - 3000)
+            const tags = dat.filter(v => tagZeroFill2Int(v) >= limit)
+            return tags
+        } else {
+            return []
+        }
     },
     build: async (dat, mainWindow) => {
         const u = `/build/${dat.fw}`
@@ -104,8 +132,7 @@ const command = {
         mainWindow.webContents.send("streamLog",  `Cannot POST ${u}`)  
     },
     buildCompleted: () => buildCompleted,
-    buildCache: (homePath, isWin) => {
-        const fwDir = `${homePath}/GPKFW/`
+    buildCache: (isWin) => {
         const d = []
         const searchFiles = (dirPath) => {
             const allDirents = fs.readdirSync(dirPath, { withFileTypes: true })
@@ -175,7 +202,8 @@ const command = {
     readJson: async (path) => {
         const buffer = await fs.readFileSync(path)
         return JSON.parse(buffer.toString())
-    }
+    },
+    getLocalFWdir: () => localFWdir
 }
 
 module.exports.command = command

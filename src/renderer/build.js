@@ -7,7 +7,7 @@ import FormHelperText from '@mui/material/FormHelperText'
 
 import React, {useState} from "react"
 import {useStateContext} from "../context"
-import {formHelperTextFontSize, inputLabelMiddleFontSize} from "../style"
+import {formHelperTextFontSize, inputLabelMiddleFontSize, textFieldMiddleWidth} from "../style"
 import Button from "@mui/material/Button"
 import Autocomplete from "@mui/material/Autocomplete"
 
@@ -153,6 +153,7 @@ const Build = () => {
                                   error={keyboardEmptyError}
                                   onFocus={handleKbFocus}
                                   variant="standard"
+                                  style = {{width: textFieldMiddleWidth}}
                                   {...params}
                               />
                           }
@@ -174,6 +175,7 @@ const Build = () => {
                                   error={keymapEmptyError}
                                   onFocus={handleKmFocus}
                                   variant="standard"
+                                  style = {{width: textFieldMiddleWidth}}
                                   {...params}
                               />
                           }

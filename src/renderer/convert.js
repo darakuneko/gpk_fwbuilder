@@ -1,6 +1,6 @@
 import React, {useState} from "react"
 import {useStateContext} from "../context"
-import {formHelperTextFontSize, inputLabelMiddleFontSize} from "../style"
+import {formHelperTextFontSize, inputLabelMiddleFontSize, textFieldLongWidth} from "../style"
 import Button from "@mui/material/Button"
 import InputLabel from "@mui/material/InputLabel"
 import Box from "@mui/material/Box"
@@ -109,7 +109,7 @@ const Convert = () => {
     }
 
     const handleTextChange = (inputName) => (e) => {
-        const v =e.target.value
+        const v = e.target.value
         if(inputName === 'kb') state.convert.kle.kb = v
         if(inputName === 'user') state.convert.kle.user = v
         if(inputName === 'vid') state.convert.kle.vid = v
@@ -329,6 +329,7 @@ const Convert = () => {
                             disabled={disabledConvertText}
                             onChange={handleTextChange("kb")}
                             variant="standard"
+                            style = {{width: textFieldLongWidth}}
                             value={state.convert.kle.kb}
                         />
                         {keyboardStrError && ValidKBUSRTextField}
@@ -342,6 +343,7 @@ const Convert = () => {
                             disabled={disabledConvertText}
                             onChange={handleTextChange("user")}
                             variant="standard"
+                            style = {{width: textFieldLongWidth}}
                             value={state.convert.kle.user}
                         />
                         {usernameStrError && ValidKBUSRTextField}
@@ -355,6 +357,7 @@ const Convert = () => {
                             disabled={disabledConvertText}
                             onChange={handleTextChange("vid")}
                             variant="standard"
+                            style = {{width: textFieldLongWidth}}
                             value={state.convert.kle.vid}
                         />
                         {vidStrError && ValidVidPidTextField}
@@ -368,6 +371,7 @@ const Convert = () => {
                             disabled={disabledConvertText}
                             onChange={handleTextChange("pid")}
                             variant="standard"
+                            style = {{width: textFieldLongWidth}}
                             value={state.convert.kle.pid}
                         />
                         {pidStrError && ValidVidPidTextField}
