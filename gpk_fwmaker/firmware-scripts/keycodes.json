@@ -1269,6 +1269,22 @@
     ]
   },
   {
+    "group": "media",
+    "key": "KC_MISSION_CONTROL",
+    "label": "Open Mission Control",
+    "aliases": [
+      "KC_MCTL"
+    ]
+  },
+  {
+    "group": "media",
+    "key": "KC_LAUNCHPAD",
+    "label": "Open Launchpad",
+    "aliases": [
+      "KC_LPAD"
+    ]
+  },
+  {
     "group": "mouse",
     "key": "KC_MS_UP",
     "label": "Move cursor up",
