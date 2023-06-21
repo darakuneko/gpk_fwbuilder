@@ -117,6 +117,9 @@ class InfoJSONEncoder(QMKJSONEncoder):
             elif key == 'features':
                 return '17features'
 
+            elif key == 'encoder':
+                return '18encoder'
+
             elif key == 'community_layouts':
                 return '97community_layouts'
 

@@ -2,6 +2,7 @@ from serial import serialize, deserialize
 from util import read_file, write_file, gen_uid, MCU_DICT
 from converters import kbd_to_qmk_info, kbd_to_vial, kbd_to_keymap, kbd_to_layout_macro, layout_str_to_layout_dict, keycodes_md_to_keycode_dict, generate_keycode_conversion_dict, kbd_to_main_config, extract_matrix_pins
 import json
+#import requests
 
 from json_encoders import * # from qmk_firmware/lib/python/qmk/json_encoders.py, for generating info.json
 import sys
@@ -23,9 +24,12 @@ write_file(serialized_path, json.dumps(srlzd, ensure_ascii=False, indent=2, cls=
 # Test parity:
 print(f"Deserialized and Serialized JSONs are identical: {read_file(input_kle_json_path) == read_file(serialized_path)}")
 
+
 # Generate a QMK info.json file used for QMK Configurator
-name = "kb"
-maintainer = "maintainer"
+name = 'Slime88'
+maintainer = 'Zykrah'
+manufacturer = 'MANUFACTURER'
+url = ""
 vid = "0xFEED"
 pid = "0x0001"
 ver = "0.0.1"
@@ -57,8 +61,9 @@ else:
     pin_dict = {}
 
 qmk_info_path = 'info.json'
-qmk_info_content = kbd_to_qmk_info(keyboard, name, maintainer, "", vid, pid, ver, mcu, bootloader, board, pin_dict, diode_dir)
+qmk_info_content = kbd_to_qmk_info(keyboard, name, maintainer, url, vid, pid, ver, mcu, bootloader, board, pin_dict, diode_dir, manufacturer)
 write_file(qmk_info_path, json.dumps(qmk_info_content, indent=4, separators=(', ', ': '), sort_keys=False, cls=InfoJSONEncoder))
+
 
 # Generate a VIAL json file used to identify a keyboard in VIAL. Same as via but with encoders and no required product/vendor ID
 # Also generate a config.h file with a randomly generated UID and unlocking combo (if included)
