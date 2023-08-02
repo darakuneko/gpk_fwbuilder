@@ -73,7 +73,8 @@ const cmd = {
     },
     checkoutVial: async (res, commit) => {
         await exec(rmKeyboardsL(dirVial))
-        await streamWriteLineVial(`git reset --hard HEAD^`, res)
+        await streamWriteLineVial(`git fetch origin`, res)
+        await streamWriteLineVial(`git reset --hard origin/${commit}`, res)
         await streamWriteLineVial(`git checkout ${commit}`, res)
         await streamWriteLineVial(`make git-submodule\n`, res)
         await exec(rmKeyboardsL(dirVial))
