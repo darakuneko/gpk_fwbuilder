@@ -54,7 +54,7 @@ app.post('/build/vial', async (req, res) => {
             const kbDir = kb.replace(/\/.*/g, "")
             const km = req.body.km.replace(/:.*|flash/g, "")
             const commit = "commit" in req.body && req.body.commit.length > 0 ? req.body.commit : "vial"
-            await cmd.checkoutVial(res, commit)
+            await cmd.checkoutVial(res, 'vial', commit)
             await cmd.cpConfigsToVial(kbDir)
             await cmd.buildVialFirmware(res, kb, km)
         } catch (e) { streamError(res, e) }
