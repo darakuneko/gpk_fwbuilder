@@ -502,6 +502,8 @@ def layout_str_to_layout_dict(string: str) -> Dict[Any, Any]: # Change to a Type
         raise Exception(f'Invalid VIAL/VIA layout file input, {e}')
     return obj
 
+keycodes_json = open('keycodes.json', 'r')
+keycodes = json.load(keycodes_json)
 
 def kbd_to_keymap(kbd: Keyboard,
                   layers: int = 4,
@@ -558,7 +560,7 @@ def kbd_to_keymap(kbd: Keyboard,
                 if "layout" in layout_dict.keys():  # VIAL layout file
                     vial_layout_dict = layout_dict["layout"]
                     if i+1 > len(vial_layout_dict):
-                        kc = 'KC_TRNS'
+                        kc = 'KC_NO'
                     else:
                         try:
                             row, col = extract_row_col(key)
@@ -569,7 +571,7 @@ def kbd_to_keymap(kbd: Keyboard,
                 elif "layers" in layout_dict.keys():  # VIA layout file
                     via_layout_dict = layout_dict["layers"]
                     if i+1 > len(via_layout_dict):
-                        kc = 'KC_TRNS'
+                        kc = 'KC_NO'
                     else:
                         try:
                             row, col = extract_row_col(key)
@@ -579,9 +581,19 @@ def kbd_to_keymap(kbd: Keyboard,
 
             else: # Default to label
                 kc = key.labels[keycode_label_no] # Keycode
-                
-                if i > 0:
-                    kc = 'KC_TRNS'
+                if i == 0 or i == 1 or i == 2 : # First/Second/Third layer
+                   kc = key.labels[8 if i == 2 else i] # Keycode
+                   if kc == "" :
+                      kc = 'KC_NO'
+                   else:
+                      for v in keycodes:
+                        if(v['label'].upper() == kc.upper()):
+                            if(set(v) >= {'aliases'}):
+                                kc = v['aliases'][0]
+                            else:
+                                kc = v['key']
+                elif i == 3:
+                    kc = 'KC_NO'
 
                 elif not kc:
                     def get_key_by_value(dict, search):
@@ -600,7 +612,7 @@ def kbd_to_keymap(kbd: Keyboard,
                     kc = get_key_by_value(COMMON_KEYS, lbls)
 
                     if not kc or i > 0:
-                        kc = 'KC_TRNS'
+                        kc = 'KC_NO'
 
             # Convert (VIALs) deprecated keycodes into updated ones if required
             if conversion_dict:
@@ -670,7 +682,7 @@ def kbd_to_keymap(kbd: Keyboard,
             for i in range(encoders_num):
                 encoder_kc[i] = []
                 for x in range(layers):
-                    encoder_kc[i].append(["KC_TRNS", "KC_TRNS"])
+                    encoder_kc[i].append(["KC_NO", "KC_NO"])
 
         keymap_all += "\n\n/* `ENCODER_MAP_ENABLE = yes` must be added to the rules.mk at the KEYMAP level. See QMK docs. */\n"
         keymap_all += "/* Remove the following code if you do not enable it in your keymap (e.g. default keymap). */\n"
