@@ -88,7 +88,7 @@ const command = {
         if(!skipCheckDocker) await appExe("docker compose stop")
     },
     rebuildImage: async (mainWindow) => {
-        const res = spawn(appSpawn("docker compose stop && docker compose rm -f --volumes && docker compose build --no-cache && docker compose up -d"), { shell: true });
+        const res = spawn(appSpawn("docker compose rm -f -s -v && docker compose build --no-cache && docker compose up -d"), { shell: true });
         streamLog(res, mainWindow)
     },
     setSkipCheckDocker: async (skip) => skipCheckDocker = skip,
