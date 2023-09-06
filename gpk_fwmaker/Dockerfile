@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:12-slim
 
 RUN apt-get update && apt-get install -y locales && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 
@@ -12,7 +12,7 @@ RUN apt-get -y install \
     nodejs\
     npm
 
-RUN python3 -m pip install qmk
+RUN pip install qmk --break-system-packages
 
 RUN echo 'PATH="$HOME/.local/bin:$PATH"' >> $HOME/.bashrc
 

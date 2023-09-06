@@ -1,10 +1,10 @@
-from serial import serialize, deserialize
-from util import read_file, write_file, gen_uid, MCU_DICT
-from converters import kbd_to_qmk_info, kbd_to_vial, kbd_to_keymap, kbd_to_layout_macro, layout_str_to_layout_dict, keycodes_md_to_keycode_dict, generate_keycode_conversion_dict, kbd_to_main_config, extract_matrix_pins
+from util.serial import serialize, deserialize
+from util.util import read_file, write_file, gen_uid, MCU_DICT
+from util.converters import kbd_to_layout_macro, kbd_to_qmk_info, kbd_to_vial, kbd_to_keymap, layout_str_to_layout_dict, keycodes_md_to_keycode_dict, generate_keycode_conversion_dict, kbd_to_main_config, extract_matrix_pins
 import json
 #import requests
 
-from json_encoders import * # from qmk_firmware/lib/python/qmk/json_encoders.py, for generating info.json
+from util.json_encoders import * # from qmk_firmware/lib/python/qmk/json_encoders.py, for generating info.json
 import sys
 
 input_kle_json_path = sys.argv[1]
@@ -86,7 +86,7 @@ keymap_c_path = 'keymap.c'
 keycodes_dict = keycodes_md_to_keycode_dict(read_file('keycodes.md')) # Local fallback
 conversion_dict = generate_keycode_conversion_dict(read_file('deprecated_keycodes.txt'))
 
-keymap_c_content = kbd_to_keymap(keyboard, 4, 1, None, keycodes_dict, conversion_dict)
+keymap_c_content = kbd_to_keymap(keyboard, layers, 1, None, keycodes_dict, conversion_dict)
 write_file(keymap_c_path, keymap_c_content)
 
 #main_config_h_content = kbd_to_main_config(keyboard, 4)

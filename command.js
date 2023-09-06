@@ -55,11 +55,13 @@ const fileAppend = (data, key, obj) => {
 
 const streamLog = (res, mainWindow, init) => {
     isDockerUp = false
+    buildCompleted = false
     res.stdout.on('data', (data) => mainWindow.webContents.send("streamLog", data.toString(), init))
     res.stderr.on('data', (data) => mainWindow.webContents.send("streamLog", data.toString(), init))
     res.on('close', () => {
         mainWindow.webContents.send("streamLog", 'finish!!', init)
         isDockerUp = true
+        buildCompleted = true
     })
 }
 
@@ -86,7 +88,7 @@ const command = {
         if(!skipCheckDocker) await appExe("docker compose stop")
     },
     rebuildImage: async (mainWindow) => {
-        const res = spawn(appSpawn("docker compose build --no-cache && docker compose up -d"), { shell: true });
+        const res = spawn(appSpawn("docker compose stop && docker compose rm -f --volumes && docker compose build --no-cache && docker compose up -d"), { shell: true });
         streamLog(res, mainWindow)
     },
     setSkipCheckDocker: async (skip) => skipCheckDocker = skip,

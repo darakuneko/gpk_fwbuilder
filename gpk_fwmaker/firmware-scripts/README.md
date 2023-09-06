@@ -20,6 +20,19 @@ You start with your KLE (colours for multilayout not necessary). Keep in mind th
 
 The idea is to then follow the following guidelines to be able to output various firmware-related files (e.g. a whole via.json).
 
+<details><summary><h2>NEW: <a href="https://zykrah.me/from-via">Convert existing VIA/L JSON to Firmware Script KLE</a></h2></summary>
+
+This allows you to convert an existing VIA/VIAL json file into the layout used for this firmware script. 
+
+(If there are multilayout values): Multilayout labels will automatically go into the widest key of any given multilayout
+
+> **Note**: The it outputs in the format of a KLE json, and **not raw data**. If you want to use the output as a raw data (either to paste into the main page of the site, or to paste into KLE's raw data to modify) you will have to remove the first set of `[]` brackets.
+
+Example:
+
+![image](https://user-images.githubusercontent.com/23428162/253729473-3c606377-67e6-45e5-91a5-e23c6ad872c8.png)
+
+</details>
 
 # Guidelines:
 ![image](https://user-images.githubusercontent.com/23428162/168476640-09a4b226-8364-4fc1-833d-9fd1efac6a04.png)
@@ -35,6 +48,8 @@ The idea is to then follow the following guidelines to be able to output various
 - 11: Col
 
 > **Note**: The name of the board can also be edited in KLE
+
+> **Note**: Rotated layouts are currently not tested/fully supported. If you want to use this tool with layouts with rotated keys, I would recommend doing the whole thing in two separate 'steps'. Once with a simplified, non-rotated KLE (ie in a grid) to generate the keymap.c, info.json, etc. And the second time you can use your rotated KLE for the VIA/L json.
 
 Example of the initial board being converted as per above guidelines:
 
@@ -123,7 +138,7 @@ The keys are also offset appropriately.
 > ~~WIP: I want to be able to automatically detect (based on the multilayout keys), which combination of multi-layout options produces a `LAYOUT` for use with via (maximum amount of keys).~~ DONE
 
 > WIP: Add a more generic converter.
-> WIP: Add the option to create more layouts based on multilayouts picked by the user
+> ~~WIP: Add the option to create more layouts based on multilayouts picked by the user~~ DONE
 
 Example of the initial board being converted:
 
@@ -134,6 +149,20 @@ Below is what the `LAYOUT` looks like (represented in KLE). You can see how the 
 ![image](https://user-images.githubusercontent.com/23428162/168613442-5ea87f88-3bc4-4406-91d6-df2550f58f43.png)
 
 > **Note**: I haven't tested this with more complex multilayouts or larger boards.
+
+## Alternate Layouts
+
+You can specify different layouts to add extra alternative layouts (e.g. for QMK PR merging, where community layouts are required) to the info.json. Takes a a json/dict structured as shown in the example below. 
+
+More specifically: each dict key (e.g. `"tkl_ansi"`) corresponds to an extra layout named `LAYOUT_<key>` (e.g. `"LAYOUT_tkl_ansi"`), and takes one list. Each list should be a list of integers referring to the chosen multilayout value, and should correspond to the multilayout indexes (in order).
+
+Example (based on same KLE as used above):
+
+![image](https://user-images.githubusercontent.com/23428162/253728630-a360ff68-b45a-41e2-9947-521ac8ea66be.png)
+
+![image](https://user-images.githubusercontent.com/23428162/253728691-3be5951d-d966-45de-a8bb-65be6cb11220.png)
+
+> Thanks to @awkannan for writing this part of the code for me.
 
 ## Kicad Netlist
 
@@ -233,7 +262,7 @@ How it shows up in VIA:
 # Extra
 I plan on further improving the scripts, and also adding more features.
 
-I also plan on soon implementing some code to convert from VIA -> KLE, VIA -> info.json, info.json -> KLE, etc.
+I also plan on soon implementing some code to convert from ~~VIA -> KLE, VIA -> info.json~~ (done), info.json -> KLE, etc.
 
 WIP:
 - be able to re-configure the "guidelines"/labels as you wish
