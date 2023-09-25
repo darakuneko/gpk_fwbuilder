@@ -113,11 +113,16 @@ const Build = () => {
                           value={state.build.fw}
                           onChange={handleSelectFW}
                           required>
-                          <MenuItem key="fw-qmk" value="qmk">QMK</MenuItem>
-                          <MenuItem key="fw-vial" value="vial">Vial</MenuItem>
+                          {state.repository.firmwares.map((fw, i) =>
+                              (<MenuItem
+                                  key={`fw-${fw.id}`}
+                                  value={fw.id}
+                                  selected={i === 0}
+                              >{fw.id}</MenuItem>)
+                          )}
                       </Select>
                   </Box>
-                  {state.build.fw === "qmk" ? (
+                  {state.build.fw === "QMK" ? (
                        <Box sx={{ pl: 4 }}>
                            <InputLabel sx={{ fontSize: inputLabelMiddleFontSize }} >Tag</InputLabel>
                            <Select

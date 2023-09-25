@@ -160,7 +160,7 @@ const Generate = () => {
                             onClick={handleQmkFileSubmit()}
                             disabled={qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton }
                     >Generate</Button>
-                </Box>
+            </Box>
             </Box>
             <Box
                 sx={{

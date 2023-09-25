@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron')
+const {contextBridge, ipcRenderer} = require('electron')
 
 process.once('loaded', async () => {
     global.ipcRenderer = ipcRenderer
@@ -9,13 +9,14 @@ process.once('loaded', async () => {
             existSever: async () => await ipcRenderer.invoke('existSever'),
             tags: async () => await ipcRenderer.invoke('tags'),
             build: async (dat) => await ipcRenderer.invoke('build', dat),
-            buildCompleted: async () =>  await ipcRenderer.invoke('buildCompleted'),
-            buildCache: async () =>  await ipcRenderer.invoke('buildCache'),
+            buildCompleted: async () => await ipcRenderer.invoke('buildCompleted'),
+            buildCache: async () => await ipcRenderer.invoke('buildCache'),
             updateRepository: async (fw) => await ipcRenderer.invoke('updateRepository', fw),
+            updateRepositoryCustom: async (obj) => await ipcRenderer.invoke('updateRepositoryCustom', obj),
             generateQMKFile: async (dat) => await ipcRenderer.invoke('generateQMKFile', dat),
             generateVialId: async () => await ipcRenderer.invoke('generateVialId'),
-            getState: async() => await ipcRenderer.invoke('getState'),
-            setState: async(obj) => await ipcRenderer.invoke('setState', obj),
+            getState: async () => await ipcRenderer.invoke('getState'),
+            setState: async (obj) => await ipcRenderer.invoke('setState', obj),
             rebuildImage: async () => await ipcRenderer.invoke('rebuildImage'),
             convertViaJson: async (file) => await ipcRenderer.invoke('convertViaJson', file),
             convertKleJson: async (obj) => await ipcRenderer.invoke('convertKleJson', obj),

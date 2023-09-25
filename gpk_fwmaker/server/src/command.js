@@ -5,6 +5,7 @@ const fs = require('fs');
 
 const dirQMK = '/root/qmk_firmware'
 const dirVial = '/root/vial-qmk'
+const dirCustomRepo  = `/root/custom_repository`
 const dirFirmFiles = '/firmware-scripts/'
 
 const execCd = async (dir, line) => await exec(`cd ${dir} && ${line}`)
@@ -21,7 +22,10 @@ const streamWriteLine = async (dir, line, res) => {
 const streamWriteLineQMK = async (line, res) => await streamWriteLine(dirQMK, line, res)
 const streamWriteLineVial = async (line, res) => await streamWriteLine(dirVial, line, res)
 
-const findFirmwareL = (dir) => `find ${dir}/* -maxdepth 0 -regex ".*\\.\\(bin\\|hex\\|uf2\\)"`
+const findFirmwareL = (dir) => {
+    const d = dir.match(/\/$/) ? dir : `${dir}/`
+    return `find ${d}* -maxdepth 0 -regex ".*\\.\\(bin\\|hex\\|uf2\\)"`
+}
 const cpFirmwareL = (dir) => `${findFirmwareL(dir)} -type f -exec cp {} /root/keyboards \\;`
 
 const rmL = (path) => `rm -rf ${path}`
@@ -47,6 +51,28 @@ const streamError = (res, e) => {
     res.end(e.toString())
 }
 
+const buildCustomFW = async (res, dir, branch, kb, km) => {
+    await exec(`${findFirmwareL(dir)} -delete`)
+    const line = `cd ${dir} && { make ${kb}:${km} || true; } && git checkout ${branch} > /dev/null 2>&1 && ${cpFirmwareL(dir)}`
+    await streamLog(line, res)
+}
+
+const cpCfgToCustom = async (dir, kbDir) => {
+    await exec(rmKeyboardsL(dir))
+    await exec(`cp -rf /root/keyboards/${kbDir} ${dir}/keyboards`)
+}
+
+const checkoutRepo = async (res, dir, fw, commit) => {
+    await exec(rmKeyboardsL(dir))
+    const result = await exec(`cd ${dir} && git symbolic-ref --short HEAD`)
+    const branch = result.stdout.replaceAll('\n', '')
+    await streamWriteLine(dir, `git fetch origin`, res)
+    await streamWriteLine(dir, `git reset --hard ${branch}`, res)
+    await streamWriteLine(dir, `git checkout ${commit.length > 0 ? commit : branch}`, res)
+    await streamWriteLine(dir, `make git-submodule`, res)
+    return branch
+}
+
 const cmd = {
     tags: async () => {
         const result = await execQMK(`git ls-remote --tags`)
@@ -63,7 +89,8 @@ const cmd = {
     },
     checkoutQmk: async (res, tag) => {
         await exec(rmKeyboardsL(dirQMK))
-        await streamWriteLineQMK("git reset --hard HEAD^", res)
+        await streamWriteLineQMK(`git fetch origin`, res)
+        await streamWriteLineQMK(`git reset --hard master`, res)
         try {  await streamWriteLineQMK(`git checkout -b ${tag} refs/tags/${tag}`, res) } catch (e){
             await streamWriteLineQMK(`git branch -D ${tag}`, res)
             await streamWriteLineQMK(`git checkout -b ${tag} refs/tags/${tag}`, res)
@@ -71,24 +98,21 @@ const cmd = {
         await streamWriteLineQMK(`make git-submodule\n`, res)
         await exec(rmKeyboardsL(dirQMK))
     },
-    checkoutVial: async (res, repo, commit) => {
-        await exec(rmKeyboardsL(dirVial))
-        await streamWriteLineVial(`git fetch origin`, res)
-        await streamWriteLineVial(`git reset --hard origin/${repo}`, res)
-        await streamWriteLineVial(`git checkout ${commit}`, res)
-        await streamWriteLineVial(`make git-submodule\n`, res)
-        await exec(rmKeyboardsL(dirVial))
+    checkoutVial: async (res, repo, commit) => await checkoutRepo(res, dirVial, repo, commit),
+    checkoutCustom: async (res, fw, commit) => {
+        const baseDir = `${dirCustomRepo}/${fw}`
+        const result = await exec(`cd ${baseDir} && ls -d */`)
+        const dir = `${baseDir}/${result.stdout.split("\n")[0]}`
+        const branch = await checkoutRepo(res, dir, fw, commit)
+        return {branch: branch, dir: dir}
     },
     buildQmkFirmware: async (res, kb, km) => {
         await exec(`${findFirmwareL(dirQMK)} -delete`)
         const line = `qmk compile -kb ${kb} -km ${km} && ${cpFirmwareL(dirQMK)}`
         streamLog(line, res)
     },
-    buildVialFirmware: async (res, kb, km) => {
-        await exec(`${findFirmwareL(dirVial)} -delete`)
-        const line = `cd ${dirVial} && make ${kb}:${km} && ${cpFirmwareL(dirVial)}`
-        streamLog(line, res)
-    },
+    buildVialFirmware: async (res, kb, km) => await buildCustomFW(res, dirVial, "vial", kb, km),
+    buildCustomFirmware: async (res, obj, kb, km) => await buildCustomFW(res, obj.dir, obj.branch, kb, km),
     updateRepositoryQmk: async (res) => {
         await exec(rmL(dirQMK))
         const line = "cd /root && qmk setup -y"
@@ -97,6 +121,17 @@ const cmd = {
     updateRepositoryVial: async (res) => {
         await exec(rmL(dirVial))
         const line = `cd /root && git clone https://github.com/vial-kb/vial-qmk.git && cd ${dirVial} && make git-submodule`
+        streamLog(line, res)
+    },
+    updateRepositoryCustom: async (res, customDir, url) => {
+        const dir  = `${dirCustomRepo}/${customDir}`
+        const cloneDir = `${dir}/${url.match(/\/([^/]+)\.git$/)[1]}`
+        const line = `rm -rf ${dir} && mkdir ${dir} && cd ${dir} && git clone ${url} && cd ${cloneDir} && make git-submodule`
+        streamLog(line, res)
+    },
+    deleteRepositoryCustom: async (res, customDir) => {
+        const dir  = `${dirCustomRepo}/${customDir}`
+        const line = `rm -rf ${dir}`
         streamLog(line, res)
     },
     generateQmkFile: async (kb, mcu, layout, user) => {
@@ -120,10 +155,8 @@ const cmd = {
         await exec(rmKeyboardsL(dirQMK))
         await exec(`cp -rf /root/keyboards/${kbDir} ${dirQMK}/keyboards`)
     },
-    cpConfigsToVial: async (kbDir) => {
-        await exec(rmKeyboardsL(dirVial))
-        await exec(`cp -rf /root/keyboards/${kbDir} ${dirVial}/keyboards`)
-    },
+    cpConfigsToVial: async (kbDir) => await cpCfgToCustom(dirVial, kbDir),
+    cpConfigsToCustom: async (dir, kbDir) => await cpCfgToCustom(dir, kbDir),
     cpDefaultToVail: async (kbDir) => {
         await exec(`mkdir -p ${dirQMK}/keyboards/${kbDir}/keymaps/vial`)
         await exec(`cp -rf ${dirQMK}/keyboards/${kbDir}/keymaps/default/* ${dirQMK}/keyboards/${kbDir}/keymaps/vial`)

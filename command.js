@@ -33,17 +33,6 @@ const url = (path) => new URL(`${fwMakerUrl}${path}`).href
 let isDockerUp = false
 let skipCheckDocker = !fwMakerUrl.includes("127.0.0.1") ? !fwMakerUrl.includes("127.0.0.1")  : false
 
-const tagZeroFill2Int = (str) => {
-    const s = str
-        .replace(/\.(\d{1})\./, ".0$1.")
-        .replace(/\.(\d{2})$/, ".0$1")
-        .replace(/\.(\d{1})$/, ".00$1")
-        .replace(/\./g, "")
-    return parseInt(s)
-}
-
-const parseZeroLastDigit = (num) => parseInt(num.toString().slice(0, -1))  * 10
-
 const fileAppend = (data, key, obj) => {
     const buffer = fs.readFileSync(obj.path)
     data.append(key, buffer, {
@@ -78,9 +67,11 @@ const responseStreamLog = async (res, mainWindow, channel) => {
 }
 
 const command = {
-    upImage: (mainWindow) => {
+    upImage: async (mainWindow) => {
         if(!skipCheckDocker){
-            const res = spawn(appSpawn("docker compose build && docker compose up -d"), { shell: true })
+            const result = await appExe("docker images")
+            const cmd  = result.stdout.match("gpk_fwmaker_0003") ? "docker compose start" : "docker compose build && docker compose up -d"
+            const res = spawn(appSpawn(cmd), { shell: true })
             streamLog(res, mainWindow, true)
         }
     },
@@ -103,21 +94,19 @@ const command = {
     tags: async () => {
         const res = await instance(url('/tags/qmk')).catch(e => e)
         if(res.status === 200) {
-            const dat = res.data
-            const limit = parseZeroLastDigit(tagZeroFill2Int(dat[0]) - 3000)
-            const tags = dat.filter(v => tagZeroFill2Int(v) >= limit)
-            return tags
+            return res.data
         } else {
             return []
         }
     },
     build: async (dat, mainWindow) => {
-        const u = `/build/${dat.fw}`
-        const data = dat.fw === "qmk" ? {
+        const u = dat.fw === "QMK" || dat.fw === "Vial" ? `/build/${dat.fw.toLowerCase()}` : `/build/custom`
+        const data = dat.fw === "QMK" ? {
             kb: dat.kb,
             km: dat.km,
             tag: dat.tag,
         } : {
+            fw: dat.fw.toLowerCase(),
             kb: dat.kb,
             km: dat.km,
             commit: dat.commit,
@@ -181,7 +170,19 @@ const command = {
         return res.data
     },
     updateRepository: async (fw, mainWindow) => {
-        const res = await axios(url(`/update/repository/${fw}`), {responseType: 'stream'})
+        const res = await axios(url(`/update/repository/${fw.toLowerCase()}`), {responseType: 'stream'})
+        await responseStreamLog(res, mainWindow, "streamLog")
+    },
+    updateRepositoryCustom: async (obj, mainWindow) => {
+        const res = await axios({
+            url: url("/update/repository/custom"),
+            method: 'post',
+            responseType: 'stream',
+            data: {
+                id: obj.id.toLowerCase(),
+                url: obj.url
+            }
+        }).catch(e => {})
         await responseStreamLog(res, mainWindow, "streamLog")
     },
     convertViaJson: async (file) => {

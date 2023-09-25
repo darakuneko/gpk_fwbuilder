@@ -4,10 +4,10 @@ const {cmd, streamError} = require('./command')
 const app = express()
 const multer = require("multer")
 
-const server = app.listen(3000, async() =>console.log("Node.js is listening to PORT:" + server.address().port))
+const server = app.listen(3000, async () => console.log("Node.js is listening to PORT:" + server.address().port))
 
-const streamResponce = async (res, fn) => {
-    res.writeHead(200, { "Content-Type": "text/event-stream"})
+const streamResponse = async (res, fn) => {
+    res.writeHead(200, {"Content-Type": "text/event-stream"})
     await fn()
 }
 
@@ -15,7 +15,7 @@ const bufferToJson = (buf) => JSON.parse(buf.toString())
 
 const jsonToStr = (obj) => JSON.stringify(obj, null, 2)
 
-app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.urlencoded({extended: true}))
 app.use(bodyParser.json())
 
 app.get('/', async (req, res) => res.send('GPK FWMaker!'))
@@ -23,6 +23,35 @@ app.get('/', async (req, res) => res.send('GPK FWMaker!'))
 app.get('/tags/qmk', async (req, res) => {
     const tags = await cmd.tags()
     res.send(tags)
+})
+
+app.get('/update/repository/qmk', async (req, res) => await cmd.updateRepositoryQmk(res))
+
+app.get('/update/repository/vial', async (req, res) => await cmd.updateRepositoryVial(res))
+
+app.post('/update/repository/custom', async (req, res) => {
+    const fn = async () => {
+        try {
+            const id = req.body.id
+            const url = req.body.url
+            await cmd.updateRepositoryCustom(res, id, url)
+        } catch (e) {
+            streamError(res, e)
+        }
+    }
+    await streamResponse(res, fn)
+})
+
+app.post('/delete/repository/custom', async (req, res) => {
+    const fn = async () => {
+        try {
+            const id = req.body.id
+            await cmd.deleteRepositoryCustom(res, id)
+        } catch (e) {
+            streamError(res, e)
+        }
+    }
+    await streamResponse(res, fn)
 })
 
 app.get('/update/repository/qmk', async (req, res) => await cmd.updateRepositoryQmk(res))
@@ -44,9 +73,9 @@ app.post('/build/qmk', async (req, res) => {
             streamError(res, e)
         }
     }
-    await streamResponce(res, fn)
+    await streamResponse(res, fn)
 })
-  
+
 app.post('/build/vial', async (req, res) => {
     const fn = async () => {
         try {
@@ -58,23 +87,48 @@ app.post('/build/vial', async (req, res) => {
             await cmd.checkoutVial(res, repo, commit)
             await cmd.cpConfigsToVial(kbDir)
             await cmd.buildVialFirmware(res, kb, km)
-        } catch (e) { streamError(res, e) }
+        } catch (e) {
+            streamError(res, e)
+        }
     }
 
-    await streamResponce(res, fn)
+    await streamResponse(res, fn)
 })
-  
+
+
+app.post('/build/custom', async (req, res) => {
+    const fn = async () => {
+        try {
+            const fw = req.body.fw
+            const kb = req.body.kb
+            const kbDir = kb.replace(/\/.*/g, "")
+            const km = req.body.km.replace(/:.*|flash/g, "")
+            const commit = req.body.commit
+            const obj = await cmd.checkoutCustom(res, fw, commit)
+            console.log("checkoutCustom")
+            await cmd.cpConfigsToCustom(obj.dir, kbDir)
+            console.log("cpConfigsToCustom")
+
+            await cmd.buildCustomFirmware(res, obj, kb, km)
+        } catch (e) {
+            streamError(res, e)
+        }
+    }
+
+    await streamResponse(res, fn)
+})
+
 app.post('/generate/qmk/file', async (req, res) => {
     try {
         const kb = req.body.kb
-        const kbL = kb.toLowerCase().replace(/-| /g,"_")
+        const kbL = kb.toLowerCase().replace(/-| /g, "_")
         const kbDir = kbL.replace(/\/.*/g, "")
         const mcu = req.body.mcu
         const layout = req.body.layout
         const user = req.body.user
 
         const result = await cmd.generateQmkFile(kbL, mcu, layout, user)
-        const infoQmk = bufferToJson(await cmd.readQmkFile(kbDir, 'info.json')) 
+        const infoQmk = bufferToJson(await cmd.readQmkFile(kbDir, 'info.json'))
         infoQmk.keyboard_name = kb
         infoQmk.manufacturer = user
         infoQmk.maintainer = user
@@ -95,7 +149,7 @@ app.get('/generate/vial/id', async (req, res) => {
     }
 })
 
-app.post('/convert/via/json', multer().fields([{ name: 'info' }, { name: 'kle' }]), async (req, res) => {
+app.post('/convert/via/json', multer().fields([{name: 'info'}, {name: 'kle'}]), async (req, res) => {
     try {
         const info = bufferToJson(req.files['info'][0].buffer)
         const kle = bufferToJson(req.files['kle'][0].buffer)
@@ -132,7 +186,7 @@ app.post('/convert/kle/qmk', multer().single('kle'), async (req, res) => {
     try {
         const params = JSON.parse(req.body.params)
         const kb = params.kb
-        const fileKb = kb.toLowerCase().replace(/-| /g,"_")
+        const fileKb = kb.toLowerCase().replace(/-| /g, "_")
         const kbDir = fileKb.replace(/\/.*/g, "")
         const mcu = params.mcu
         const layout = "fullsize_ansi"
@@ -140,26 +194,26 @@ app.post('/convert/kle/qmk', multer().single('kle'), async (req, res) => {
         const vid = params.vid
         const pid = params.pid
         const option = params.option
-   
+
         const rows = params.rows.split(",")
         const cols = params.cols.split(",")
-        
+
         const kle = bufferToJson(req.file.buffer)
         const kleFileName = 'kle.json'
         await cmd.writeFirmFiles(kleFileName, jsonToStr(kle))
 
         await cmd.generateQmkFile(fileKb, mcu, layout, user)
         await cmd.generateFirmFiles(kleFileName)
-      
+
         const vialFirm = bufferToJson(await cmd.readFirmFiles('vial.json'))
-        if(option === 2) {
+        if (option === 2) {
             await cmd.write('/root/keyboards/via.json', jsonToStr(vialFirm))
             res.send("finish!!")
             return
         }
 
-        const infoQmk = bufferToJson(await cmd.readQmkFile(fileKb, 'info.json')) 
-        const infoFirm = bufferToJson(await cmd.readFirmFiles('info.json')) 
+        const infoQmk = bufferToJson(await cmd.readQmkFile(fileKb, 'info.json'))
+        const infoFirm = bufferToJson(await cmd.readFirmFiles('info.json'))
         infoQmk.keyboard_name = kb
         infoQmk.manufacturer = user
         infoQmk.maintainer = user
@@ -177,19 +231,19 @@ app.post('/convert/kle/qmk', multer().single('kle'), async (req, res) => {
         await cmd.writeQmkFile(fileKb, 'info.json', jsonToStr(infoQmk))
 
         let configQmk = await cmd.readQmkFile(fileKb, 'config.h')
-        if(option === 1){
+        if (option === 1) {
             const configFirm = await cmd.readFirmFiles('config.h')
             configQmk = configQmk + configFirm
         }
         await cmd.writeQmkFile(fileKb, 'config.h', configQmk)
-        
+
         const kbFirm = await cmd.readFirmFiles('kb.h')
         await cmd.writeQmkFile(fileKb, `${fileKb}.h`, kbFirm)
 
         const kmFirm = await cmd.readFirmFiles('keymap.c')
         await cmd.writeQmkFile(fileKb, 'keymaps/default/keymap.c', kmFirm)
 
-        if(option === 1){
+        if (option === 1) {
             vialFirm.name = kb
             vialFirm.vendorId = vid
             vialFirm.productId = pid

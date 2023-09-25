@@ -210,10 +210,9 @@ Right Alt
 Right GUI
 ```
 
-
-Update Repository
+Repository
 -------
-Clone again to the latest state.    
+You can add 5 fork repositories for QMK and Vial.
 If you get an error like this, please update the repository.     
 ```
 error: branch 'x.x.x' not found.

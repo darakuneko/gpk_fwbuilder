@@ -55,6 +55,7 @@ ipcMain.handle('buildCache',  () => command.buildCache(process.platform==='win32
 ipcMain.handle('generateQMKFile', async (e, dat) => await command.generateQMKFile(dat))
 ipcMain.handle('generateVialId', async () => await command.generateVialId())
 ipcMain.handle('updateRepository', async (e, fw) => await command.updateRepository(fw, mainWindow))
+ipcMain.handle('updateRepositoryCustom', async (e, obj) => await command.updateRepositoryCustom(obj, mainWindow))
 ipcMain.handle('getState',  async () => await store.get('state'))
 ipcMain.handle('setState',  async (e, obj) => {
     await store.set('state', obj)

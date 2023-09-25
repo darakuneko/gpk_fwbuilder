@@ -1,7 +1,7 @@
 {
   "name": "gpk_fwmaker_sever",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "GPK_FWMaker_Sever",
   "author": "Daraku-Neko",
   "dependencies": {
