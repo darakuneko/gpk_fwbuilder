@@ -27,7 +27,8 @@ https://github.com/darakuneko/gpk_fwbuilder/releases
 
 Firmware Build
 -------
-https://user-images.githubusercontent.com/5214078/209667452-385875e9-a826-4edf-befd-ad2817b7a7fe.mov
+Youtube    
+[![](https://img.youtube.com/vi/A-S9mt4PAJ4/0.jpg)](https://www.youtube.com/watch?v=A-S9mt4PAJ4)　　　　　
 
 After the application is installed and initialized, "GPKFW" directory will be created.
 
