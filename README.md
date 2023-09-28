@@ -1,6 +1,8 @@
 # GPK FWBuilder
 Application to create QMK/Vial firmware.  
 
+https://github.com/darakuneko/gpk_fwbuilder/assets/5214078/70497d3d-4729-4b58-b9b3-c4626b0f21d9
+
 CUI version
 -------
 GPK FWMaker  
@@ -27,9 +29,6 @@ https://github.com/darakuneko/gpk_fwbuilder/releases
 
 Firmware Build
 -------
-Youtube    
-[![](https://img.youtube.com/vi/A-S9mt4PAJ4/0.jpg)](https://www.youtube.com/watch?v=A-S9mt4PAJ4)　　　　　
-
 After the application is installed and initialized, "GPKFW" directory will be created.
 
 e.g.   
