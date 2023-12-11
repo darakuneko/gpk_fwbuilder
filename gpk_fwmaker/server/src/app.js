@@ -232,8 +232,7 @@ app.post('/convert/kle/qmk', multer().single('kle'), async (req, res) => {
 
         let configQmk = await cmd.readQmkFile(fileKb, 'config.h')
         if (option === 1) {
-            const configFirm = await cmd.readFirmFiles('config.h')
-            configQmk = configQmk + configFirm
+            configQmk = await cmd.readFirmFiles('config.h')
         }
         await cmd.writeQmkFile(fileKb, 'config.h', configQmk)
 
