@@ -8,7 +8,7 @@ let mainWindow
 const createWindow = () => {
     const win  = store.get('window')
     const state  = store.get('state')
-    const isRestored = win && state.version === app.getVersion()
+    const isRestored = win && state?.version === app.getVersion()
 
     mainWindow = new BrowserWindow({
         x: isRestored ? win.x : undefined,
