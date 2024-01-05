@@ -5,7 +5,7 @@ const fs = require('fs');
 
 const dirQMK = '/root/qmk_firmware'
 const dirVial = '/root/vial-qmk'
-const dirCustomRepo  = `/root/custom_repository`
+const dirCustomRepo = `/root/custom_repository`
 const dirFirmFiles = '/firmware-scripts/'
 
 const execCd = async (dir, line) => await exec(`cd ${dir} && ${line}`)
@@ -13,7 +13,7 @@ const execQMK = async (line) => await execCd(dirQMK, line)
 const execVial = async (line) => await execCd(dirVial, line)
 const execFirmFiles = async (line) => await execCd(dirFirmFiles, line)
 
-const spawn = (line) => childProcess.spawn(line, { shell: true })
+const spawn = (line) => childProcess.spawn(line, {shell: true})
 
 const streamWriteLine = async (dir, line, res) => {
     await exec(`cd ${dir} && ${line}`)
@@ -29,15 +29,26 @@ const findFirmwareL = (dir) => {
 const cpFirmwareL = (dir) => `${findFirmwareL(dir)} -type f -exec cp {} /root/keyboards \\;`
 
 const rmL = (path) => `rm -rf ${path}`
-const rmKeyboardsL = (path) => rmL(`${path}/keyboards/*`)
+const rmKeyboardsL = (path, kb) => rmL(`${path}/keyboards/${kb}`)
+
+const mkCustomDir = async (fw) => {
+    const baseDir = `${dirCustomRepo}/${fw}`
+    const result = await exec(`cd ${baseDir} && ls -d */`)
+    return `${baseDir}/${result.stdout.split("\n")[0].replace(/\//g, "")}`
+}
 
 const tagZeroFill2Int = (str) => {
     const s = str
-            .replace(/\.(\d{1})\./, ".0$1.")
-            .replace(/\.(\d{2})$/, ".0$1")
-            .replace(/\.(\d{1})$/, ".00$1")
-            .replace(/\./g, "")
+        .replace(/\.(\d{1})\./, ".0$1.")
+        .replace(/\.(\d{2})$/, ".0$1")
+        .replace(/\.(\d{1})$/, ".00$1")
+        .replace(/\./g, "")
     return parseInt(s)
+}
+
+const streamResponse = async (res, fn) => {
+    res.writeHead(200, {"Content-Type": "text/event-stream"})
+    await fn()
 }
 
 const streamLog = (line, res) => {
@@ -45,6 +56,10 @@ const streamLog = (line, res) => {
     response.stdout.on('data', (data) => res.write(data.toString()))
     response.stderr.on('data', (data) => res.write(data.toString()))
     response.on('close', () => res.end(''))
+}
+
+const streamEnd = (res, msg) => {
+    res.end(msg)
 }
 
 const streamError = (res, e) => {
@@ -58,12 +73,11 @@ const buildCustomFW = async (res, dir, branch, kb, km) => {
 }
 
 const cpCfgToCustom = async (dir, kbDir) => {
-    await exec(rmKeyboardsL(dir))
+    await exec(rmKeyboardsL(dir, kbDir))
     await exec(`cp -rf /root/keyboards/${kbDir} ${dir}/keyboards`)
 }
 
 const checkoutRepo = async (res, dir, fw, commit) => {
-    await exec(rmKeyboardsL(dir))
     const result = await exec(`cd ${dir} && git symbolic-ref --short HEAD`)
     const branch = result.stdout.replaceAll('\n', '')
     await streamWriteLine(dir, `git fetch origin`, res)
@@ -74,37 +88,42 @@ const checkoutRepo = async (res, dir, fw, commit) => {
 }
 
 const cmd = {
+    dirQMK: '/root/qmk_firmware',
+    dirVial: '/root/vial-qmk',
+    dirCustom: async (fw) => await mkCustomDir(fw),
     tags: async () => {
         const result = await execQMK(`git ls-remote --tags`)
 
         return result
-        .stdout
-        .split('\n')
-        .flatMap(v => v.match(/tags\/[0-9].*?[0-9]$/) ? v.replace(/.*?tags\//g, '') : [])
-        .sort((a, b) => tagZeroFill2Int(b) - tagZeroFill2Int(a))
+            .stdout
+            .split('\n')
+            .flatMap(v => v.match(/tags\/[0-9].*?[0-9]$/) ? v.replace(/.*?tags\//g, '') : [])
+            .sort((a, b) => tagZeroFill2Int(b) - tagZeroFill2Int(a))
     },
     currentTag: async () => {
         const result = await execQMK(`git branch`)
         return result.stdout.split('\n').filter(v => v.match(/^\* /))[0].replace(/^\* /, '')
     },
     checkoutQmk: async (res, tag) => {
-        await exec(rmKeyboardsL(dirQMK))
         await streamWriteLineQMK(`git fetch origin`, res)
         await streamWriteLineQMK(`git reset --hard master`, res)
-        try {  await streamWriteLineQMK(`git checkout -b ${tag} refs/tags/${tag}`, res) } catch (e){
+        await streamWriteLineQMK(`git checkout master`, res)
+        try {
+            await streamWriteLineQMK(`git checkout -b ${tag} refs/tags/${tag}`, res)
+        } catch (e) {
             await streamWriteLineQMK(`git branch -D ${tag}`, res)
             await streamWriteLineQMK(`git checkout -b ${tag} refs/tags/${tag}`, res)
         }
         await streamWriteLineQMK(`make git-submodule\n`, res)
-        await exec(rmKeyboardsL(dirQMK))
     },
     checkoutVial: async (res, repo, commit) => await checkoutRepo(res, dirVial, repo, commit),
     checkoutCustom: async (res, fw, commit) => {
-        const baseDir = `${dirCustomRepo}/${fw}`
-        const result = await exec(`cd ${baseDir} && ls -d */`)
-        const dir = `${baseDir}/${result.stdout.split("\n")[0]}`
+        const dir = await mkCustomDir(fw)
         const branch = await checkoutRepo(res, dir, fw, commit)
         return {branch: branch, dir: dir}
+    },
+    copyKeyboard: async (fwDir, kbDir) => {
+        await exec(`cp -rf ${fwDir}/${kbDir} /root/keyboards/`)
     },
     buildQmkFirmware: async (res, kb, km) => {
         await exec(`${findFirmwareL(dirQMK)} -delete`)
@@ -124,18 +143,18 @@ const cmd = {
         streamLog(line, res)
     },
     updateRepositoryCustom: async (res, customDir, url) => {
-        const dir  = `${dirCustomRepo}/${customDir}`
+        const dir = `${dirCustomRepo}/${customDir}`
         const cloneDir = `${dir}/${url.match(/\/([^/]+)\.git$/)[1]}`
         const line = `rm -rf ${dir} && mkdir ${dir} && cd ${dir} && git clone ${url} && cd ${cloneDir} && make git-submodule`
         streamLog(line, res)
     },
     deleteRepositoryCustom: async (res, customDir) => {
-        const dir  = `${dirCustomRepo}/${customDir}`
+        const dir = `${dirCustomRepo}/${customDir}`
         const line = `rm -rf ${dir}`
         streamLog(line, res)
     },
-    generateQmkFile: async (kb, mcu, layout, user) => {
-        await exec(rmKeyboardsL(dirQMK))
+    generateQmkFile: async (kb, kbDir, mcu, layout, user) => {
+        await exec(rmKeyboardsL(dirQMK, kbDir))
         const result = await exec(`qmk new-keyboard -kb ${kb} -t ${mcu} -l ${layout} -u ${user}`)
         return result
     },
@@ -152,7 +171,7 @@ const cmd = {
     writeFirmFiles: async (filePath, obj) => await fs.writeFileSync(`${dirFirmFiles}${filePath}`, obj),
     writeQmkFile: async (kb, filePath, obj) => await fs.writeFileSync(`${dirQMK}/keyboards/${kb}/${filePath}`, obj),
     cpConfigsToQmk: async (kbDir) => {
-        await exec(rmKeyboardsL(dirQMK))
+        await exec(rmKeyboardsL(dirQMK, kbDir))
         await exec(`cp -rf /root/keyboards/${kbDir} ${dirQMK}/keyboards`)
     },
     cpConfigsToVial: async (kbDir) => await cpCfgToCustom(dirVial, kbDir),
@@ -168,4 +187,6 @@ const cmd = {
 }
 
 module.exports.cmd = cmd
+module.exports.streamResponse = streamResponse
 module.exports.streamError = streamError
+module.exports.streamEnd = streamEnd

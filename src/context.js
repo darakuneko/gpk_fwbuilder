@@ -1,5 +1,5 @@
-import React from 'react'
-import {createContext, useState, useContext} from 'react'
+import React, {createContext, useContext, useState} from 'react'
+
 const stateContext = createContext({})
 
 export function useStateContext() {
@@ -12,19 +12,21 @@ export function StateProvider({children}) {
 
     const [state, _setState] = useState({
         version: '',
-        build : {
+        storePath: '',
+        build: {
             fw: 'QMK',
             tag: '',
             tags: [],
             kb: '',
             km: '',
             commit: '',
+            useRepo: false,
         },
-        buildCache : {
+        keyboardList: {
             kb: [],
             km: [],
         },
-        generate : {
+        generate: {
             qmkFile: {
                 kb: '',
                 user: '',
@@ -32,7 +34,7 @@ export function StateProvider({children}) {
                 mcu: 'RP2040',
             }
         },
-        convert : {
+        convert: {
             kle: {
                 kb: '',
                 user: '',
@@ -44,36 +46,36 @@ export function StateProvider({children}) {
                 option: 0,
             },
             pins: {
-                rp2040: ["GP0","GP1","GP2","GP3","GP4","GP5","GP6","GP7","GP8","GP9","GP10","GP11","GP12","GP13","GP14","GP15","GP16","GP17","GP18","GP19","GP20","GP21","GP22","GP23","GP24","GP25","GP26","GP27","GP28","GP29"],
+                rp2040: ["GP0", "GP1", "GP2", "GP3", "GP4", "GP5", "GP6", "GP7", "GP8", "GP9", "GP10", "GP11", "GP12", "GP13", "GP14", "GP15", "GP16", "GP17", "GP18", "GP19", "GP20", "GP21", "GP22", "GP23", "GP24", "GP25", "GP26", "GP27", "GP28", "GP29"],
                 promicro: ["D3", "D2", "D1", "D0", "D4", "C6", "D7", "E6", "B4", "B5", "B6", "B2", "B3", "B1", "F7", "F6", "F5", "F4", "B0", "D5"]
             }
         },
-        repository : {
+        repository: {
             firmware: "QMK",
             firmwares: [{
                 id: "QMK",
                 url: ""
-            },{
+            }, {
                 id: "Vial",
                 url: ""
-            },{
+            }, {
                 id: "Custom1",
                 url: ""
-            },{
+            }, {
                 id: "Custom2",
                 url: ""
-            },{
+            }, {
                 id: "Custom3",
                 url: ""
-            },{
+            }, {
                 id: "Custom4",
                 url: ""
-            },{
+            }, {
                 id: "Custom5",
                 url: ""
             }],
         },
-        setting : {
+        setting: {
             fwMakerUrl: "",
             fwDir: ""
         },
@@ -84,19 +86,20 @@ export function StateProvider({children}) {
     const setState = async (obj) => {
         _state = obj
         _setState({
-            build : {
+            build: {
                 fw: obj.build.fw,
                 tag: obj.build.tag,
                 tags: obj.build.tags,
                 kb: obj.build.kb,
                 km: obj.build.km,
-                commit: obj.build.commit
+                commit: obj.build.commit,
+                useRepo: obj.build.useRepo,
             },
-            buildCache : {
-                kb: obj.buildCache.kb,
-                km: obj.buildCache.km,
+            keyboardList: {
+                kb: obj.keyboardList.kb,
+                km: obj.keyboardList.km,
             },
-            generate : {
+            generate: {
                 qmkFile: {
                     kb: obj.generate.qmkFile.kb,
                     user: obj.generate.qmkFile.user,
@@ -104,7 +107,7 @@ export function StateProvider({children}) {
                     mcu: obj.generate.qmkFile.mcu,
                 }
             },
-            convert : {
+            convert: {
                 kle: {
                     kb: obj.convert.kle.kb,
                     user: obj.convert.kle.user,
@@ -120,15 +123,16 @@ export function StateProvider({children}) {
                     promicro: obj.convert.pins.promicro,
                 }
             },
-            repository : {
+            repository: {
                 firmware: obj.repository.firmware,
                 firmwares: obj.repository.firmwares
             },
-            setting : {
+            setting: {
                 fwMakerUrl: obj.setting.fwMakerUrl,
                 fwDir: obj.setting.fwDir
             },
             version: obj.version,
+            storePath:  obj.storePath,
             logs: obj.logs,
             tabDisabled: obj.tabDisabled,
         })

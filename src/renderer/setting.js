@@ -71,7 +71,8 @@ const Setting = () => {
                 }}
             >
                 Use local docker if URL is empty<br />
-                Settings are saved when you exit, so you will need to restart the application.
+                Settings are saved when you exit, so you will need to restart the application.<br />
+                config: {state.storePath}
             </Box>
         </Box>
     )

@@ -1,19 +1,25 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-const {cmd, streamError} = require('./command')
+const fs = require('fs')
+const path = require('path')
+const {cmd, streamResponse, streamError} = require('./command')
 const app = express()
 const multer = require("multer")
 
 const server = app.listen(3000, async () => console.log("Node.js is listening to PORT:" + server.address().port))
 
-const streamResponse = async (res, fn) => {
-    res.writeHead(200, {"Content-Type": "text/event-stream"})
-    await fn()
-}
-
 const bufferToJson = (buf) => JSON.parse(buf.toString())
 
 const jsonToStr = (obj) => JSON.stringify(obj, null, 2)
+
+const getFWDir = async (fw) => {
+    const getDir = async (fw) => {
+        if (fw === "qmk") return cmd.dirQMK
+        if (fw === "vial") return cmd.dirVial
+        return await cmd.dirCustom(fw)
+    }
+    return `${await getDir(fw)}/keyboards`
+}
 
 app.use(bodyParser.urlencoded({extended: true}))
 app.use(bodyParser.json())
@@ -67,7 +73,8 @@ app.post('/build/qmk', async (req, res) => {
             const tag = req.body.tag
             const currentTag = await cmd.currentTag()
             if (tag !== currentTag) await cmd.checkoutQmk(res, tag)
-            await cmd.cpConfigsToQmk(kbDir)
+            const useRepo = req.body?.useRepo
+            if (!useRepo) await cmd.cpConfigsToQmk(kbDir)
             await cmd.buildQmkFirmware(res, kb, km)
         } catch (e) {
             streamError(res, e)
@@ -85,7 +92,8 @@ app.post('/build/vial', async (req, res) => {
             const km = req.body.km.replace(/:.*|flash/g, "")
             const commit = "commit" in req.body && req.body.commit.length > 0 ? req.body.commit : repo
             await cmd.checkoutVial(res, repo, commit)
-            await cmd.cpConfigsToVial(kbDir)
+            const useRepo = req.body?.useRepo
+            if (!useRepo) await cmd.cpConfigsToVial(kbDir)
             await cmd.buildVialFirmware(res, kb, km)
         } catch (e) {
             streamError(res, e)
@@ -94,7 +102,6 @@ app.post('/build/vial', async (req, res) => {
 
     await streamResponse(res, fn)
 })
-
 
 app.post('/build/custom', async (req, res) => {
     const fn = async () => {
@@ -105,10 +112,8 @@ app.post('/build/custom', async (req, res) => {
             const km = req.body.km.replace(/:.*|flash/g, "")
             const commit = req.body.commit
             const obj = await cmd.checkoutCustom(res, fw, commit)
-            console.log("checkoutCustom")
-            await cmd.cpConfigsToCustom(obj.dir, kbDir)
-            console.log("cpConfigsToCustom")
-
+            const useRepo = req.body?.useRepo
+            if (!useRepo) await cmd.cpConfigsToCustom(obj.dir, kbDir)
             await cmd.buildCustomFirmware(res, obj, kb, km)
         } catch (e) {
             streamError(res, e)
@@ -116,6 +121,76 @@ app.post('/build/custom', async (req, res) => {
     }
 
     await streamResponse(res, fn)
+})
+
+
+app.post('/checkout', async (req, res) => {
+    const fn = async () => {
+        try {
+            const fw = req.body.fw
+            if (fw === "qmk") {
+                const tag = req.body.tag
+                await cmd.checkoutQmk(res, tag)
+            } else if (fw === "vial") {
+                const repo = 'vial'
+                const commit = "commit" in req.body && req.body.commit.length > 0 ? req.body.commit : repo
+                await cmd.checkoutVial(res, repo, commit)
+            } else {
+                const commit = req.body.commit
+                await cmd.checkoutCustom(res, fw, commit)
+            }
+            res.end('finish')
+        } catch (e) {
+            streamError(res, e)
+        }
+    }
+
+    await streamResponse(res, fn)
+})
+
+app.post('/list/keyboards', async (req, res) => {
+    const d = []
+    const searchFiles = (dirPath) => {
+        const allDirs = fs.readdirSync(dirPath, {withFileTypes: true})
+        const f = []
+        allDirs.map(v => {
+            if (v.isDirectory()) {
+                const fp = path.join(dirPath, v.name)
+                f.push(searchFiles(fp))
+                if (fp.match(/\/keymaps\//)) d.push(fp)
+            }
+        })
+    }
+
+    try {
+        const fwDir = await getFWDir(req.body.fw)
+        searchFiles(fwDir)
+        const keymapsDirs = d.flat().map(v => v.replace(fwDir, '').split("/keymaps/"))
+        const kb = Array.from(new Set(keymapsDirs.map(v => v[0])))
+        const obj = kb.map(k => {
+            return {
+                kb: k.replace(/\\/g, '/').replace(/^\//, '').replace(/.*\/keyboards\//, ''),
+                km: keymapsDirs.filter(v => v[0] === k).map(v => v[1])
+            }
+        })
+        res.send(obj)
+        res.on('close', () => res.end('finish'))
+    } catch (e) {
+        res.send(e)
+    }
+})
+
+app.post('/copy/keyboard', async (req, res) => {
+    try {
+        const fwDir = await getFWDir(req.body.fw)
+        const kb = req.body.kb
+        const kbL = kb.toLowerCase().replace(/-| /g, "_")
+        const kbDir = kbL.replace(/\/.*/g, "")
+        await cmd.copyKeyboard(fwDir, kbDir)
+        res.send("finish")
+    } catch (e) {
+        res.send(e)
+    }
 })
 
 app.post('/generate/qmk/file', async (req, res) => {
@@ -127,7 +202,7 @@ app.post('/generate/qmk/file', async (req, res) => {
         const layout = req.body.layout
         const user = req.body.user
 
-        const result = await cmd.generateQmkFile(kbL, mcu, layout, user)
+        const result = await cmd.generateQmkFile(kbL, kbDir, mcu, layout, user)
         const infoQmk = bufferToJson(await cmd.readQmkFile(kbDir, 'info.json'))
         infoQmk.keyboard_name = kb
         infoQmk.manufacturer = user

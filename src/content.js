@@ -30,6 +30,7 @@ const Content = () => {
                 if (exist === 200 || exist === 503) {
                     const reStoreState = await api.getState()
                     state.version = await api.appVersion()
+                    state.storePath = await api.getStorePath()
                     if (reStoreState?.build) state.build = reStoreState.build
                     if (reStoreState?.generate) state.generate = reStoreState.generate
                     if (reStoreState?.convert) state.convert = reStoreState.convert

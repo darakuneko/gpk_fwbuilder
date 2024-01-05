@@ -10,13 +10,13 @@ const Store = require("electron-store")
 const store = new Store()
 const {app} = require("electron")
 
-const dockerVersion = "gpk_fwmaker_0004"
+const dockerVersion = "gpk_fwmaker_0005"
 
 if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`
 const instance = axios.create();
 instance.defaults.timeout = 2500;
 //store.clear('state')
-const state  = store.get('state')
+const state = store.get('state')
 const localFWMakerUrl = "http://127.0.0.1:3123"
 const localFWdir = `${app.getPath('home')}/GPKFW/`
 
@@ -28,12 +28,12 @@ const fwMakerUrlMassage = "The docker command will not be issued unless the dock
 const appExe = async (cmd) =>
     fwMakerUrl.includes("127.0.0.1") ? await exec(`cd "${appPath}/gpk_fwmaker" && ${cmd}`) : fwMakerUrlMassage
 
-const appSpawn =  (cmd) =>
+const appSpawn = (cmd) =>
     fwMakerUrl.includes("127.0.0.1") ? `cd "${appPath}/gpk_fwmaker" && ${cmd}` : fwMakerUrlMassage
 
 const url = (path) => new URL(`${fwMakerUrl}${path}`).href
 let isDockerUp = false
-let skipCheckDocker = !fwMakerUrl.includes("127.0.0.1") ? !fwMakerUrl.includes("127.0.0.1")  : false
+let skipCheckDocker = !fwMakerUrl.includes("127.0.0.1") ? !fwMakerUrl.includes("127.0.0.1") : false
 
 const fileAppend = (data, key, obj) => {
     const buffer = fs.readFileSync(obj.path)
@@ -56,7 +56,7 @@ const streamLog = (res, mainWindow, init) => {
     })
 }
 
-const createdMsg  = "Files are created in GKPFW directory"
+const createdMsg = "Files are created in GKPFW directory"
 let buildCompleted = false
 const responseStreamLog = async (res, mainWindow, channel) => {
     buildCompleted = false
@@ -70,10 +70,10 @@ const responseStreamLog = async (res, mainWindow, channel) => {
 
 const command = {
     upImage: async (mainWindow) => {
-        if(!skipCheckDocker){
+        if (!skipCheckDocker) {
             const result = await appExe("docker images")
-            const cmd  = result.stdout.match(dockerVersion) ? "docker compose start" : "docker compose build && docker compose up -d"
-            const res = spawn(appSpawn(cmd), { shell: true })
+            const cmd = result.stdout.match(dockerVersion) ? "docker compose start" : "docker compose build && docker compose up -d"
+            const res = spawn(appSpawn(cmd), {shell: true})
             streamLog(res, mainWindow, true)
         }
     },
@@ -81,13 +81,13 @@ const command = {
         if(!skipCheckDocker) await appExe("docker compose stop")
     },
     rebuildImage: async (mainWindow) => {
-        const res = spawn(appSpawn("docker compose rm -f -s -v && docker compose build --no-cache && docker compose up -d"), { shell: true });
+        const res = spawn(appSpawn("docker compose rm -f -s -v && docker compose build --no-cache && docker compose up -d"), {shell: true});
         streamLog(res, mainWindow)
     },
     setSkipCheckDocker: async (skip) => skipCheckDocker = skip,
     existSever: async () => {
-        if(skipCheckDocker) return 503
-        if(isDockerUp) {
+        if (skipCheckDocker) return 503
+        if (isDockerUp) {
             const res = await instance(url("")).catch(e => e)
             return res.status ? res.status : 404
         }
@@ -95,11 +95,45 @@ const command = {
     },
     tags: async () => {
         const res = await instance(url('/tags/qmk')).catch(e => e)
-        if(res.status === 200) {
+        if (res.status === 200) {
             return res.data
         } else {
             return []
         }
+    },
+    checkout: async (obj, mainWindow) => {
+        const res = await axios({
+            url: url("/checkout"),
+            method: 'post',
+            responseType: 'stream',
+            data: obj
+        }).catch(e => {
+            console.log(e)
+        })
+        const channel = "streamBuildLog"
+        mainWindow.webContents.send(channel, "@@@@init@@@@")
+        const fail = () => {
+            mainWindow.webContents.send("streamLog", `POST ${url("/checkout")} failed`)
+            buildCompleted = true
+        }
+        return res?.status === 200 ? responseStreamLog(res, mainWindow, channel) : fail()
+    },
+    copyKeyboardFile: async (obj, mainWindow) => {
+        const res = await axios({
+            url: url("/copy/keyboard"),
+            method: 'post',
+            responseType: 'stream',
+            data: obj
+        }).catch(e => {
+            console.log(e)
+        })
+        const channel = "streamBuildLog"
+        mainWindow.webContents.send(channel, "@@@@init@@@@")
+        const fail = () => {
+            mainWindow.webContents.send("streamLog", `POST ${url("/copy/keyboard")} failed`)
+            buildCompleted = true
+        }
+        return res?.status === 200 ? responseStreamLog(res, mainWindow, channel) : fail()
     },
     build: async (dat, mainWindow) => {
         const u = dat.fw === "QMK" || dat.fw === "Vial" ? `/build/${dat.fw.toLowerCase()}` : `/build/custom`
@@ -107,45 +141,48 @@ const command = {
             kb: dat.kb,
             km: dat.km,
             tag: dat.tag,
+            useRepo: dat.useRepo,
         } : {
             fw: dat.fw.toLowerCase(),
             kb: dat.kb,
             km: dat.km,
             commit: dat.commit,
+            useRepo: dat.useRepo,
         }
         const res = await axios({
             url: url(u),
             method: 'post',
             responseType: 'stream',
             data: data
-        }).catch(e => {})
+        }).catch(e => {
+        })
         const channel = "streamBuildLog"
         mainWindow.webContents.send(channel, "@@@@init@@@@")
         return res.status === 200 ? responseStreamLog(res, mainWindow, channel) :
         mainWindow.webContents.send("streamLog",  `Cannot POST ${u}`)  
     },
     buildCompleted: () => buildCompleted,
-    buildCache: (isWin) => {
+    listLocalKeyboards: (isWin) => {
         const d = []
         const searchFiles = (dirPath) => {
-            const allDirents = fs.readdirSync(dirPath, { withFileTypes: true })
+            const allDirents = fs.readdirSync(dirPath, {withFileTypes: true})
             const f = []
             allDirents.map(v => {
                 if (v.isDirectory()) {
                     const fp = path.join(dirPath, v.name)
                     f.push(searchFiles(fp))
-                    if(isWin) {
-                        if(fp.match(/\\keymaps\\/)) d.push(fp)
+                    if (isWin) {
+                        if (fp.match(/\\keymaps\\/)) d.push(fp)
                     } else {
-                        if(fp.match(/\/keymaps\//)) d.push(fp)
+                        if (fp.match(/\/keymaps\//)) d.push(fp)
                     }
                 }
             })
         }
         searchFiles(fwDir)
         const fd = fwDir.replace(/\//g, '\\')
-        const keymapsDirs = d.flat().map(v => isWin ? v.replace(fd, '').split("\\keymaps\\") : 
-        v.replace(fwDir, '').split("/keymaps/"))
+        const keymapsDirs = d.flat().map(v => isWin ? v.replace(fd, '').split("\\keymaps\\") :
+            v.replace(fwDir, '').split("/keymaps/"))
         const kb = Array.from(new Set(keymapsDirs.map(v => v[0])))
 
         return kb.map(k => {
@@ -155,17 +192,25 @@ const command = {
             }
         })
     },
+    listRemoteKeyboards: async (fw) => {
+        const res = await axios.post(url("/list/keyboards"), {
+            fw: fw.toLowerCase()
+        }).catch(e => {
+        })
+        return res?.data ? res.data : []
+    },
     generateQMKFile: async (dat) => {
         const res = await axios.post(url("/generate/qmk/file"), {
             kb: dat.kb,
             user: dat.user,
             mcu: dat.mcu,
             layout: dat.layout
-        }).catch(e => {})
+        }).catch(e => {
+        })
 
-        return res.status === 200 
-         ? `Generate!!\n\n${createdMsg}`
-         : `Cannot POST`
+        return res.status === 200
+            ? `Generate!!\n\n${createdMsg}`
+            : `Cannot POST`
     },
     generateVialId: async () => {
         const res = await axios(url(`/generate/vial/id`))
@@ -184,13 +229,14 @@ const command = {
                 id: obj.id.toLowerCase(),
                 url: obj.url
             }
-        }).catch(e => {})
+        }).catch(e => {
+        })
         await responseStreamLog(res, mainWindow, "streamLog")
     },
     convertViaJson: async (file) => {
         const data = new FormData()
         fileAppend(data, 'info', file.info)
-        fileAppend(data,'kle', file.kle)
+        fileAppend(data, 'kle', file.kle)
 
         const res = await axios.post(url("/convert/via/json"), data,
             {headers: {"Content-Type": "multipart/form-data"}})
@@ -198,7 +244,7 @@ const command = {
     },
     convertKleJson: async (obj) => {
         const data = new FormData()
-        fileAppend(data,'kle', obj.file)
+        fileAppend(data, 'kle', obj.file)
         data.append('params', JSON.stringify(obj.params))
         const res = await axios.post(url("/convert/kle/qmk"), data,
             {headers: {"Content-Type": "multipart/form-data"}})
