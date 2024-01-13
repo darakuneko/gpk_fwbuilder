@@ -3,6 +3,8 @@ Application to create QMK/Vial firmware.
 
 https://github.com/darakuneko/gpk_fwbuilder/assets/5214078/70497d3d-4729-4b58-b9b3-c4626b0f21d9
 
+https://github.com/darakuneko/gpk_fwbuilder/assets/5214078/55f463ee-44eb-4aa6-bde4-87bfe379ebf0
+
 CUI version
 -------
 GPK FWMaker  
