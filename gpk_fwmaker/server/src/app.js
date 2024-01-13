@@ -277,7 +277,7 @@ app.post('/convert/kle/qmk', multer().single('kle'), async (req, res) => {
         const kleFileName = 'kle.json'
         await cmd.writeFirmFiles(kleFileName, jsonToStr(kle))
 
-        await cmd.generateQmkFile(fileKb, mcu, layout, user)
+        await cmd.generateQmkFile(fileKb, kbDir, mcu, layout, user)
         await cmd.generateFirmFiles(kleFileName)
 
         const vialFirm = bufferToJson(await cmd.readFirmFiles('vial.json'))

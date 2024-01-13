@@ -10,7 +10,7 @@ const Store = require("electron-store")
 const store = new Store()
 const {app} = require("electron")
 
-const dockerVersion = "gpk_fwmaker_0005"
+const dockerVersion = "gpk_fwmaker_0006"
 
 if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`
 const instance = axios.create();
