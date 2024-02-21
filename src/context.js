@@ -12,6 +12,7 @@ export function StateProvider({children}) {
 
     const [state, _setState] = useState({
         version: '',
+        cmdVersion: '',
         storePath: '',
         build: {
             fw: 'QMK',
@@ -132,6 +133,7 @@ export function StateProvider({children}) {
                 fwDir: obj.setting.fwDir
             },
             version: obj.version,
+            cmdVersion: obj.cmdVersion,
             storePath:  obj.storePath,
             logs: obj.logs,
             tabDisabled: obj.tabDisabled,

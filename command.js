@@ -11,6 +11,7 @@ const store = new Store()
 const {app} = require("electron")
 
 const dockerVersion = "gpk_fwmaker_0006"
+const cmdVersion = 1
 
 if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`
 const instance = axios.create();
@@ -71,9 +72,19 @@ const responseStreamLog = async (res, mainWindow, channel) => {
 const command = {
     upImage: async (mainWindow) => {
         if (!skipCheckDocker) {
+            const cmd = async (result) =>  {
+                const isDockerVersion = result.stdout.match(dockerVersion)
+                if (isDockerVersion && state.cmdVersion === cmdVersion) return "docker compose start"
+                else if (isDockerVersion && state.cmdVersion !== cmdVersion) {
+                    state.cmdVersion = cmdVersion
+                    await store.set('state', state)
+                    return "docker compose up -d --build"
+                }
+                else return "docker compose up -d --build --force-recreate"
+            }
+
             const result = await appExe("docker images")
-            const cmd = result.stdout.match(dockerVersion) ? "docker compose start" : "docker compose build && docker compose up -d"
-            const res = spawn(appSpawn(cmd), {shell: true})
+            const res = spawn(appSpawn(await cmd(result)), {shell: true})
             streamLog(res, mainWindow, true)
         }
     },
