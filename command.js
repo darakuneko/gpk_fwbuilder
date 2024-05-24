@@ -10,7 +10,7 @@ const Store = require("electron-store")
 const store = new Store()
 const {app} = require("electron")
 
-const dockerVersion = "gpk_fwmaker_0006"
+const dockerVersion = /gpk_fwmaker_0006/
 const cmdVersion = undefined
 
 if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`
@@ -73,7 +73,8 @@ const command = {
     upImage: async (mainWindow) => {
         if (!skipCheckDocker) {
             const cmd = async (result) =>  {
-                const isDockerVersion = result.stdout.match(dockerVersion)
+                const isDockerVersion = dockerVersion.test(result.stdout);
+                state.cmdVersion = state.cmdVersion ? state.cmdVersion : undefined
                 if (isDockerVersion && state.cmdVersion === cmdVersion) return "docker compose start"
                 else if (isDockerVersion && state.cmdVersion !== cmdVersion) {
                     state.cmdVersion = cmdVersion
@@ -82,7 +83,6 @@ const command = {
                 }
                 else return "docker compose up -d --build --force-recreate"
             }
-
             const result = await appExe("docker images")
             const res = spawn(appSpawn(await cmd(result)), {shell: true})
             streamLog(res, mainWindow, true)
