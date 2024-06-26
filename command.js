@@ -74,11 +74,10 @@ const command = {
         if (!skipCheckDocker) {
             const cmd = async (result) =>  {
                 const isDockerVersion = dockerVersion.test(result.stdout);
-                state.cmdVersion = state.cmdVersion ? state.cmdVersion : undefined
-                if (isDockerVersion && state.cmdVersion === cmdVersion) return "docker compose start"
-                else if (isDockerVersion && state.cmdVersion !== cmdVersion) {
-                    state.cmdVersion = cmdVersion
-                    await store.set('state', state)
+                const stateCmdVersion = store.get('cmdVersion')
+                if (isDockerVersion && stateCmdVersion === cmdVersion) return "docker compose start"
+                else if (isDockerVersion && stateCmdVersion !== cmdVersion) {
+                    await store.set('cmdVersion', cmdVersion)
                     return "docker compose up -d --build"
                 }
                 else return "docker compose up -d --build --force-recreate"
