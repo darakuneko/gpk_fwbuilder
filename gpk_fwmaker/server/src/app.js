@@ -287,7 +287,14 @@ app.post('/convert/kle/qmk', multer().single('kle'), async (req, res) => {
             return
         }
 
-        const infoQmk = bufferToJson(await cmd.readQmkFile(fileKb, 'info.json'))
+        let json = 'keyboard.json'
+        let infoQmk = {}
+        try {
+            infoQmk = bufferToJson(await cmd.readQmkFile(fileKb, json))
+        } catch (_) {
+            json = 'info.json'
+            infoQmk =bufferToJson(await cmd.readQmkFile(fileKb, json))
+        }
         const infoFirm = bufferToJson(await cmd.readFirmFiles('info.json'))
         infoQmk.keyboard_name = kb
         infoQmk.manufacturer = user
@@ -303,17 +310,18 @@ app.post('/convert/kle/qmk', multer().single('kle'), async (req, res) => {
             rows: rows,
             cols: cols
         }
-        await cmd.writeQmkFile(fileKb, 'info.json', jsonToStr(infoQmk))
+        await cmd.writeQmkFile(fileKb, json, jsonToStr(infoQmk))
 
-        let configQmk = await cmd.readQmkFile(fileKb, 'config.h')
+        let configQmk = ""
+        try {
+            configQmk = await cmd.readQmkFile(fileKb, 'config.h')
+        } catch (_) { }
         if (option === 1) {
             configQmk = await cmd.readFirmFiles('config.h')
         }
-        await cmd.writeQmkFile(fileKb, 'config.h', configQmk)
-
-        const kbFirm = await cmd.readFirmFiles('kb.h')
-        await cmd.writeQmkFile(fileKb, `${fileKb}.h`, kbFirm)
-
+        if(configQmk !== "") {
+            await cmd.writeQmkFile(fileKb, 'config.h', configQmk)
+        }
         const kmFirm = await cmd.readFirmFiles('keymap.c')
         await cmd.writeQmkFile(fileKb, 'keymaps/default/keymap.c', kmFirm)
 
