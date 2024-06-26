@@ -30,6 +30,8 @@ const createWindow = () => {
     })
 }
 
+app.setName("GPK FWBuilder")
+
 app.on('ready', () => {
     createWindow()
     command.upImage(mainWindow)
