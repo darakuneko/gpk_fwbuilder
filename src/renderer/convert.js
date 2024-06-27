@@ -201,7 +201,7 @@ const Convert = () => {
         state.tabDisabled = true
         setState(state)
         setDisabledViaCovertButton(true)
-        const log = await api.convertviaObj(viaObj)
+        const log = await api.convertViaJson(viaObj)
         state.logs = log
         state.tabDisabled = false
         setState(state)
