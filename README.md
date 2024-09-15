@@ -12,8 +12,9 @@ https://github.com/darakuneko/gpk_fwmaker
 
 Before use
 -------
-Install Docker Desktop    
-link: https://www.docker.com
+Install Docker Desktop  
+link: https://www.docker.com  
+Note: Anything compatible is fine, as long as docker compose can be used.  
 
 ![docker](https://user-images.githubusercontent.com/5214078/209291875-596663b3-71a5-4d22-8b4c-309c1edbcb61.jpg)
 
