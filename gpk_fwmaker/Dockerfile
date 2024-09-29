@@ -14,6 +14,8 @@ RUN apt-get -y install \
 
 RUN pip install qmk --break-system-packages
 
+RUN pip install milc==1.8.0 --break-system-packages
+
 RUN echo 'PATH="$HOME/.local/bin:$PATH"' >> $HOME/.bashrc
 
 RUN ["/bin/bash", "-c", "source $HOME/.bashrc"]
