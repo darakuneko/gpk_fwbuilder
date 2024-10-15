@@ -123,7 +123,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ${keymap}
 };
 `
-const vil2c = (json) => {
+const vial2c = (json) => {
   if (!json.layout || !Array.isArray(json.layout)) {
     console.warn("Layout is not found or not in the correct format.");
     return ""; 
