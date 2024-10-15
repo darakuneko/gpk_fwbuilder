@@ -11,7 +11,7 @@ const store = new Store()
 const {app} = require("electron")
 
 const dockerVersion = /gpk_fwmaker_0006/
-const cmdVersion = 2
+const cmdVersion = 3
 
 if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`
 const instance = axios.create();
@@ -242,6 +242,14 @@ const command = {
         }).catch(e => {
         })
         await responseStreamLog(res, mainWindow, "streamLog")
+    },
+    convertVilJson: async (file) => {
+        const data = new FormData()
+        fileAppend(data, 'vil', file.vilObj)
+
+        const res = await axios.post(url("/convert/vil/keymap_c"), data,
+            {headers: {"Content-Type": "multipart/form-data"}})
+        return res.data === "convert" ? `Converted!!\n\n${createdMsg}` : res.data
     },
     convertViaJson: async (file) => {
         const data = new FormData()

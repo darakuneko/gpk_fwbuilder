@@ -19,6 +19,10 @@ const {api} = window
 
 const Convert = () => {
     const {state, setState} = useStateContext()
+    const [vilObj, setVilObj] = useState({
+        name : "",
+        path : "",
+    })
     const [viaObj, setViaObj] = useState({
         info: {
             name : "",
@@ -37,6 +41,7 @@ const Convert = () => {
     const [pinRows, setPinRows] = React.useState([]);
 
     const [disabledViaCovertButton, setDisabledViaCovertButton] = useState(true)
+    const [disabledVilCovertButton, setDisabledVilCovertButton] = useState(true)
 
     const [keyboardError, setKeyboardError] = useState(false)
     const [usernameEmptyError, setUsernameEmptyError] = useState(false)
@@ -196,16 +201,18 @@ const Convert = () => {
     const ValidVidPidTextField = ValidTextField('A-Z0-9x can used')
     const ValidPidSameTextField = ValidTextField('other than 0x0000')
 
-    const handleviaObjSubmit = async () => {
+    const handleFileSubmit =  (mode) => async () => {
         state.logs = convertMsg
         state.tabDisabled = true
         setState(state)
         setDisabledViaCovertButton(true)
-        const log = await api.convertViaJson(viaObj)
+        setDisabledVilCovertButton(true)
+        const log = mode === "vil" ? await api.convertVilJson(vilObj) : await api.convertViaJson(viaObj)
         state.logs = log
         state.tabDisabled = false
         setState(state)
         setDisabledViaCovertButton(false)
+        setDisabledVilCovertButton(false)
     }
 
     const handleViaFileUpload = async (e) => {
@@ -222,11 +229,53 @@ const Convert = () => {
         if (viaObj.info.name.length > 0 && viaObj.kle.name.length > 0) setDisabledViaCovertButton(false)
     }
 
+    const handleVilFileUpload = async (e) => {
+        const file = e.target.files[0]
+        if (file){
+            vilObj.name = file.name
+            vilObj.path = file.path
+            setVilObj({...vilObj, vilObj })
+        }
+        if (vilObj.name.length > 0) setDisabledVilCovertButton(false)
+    }
+
     return (
         <Box sx={{
             display: 'flex',
             flexDirection: 'column',
         }}>
+        <Box sx={{ pt: 2, textAlign: "center"}}>vil(Export Vial File) to keymap.c</Box>
+            <Box
+                sx={{
+                    pt: 2,
+                    pl: 4,
+                    pr: 6,
+                    display: 'flex',
+                    alignContent: 'center',
+                    justifyContent: 'center'}} >
+                <Box>
+                    <Button
+                        component="label"
+                        variant="outlined"
+                        sx={{ mr: 4, width: "25ch"}}
+                    >
+                        vil file
+                        <input id="vil" type="file" accept=".vil" hidden onChange={handleVilFileUpload} />
+                    </Button>
+                    <InputLabel sx={{ textAlign: "center", fontSize: inputLabelMiddleFontSize }} >{vilObj.name}</InputLabel>
+                </Box>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }} >
+                    <Button variant="contained"
+                            onClick={handleFileSubmit("vil")}
+                            disabled={ disabledVilCovertButton }
+                    >Convert</Button>
+                </Box>
+            </Box>
             <Box sx={{ pt: 2, textAlign: "center"}}>QMK info.json + KLE Json = via.json</Box>
             <Box
                 sx={{
@@ -265,7 +314,7 @@ const Convert = () => {
                         alignItems: 'center'
                     }} >
                     <Button variant="contained"
-                            onClick={handleviaObjSubmit}
+                            onClick={handleFileSubmit("via")}
                             disabled={ disabledViaCovertButton }
                     >Convert</Button>
                 </Box>

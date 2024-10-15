@@ -3,6 +3,8 @@ const bodyParser = require('body-parser')
 const fs = require('fs')
 const path = require('path')
 const {cmd, streamResponse, streamError} = require('./command')
+const {vial2c} = require('./vial2c/vial2c')
+
 const app = express()
 const multer = require("multer")
 
@@ -336,6 +338,18 @@ app.post('/convert/kle/qmk', multer().single('kle'), async (req, res) => {
         }
 
         await cmd.mvQmkConfigsToVolume(kbDir)
+        res.send("finish!!")
+    } catch (e) {
+        res.send(e.toString())
+    }
+})
+
+
+
+app.post('/convert/vil/keymap_c',  multer().fields([{name: 'vil'}]), async (req, res) => {
+    try {
+        const keymap = vial2c(bufferToJson(req.files['vil'][0].buffer))
+        await cmd.write(`${cmd.dirClient}/keymap.c`, keymap)
         res.send("finish!!")
     } catch (e) {
         res.send(e.toString())

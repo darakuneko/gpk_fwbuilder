@@ -20,6 +20,7 @@ process.once('loaded', async () => {
             getState: async () => await ipcRenderer.invoke('getState'),
             setState: async (obj) => await ipcRenderer.invoke('setState', obj),
             rebuildImage: async () => await ipcRenderer.invoke('rebuildImage'),
+            convertVilJson: async (file) => await ipcRenderer.invoke('convertVilJson', file),
             convertViaJson: async (file) => await ipcRenderer.invoke('convertViaJson', file),
             convertKleJson: async (obj) => await ipcRenderer.invoke('convertKleJson', obj),
             readJson: async (path) => await ipcRenderer.invoke('readJson', path),

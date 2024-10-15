@@ -3,6 +3,7 @@ const childProcess = require('child_process')
 const exec = util.promisify(childProcess.exec)
 const fs = require('fs');
 
+const dirClient = '/root/keyboards'
 const dirQMK = '/root/qmk_firmware'
 const dirVial = '/root/vial-qmk'
 const dirCustomRepo = `/root/custom_repository`
@@ -26,7 +27,7 @@ const findFirmwareL = (dir) => {
     const d = dir.match(/\/$/) ? dir : `${dir}/`
     return `find ${d}* -maxdepth 0 -regex ".*\\.\\(bin\\|hex\\|uf2\\)"`
 }
-const cpFirmwareL = (dir) => `${findFirmwareL(dir)} -type f -exec cp {} /root/keyboards \\;`
+const cpFirmwareL = (dir) => `${findFirmwareL(dir)} -type f -exec cp {} ${dirClient} \\;`
 
 const rmL = (path) => `rm -rf ${path}`
 const rmKeyboardsL = (path, kb) => rmL(`${path}/keyboards/${kb}`)
@@ -74,7 +75,7 @@ const buildCustomFW = async (res, dir, branch, kb, km) => {
 
 const cpCfgToCustom = async (dir, kbDir) => {
     await exec(rmKeyboardsL(dir, kbDir))
-    await exec(`cp -rf /root/keyboards/${kbDir} ${dir}/keyboards`)
+    await exec(`cp -rf ${dirClient}/${kbDir} ${dir}/keyboards`)
 }
 
 const checkoutRepo = async (res, dir, fw, commit) => {
@@ -88,8 +89,9 @@ const checkoutRepo = async (res, dir, fw, commit) => {
 }
 
 const cmd = {
-    dirQMK: '/root/qmk_firmware',
-    dirVial: '/root/vial-qmk',
+    dirClient: dirClient,
+    dirQMK: dirQMK,
+    dirVial: dirVial,
     dirCustom: async (fw) => await mkCustomDir(fw),
     tags: async () => {
         const result = await execQMK(`git ls-remote --tags`)
@@ -123,7 +125,7 @@ const cmd = {
         return {branch: branch, dir: dir}
     },
     copyKeyboard: async (fwDir, kbDir) => {
-        await exec(`cp -rf ${fwDir}/${kbDir} /root/keyboards/`)
+        await exec(`cp -rf ${fwDir}/${kbDir} ${dirClient}/`)
     },
     buildQmkFirmware: async (res, kb, km) => {
         await exec(`${findFirmwareL(dirQMK)} -delete`)
@@ -172,7 +174,7 @@ const cmd = {
     writeQmkFile: async (kb, filePath, obj) => await fs.writeFileSync(`${dirQMK}/keyboards/${kb}/${filePath}`, obj),
     cpConfigsToQmk: async (kbDir) => {
         await exec(rmKeyboardsL(dirQMK, kbDir))
-        await exec(`cp -rf /root/keyboards/${kbDir} ${dirQMK}/keyboards`)
+        await exec(`cp -rf ${dirClient}/${kbDir} ${dirQMK}/keyboards`)
     },
     cpConfigsToVial: async (kbDir) => await cpCfgToCustom(dirVial, kbDir),
     cpConfigsToCustom: async (dir, kbDir) => await cpCfgToCustom(dir, kbDir),
@@ -181,8 +183,8 @@ const cmd = {
         await exec(`cp -rf ${dirQMK}/keyboards/${kbDir}/keymaps/default/* ${dirQMK}/keyboards/${kbDir}/keymaps/vial`)
     },
     mvQmkConfigsToVolume: async (kbDir) => {
-        await exec(`rm -rf /root/keyboards/${kbDir} `)
-        await exec(`mv -f ${dirQMK}/keyboards/${kbDir} /root/keyboards`)
+        await exec(`rm -rf ${dirClient}/${kbDir} `)
+        await exec(`mv -f ${dirQMK}/keyboards/${kbDir} ${dirClient}`)
     }
 }
 

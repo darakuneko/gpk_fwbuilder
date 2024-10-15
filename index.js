@@ -66,6 +66,7 @@ ipcMain.handle('setState',  async (e, obj) => {
     await store.set('state', obj)
 })
 ipcMain.handle('rebuildImage', async () => await command.rebuildImage(mainWindow))
+ipcMain.handle('convertVilJson',  async (e, file) => await command.convertVilJson(file))
 ipcMain.handle('convertViaJson',  async (e, file) => await command.convertViaJson(file))
 ipcMain.handle('convertKleJson',  async (e, obj) => await command.convertKleJson(obj))
 ipcMain.handle('readJson',  async (e, path) => await command.readJson(path))
