@@ -116,20 +116,22 @@ const KC_ALIASES = {
     "KC_LSCR": "KC_LOCKING_SCROLL"
 };
 
+const KC_PATTERN = '(KC_[A-Z0-9_]+)';
+
 const keyCodePattern = [
-    { pattern: /(^KC_[A-Z]+)/, result: (match) => resolveAlias(match) },
-    { pattern: /^C_S\((KC_[A-Z]+)\)/, result: (p1) => `LCTL(LSFT(${resolveAlias(p1)}))`},
-    { pattern: /^HYPR\((KC_[A-Z]+)\)/, result: (p1) => `LCTL(LSFT(LALT(LGUI(${resolveAlias(p1)}))))`},
-    { pattern: /^MEH\((KC_[A-Z]+)\)/, result: (p1) => `LCTL(LSFT(LALT(${resolveAlias(p1)})))`},
-    { pattern: /^LCAG\((KC_[A-Z]+)\)/, result: (p1) => `LCTL(LALT(LGUI(${resolveAlias(p1)})))`},
-    { pattern: /^SGUI\((KC_[A-Z]+)\)/, result: (p1) => `LGUI(LSFT(${resolveAlias(p1)}))`},
-    { pattern: /^LCA\((KC_[A-Z]+)\)/, result: (p1) => `LCTL(LALT(${resolveAlias(p1)}))`},
-    { pattern: /^LSA\((KC_[A-Z]+)\)/, result: (p1) => `LSFT(LALT(${resolveAlias(p1)}))`},
-    { pattern: /^RSA\((KC_[A-Z]+)\)/, result: (p1) => `RSFT(RALT(${resolveAlias(p1)}))`},
-    { pattern: /^RCS\((KC_[A-Z]+)\)/, result: (p1) => `RCTL(RSFT(${resolveAlias(p1)}))`},
-    { pattern: /^LCG\((KC_[A-Z]+)\)/, result: (p1) => `LCTL(LGUI(${resolveAlias(p1)}))`},
-    { pattern: /^RCG\((KC_[A-Z]+)\)/, result: (p1) => `RCTL(RGUI(${resolveAlias(p1)}))`},
-    { pattern: /^LT([0-9]+)\((KC_[A-Z]+)\)/, result: (p1, p2) => `LT(${p1}, ${resolveAlias(p2)})`},
+    { pattern: new RegExp(KC_PATTERN), result: (p1) => resolveAlias(p1) },
+    { pattern: new RegExp(`^C_S\\(${KC_PATTERN}\\)`), result: (p1) => `LCTL(LSFT(${p1}))`},
+    { pattern: new RegExp(`^HYPR\\(${KC_PATTERN}\\)`), result: (p1) => `LCTL(LSFT(LALT(LGUI(${p1}))))`},
+    { pattern: new RegExp(`^MEH\\(${KC_PATTERN}\\)`), result: (p1) => `LCTL(LSFT(LALT(${p1})))`},
+    { pattern: new RegExp(`^LCAG\\(${KC_PATTERN}\\)`), result: (p1) => `LCTL(LALT(LGUI(${p1})))`},
+    { pattern: new RegExp(`^SGUI\\(${KC_PATTERN}\\)`), result: (p1) => `LGUI(LSFT(${p1}))`},
+    { pattern: new RegExp(`^LCA\\(${KC_PATTERN}\\)`), result: (p1) => `LCTL(LALT(${p1}))`},
+    { pattern: new RegExp(`^LSA\\(${KC_PATTERN}\\)`), result: (p1) => `LSFT(LALT(${p1}))`},
+    { pattern: new RegExp(`^RSA\\(${KC_PATTERN}\\)`), result: (p1) => `RSFT(RALT(${p1}))`},
+    { pattern: new RegExp(`^RCS\\(${KC_PATTERN}\\)`), result: (p1) => `RCTL(RSFT(${p1}))`},
+    { pattern: new RegExp(`^LCG\\(${KC_PATTERN}\\)`), result: (p1) => `LCTL(LGUI(${p1}))`},
+    { pattern: new RegExp(`^RCG\\(${KC_PATTERN}\\)`), result: (p1) => `RCTL(RGUI(${p1}))`},
+    { pattern: new RegExp(`^LT([0-9]+)\\(${KC_PATTERN}\\)`), result: (p1, p2) => `LT(${p1}, ${p2})`},
 ];
 
 const resolveAlias = (key) => KC_ALIASES[key] || key
