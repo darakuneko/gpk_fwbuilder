@@ -8,3 +8,8 @@ services:
     stdin_open: true
     ports:
       - 3123:3000
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24    
