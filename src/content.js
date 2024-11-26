@@ -1,18 +1,15 @@
 import React, {useEffect, useState} from 'react'
-import Box from "@mui/material/Box"
-import Tabs from "@mui/material/Tabs"
-import Tab from "@mui/material/Tab"
-import Button from "@mui/material/Button"
-import {getState, useStateContext} from "./context"
-import Build from "./renderer/build"
-import Logs from "./renderer/logs"
-import {buildBoxHeight, convertBoxHeight, neon, neonKeyFrame} from "./style"
+import {Box, Tab, Tabs, Button} from "@mui/material"
+import {getState, useStateContext} from "./context.js"
+import Build from "./renderer/build.js"
+import Logs from "./renderer/logs.js"
+import {buildBoxHeight, convertBoxHeight, neon, neonKeyFrame} from "./style.js"
 import parse from 'html-react-parser'
-import Repository from "./renderer/repository"
-import Image from "./renderer/image"
-import Generate from "./renderer/generate"
-import Convert from "./renderer/convert"
-import Setting from "./renderer/setting"
+import Repository from "./renderer/repository.js"
+import Image from "./renderer/image.js"
+import Generate from "./renderer/generate.js"
+import Convert from "./renderer/convert.js"
+import Setting from "./renderer/setting.js"
 
 const {api} = window
 

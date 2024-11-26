@@ -1,11 +1,7 @@
-import TextField from "@mui/material/TextField"
-import Box from "@mui/material/Box"
-
-import React, {useState} from "react"
-import {useStateContext} from "../context"
-import {inputLabelSmallFontSize} from "../style"
-import Button from "@mui/material/Button"
-import {textFieldLongWidth} from "../style"
+import {Box, TextField} from "@mui/material"
+import React from "react"
+import {useStateContext} from "../context.js"
+import {textFieldLongWidth} from "../style.js"
 
 const {api} = window
 

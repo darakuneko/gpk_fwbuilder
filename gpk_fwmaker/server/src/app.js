@@ -4,6 +4,9 @@ const fs = require('fs')
 const path = require('path')
 const {cmd, streamResponse, streamError} = require('./command')
 const {vial2c} = require('./vial2c/vial2c')
+const util = require('util')
+const childProcess = require('child_process')
+const exec = util.promisify(childProcess.exec)
 
 const app = express()
 const multer = require("multer")
@@ -350,6 +353,7 @@ app.post('/convert/vil/keymap_c',  multer().fields([{name: 'vil'}]), async (req,
     try {
         const keymap = vial2c(bufferToJson(req.files['vil'][0].buffer))
         await cmd.write(`${cmd.dirClient}/keymap.c`, keymap)
+        await exec(`chmod 777 -R ${cmd.dirClient}/keymap.c`)
         res.send("finish!!")
     } catch (e) {
         res.send(e.toString())

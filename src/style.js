@@ -1,5 +1,4 @@
-import {createTheme} from "@mui/material/styles"
-import Repository from "./renderer/repository";
+import {createTheme} from "@mui/material"
 
 export const theme = createTheme({
     palette: {

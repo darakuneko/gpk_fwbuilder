@@ -21,13 +21,13 @@ const streamWriteLine = async (dir, line, res) => {
     res.write(`${line}\n`)
 }
 const streamWriteLineQMK = async (line, res) => await streamWriteLine(dirQMK, line, res)
-const streamWriteLineVial = async (line, res) => await streamWriteLine(dirVial, line, res)
 
 const findFirmwareL = (dir) => {
     const d = dir.match(/\/$/) ? dir : `${dir}/`
     return `find ${d}* -maxdepth 0 -regex ".*\\.\\(bin\\|hex\\|uf2\\)"`
 }
-const cpFirmwareL = (dir) => `${findFirmwareL(dir)} -type f -exec cp {} ${dirClient} \\;`
+
+const cpFirmwareL = (dir) => `${findFirmwareL(dir)} -type f -exec bash -c 'cp "$1" "${dirClient}" && chmod 777 "${dirClient}/$(basename "$1")"' _ {} \\;`
 
 const rmL = (path) => `rm -rf ${path}`
 const rmKeyboardsL = (path, kb) => rmL(`${path}/keyboards/${kb}`)
@@ -126,6 +126,7 @@ const cmd = {
     },
     copyKeyboard: async (fwDir, kbDir) => {
         await exec(`cp -rf ${fwDir}/${kbDir} ${dirClient}/`)
+        await exec(`chmod 777 -R ${dirClient}`)
     },
     buildQmkFirmware: async (res, kb, km) => {
         await exec(`${findFirmwareL(dirQMK)} -delete`)
@@ -141,13 +142,13 @@ const cmd = {
     },
     updateRepositoryVial: async (res) => {
         await exec(rmL(dirVial))
-        const line = `cd /root && git clone https://github.com/vial-kb/vial-qmk.git && cd ${dirVial} && make git-submodule`
+        const line = `cd /root && git clone https://github.com/vial-kb/vial-qmk.git && cd ${dirVial} && /usr/bin/python3 -m pip install --break-system-packages -r /root/vial-qmk/requirements.txt && make git-submodule`
         streamLog(line, res)
     },
     updateRepositoryCustom: async (res, customDir, url) => {
         const dir = `${dirCustomRepo}/${customDir}`
         const cloneDir = `${dir}/${url.match(/\/([^/]+)\.git$/)[1]}`
-        const line = `rm -rf ${dir} && mkdir ${dir} && cd ${dir} && git clone ${url} && cd ${cloneDir} && make git-submodule`
+        const line = `rm -rf ${dir} && mkdir ${dir} && cd ${dir} && git clone ${url} && cd ${cloneDir} && /usr/bin/python3 -m pip install --break-system-packages -r ${cloneDir}/requirements.txt && make git-submodule`
         streamLog(line, res)
     },
     deleteRepositoryCustom: async (res, customDir) => {
@@ -175,6 +176,7 @@ const cmd = {
     cpConfigsToQmk: async (kbDir) => {
         await exec(rmKeyboardsL(dirQMK, kbDir))
         await exec(`cp -rf ${dirClient}/${kbDir} ${dirQMK}/keyboards`)
+        await exec(`chmod 777 -R ${dirQMK}/keyboards`)
     },
     cpConfigsToVial: async (kbDir) => await cpCfgToCustom(dirVial, kbDir),
     cpConfigsToCustom: async (dir, kbDir) => await cpCfgToCustom(dir, kbDir),
@@ -185,6 +187,7 @@ const cmd = {
     mvQmkConfigsToVolume: async (kbDir) => {
         await exec(`rm -rf ${dirClient}/${kbDir} `)
         await exec(`mv -f ${dirQMK}/keyboards/${kbDir} ${dirClient}`)
+        await exec(`chmod 777 -R ${dirClient}`)
     }
 }
 

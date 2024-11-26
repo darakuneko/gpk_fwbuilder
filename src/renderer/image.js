@@ -1,8 +1,6 @@
-import Box from "@mui/material/Box"
-
 import React from "react"
-import {useStateContext} from "../context"
-import Button from "@mui/material/Button"
+import {useStateContext} from "../context.js"
+import {Box, Button} from "@mui/material"
 
 const {api} = window
 

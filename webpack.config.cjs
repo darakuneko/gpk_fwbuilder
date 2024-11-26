@@ -16,7 +16,7 @@ module.exports = [{
             path.resolve(__dirname, "src"),
             "node_modules",
         ],
-        extensions: [".js", ".jsx"]
+        extensions: [".js", "mjs",".jsx"]
     },
     module: {
         rules: [

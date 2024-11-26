@@ -1,8 +1,8 @@
-import Box from "@mui/material/Box"
+import {Box} from "@mui/material"
 
 import React, {useRef, useCallback, useEffect, useState} from 'react'
 
-import {useStateContext} from "../context"
+import {useStateContext} from "../context.js"
 import Convert from "ansi-to-html"
 
 const convert = new Convert({ newline: true })

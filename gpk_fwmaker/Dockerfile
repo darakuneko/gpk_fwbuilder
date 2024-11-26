@@ -14,8 +14,6 @@ RUN apt-get -y install \
 
 RUN pip install qmk --break-system-packages
 
-RUN pip install milc==1.8.0 --break-system-packages
-
 RUN echo 'PATH="$HOME/.local/bin:$PATH"' >> $HOME/.bashrc
 
 RUN ["/bin/bash", "-c", "source $HOME/.bashrc"]
@@ -27,6 +25,8 @@ WORKDIR /root
 RUN git clone https://github.com/vial-kb/vial-qmk.git
 
 WORKDIR /root/vial-qmk
+
+RUN /usr/bin/python3 -m pip install --break-system-packages -r /root/vial-qmk/requirements.txt
 
 RUN make git-submodule
 

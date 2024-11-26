@@ -1,18 +1,10 @@
-import Select from "@mui/material/Select"
-import MenuItem from "@mui/material/MenuItem"
-import InputLabel from "@mui/material/InputLabel"
-import TextField from "@mui/material/TextField"
-import Box from "@mui/material/Box"
-import FormHelperText from '@mui/material/FormHelperText'
-
 import React, {useState} from "react"
-import {useStateContext} from "../context"
-import {formHelperTextFontSize, inputLabelMiddleFontSize, textFieldMiddleWidth} from "../style"
-import Button from "@mui/material/Button"
-import Autocomplete from "@mui/material/Autocomplete"
-import FormGroup from "@mui/material/FormGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
+import {useStateContext} from "../context.js"
+import {formHelperTextFontSize, inputLabelMiddleFontSize, textFieldMiddleWidth} from "../style.js"
+
+import {Checkbox, FormControlLabel, FormGroup, Autocomplete, Button, Box,
+    FormHelperText, TextField, InputLabel, Select, MenuItem
+} from "@mui/material";
 
 const {api} = window
 

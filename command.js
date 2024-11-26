@@ -1,21 +1,22 @@
-const util = require('util')
-const childProcess = require('child_process')
-const exec = util.promisify(childProcess.exec)
-const spawn = childProcess.spawn
-const axios = require('axios')
-const fs = require('fs')
-const FormData = require('form-data')
-const path = require('path')
-const Store = require("electron-store")
-const store = new Store()
-const {app} = require("electron")
+import util from 'util'
+import { exec as execCallback, spawn } from 'child_process'
+import axios from 'axios'
+import fs from 'fs'
+import FormData from 'form-data'
+import path from 'path'
+import ElectronStore from 'electron-store'
+import { app } from 'electron'
+import { fileURLToPath } from 'url'
+
+const exec = util.promisify(execCallback)
+const store = new ElectronStore()
 
 const dockerVersion = /gpk_fwmaker_0006/
-const cmdVersion = 7
+const cmdVersion = 8
 
 if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`
-const instance = axios.create();
-instance.defaults.timeout = 2500;
+const instance = axios.create()
+instance.defaults.timeout = 2500
 //store.clear('state')
 const state = store.get('state')
 const localFWMakerUrl = "http://127.0.0.1:3123"
@@ -24,6 +25,8 @@ const localFWdir = `${app.getPath('home')}/GPKFW/`
 const fwMakerUrl = state?.setting?.fwMakerUrl ? state.setting.fwMakerUrl : localFWMakerUrl
 const fwDir = state?.setting?.fwDir ? state.setting.fwDir : localFWdir
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 const appPath = __dirname.replace(/\/app\.asar/g, "").replace(/\\app\.asar/g, "")
 const fwMakerUrlMassage = "The docker command will not be issued unless the docker URL is 127.0.0.1."
 const appExe = async (cmd) =>
@@ -73,7 +76,7 @@ const command = {
     upImage: async (mainWindow) => {
         if (!skipCheckDocker) {
             const cmd = async (result) =>  {
-                const isDockerVersion = dockerVersion.test(result.stdout);
+                const isDockerVersion = dockerVersion.test(result.stdout)
                 const stateCmdVersion = store.get('cmdVersion')
                 if (isDockerVersion && stateCmdVersion === cmdVersion) return "docker compose start"
                 else if (isDockerVersion && stateCmdVersion !== cmdVersion) {
@@ -91,7 +94,7 @@ const command = {
         if(!skipCheckDocker) await appExe("docker compose stop")
     },
     rebuildImage: async (mainWindow) => {
-        const res = spawn(appSpawn("docker compose rm -f -s -v && docker compose build --no-cache && docker compose up -d"), {shell: true});
+        const res = spawn(appSpawn("docker compose rm -f -s -v && docker compose build --no-cache && docker compose up -d"), {shell: true})
         streamLog(res, mainWindow)
     },
     setSkipCheckDocker: async (skip) => skipCheckDocker = skip,
@@ -275,4 +278,4 @@ const command = {
     getLocalFWdir: () => localFWdir
 }
 
-module.exports.command = command
+export default command

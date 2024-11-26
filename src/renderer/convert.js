@@ -1,19 +1,7 @@
 import React, {useState} from "react"
-import {useStateContext} from "../context"
-import {formHelperTextFontSize, inputLabelMiddleFontSize, textFieldLongWidth} from "../style"
-import Button from "@mui/material/Button"
-import InputLabel from "@mui/material/InputLabel"
-import Box from "@mui/material/Box"
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-import TextField from "@mui/material/TextField";
-import Checkbox from "@mui/material/Checkbox";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import FormGroup from "@mui/material/FormGroup";
-import FormHelperText from "@mui/material/FormHelperText";
-import Chip from "@mui/material/Chip";
-import OutlinedInput from "@mui/material/OutlinedInput";
-import FormControl from "@mui/material/FormControl";
+import {useStateContext} from "../context.js"
+import {formHelperTextFontSize, inputLabelMiddleFontSize, textFieldLongWidth} from "../style.js"
+import {FormControl, Chip, FormHelperText, FormGroup, FormControlLabel, Checkbox, TextField, MenuItem, Select, Box, InputLabel, Button} from "@mui/material";
 
 const {api} = window
 

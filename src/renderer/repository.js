@@ -1,11 +1,7 @@
-import Box from "@mui/material/Box"
 import React, {useState} from "react"
-import {useStateContext} from "../context"
-import {textFieldLongWidth, textFieldMiddleWidth} from "../style"
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
+import {useStateContext} from "../context.js"
+import {textFieldLongWidth} from "../style.js"
+import {Button, TextField, MenuItem, Select, Box} from "@mui/material";
 
 const {api} = window
 

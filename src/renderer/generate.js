@@ -1,14 +1,7 @@
-import Select from "@mui/material/Select"
-import MenuItem from "@mui/material/MenuItem"
-import InputLabel from "@mui/material/InputLabel"
-import TextField from "@mui/material/TextField"
-import Box from "@mui/material/Box"
-
 import React, {useState} from "react"
-import {useStateContext} from "../context"
-import {formHelperTextFontSize, inputLabelMiddleFontSize, textFieldMiddleWidth} from "../style"
-import Button from "@mui/material/Button"
-import FormHelperText from "@mui/material/FormHelperText";
+import {useStateContext} from "../context.js"
+import {formHelperTextFontSize, inputLabelMiddleFontSize, textFieldMiddleWidth} from "../style.js"
+import {Box, TextField, InputLabel, MenuItem, Select, Button, FormHelperText}from "@mui/material"
 
 const {api} = window
 

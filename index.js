@@ -1,7 +1,11 @@
-const {app, BrowserWindow, ipcMain} = require("electron")
-const Store = require("electron-store")
-const {command} = require('./command')
+import { app, BrowserWindow, ipcMain } from "electron"
+import Store from 'electron-store'
+import command from './command.js'
+import { fileURLToPath } from "url"
+import path from "path"
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const store = new Store()
 let mainWindow
 
@@ -32,10 +36,10 @@ const createWindow = () => {
 
 app.setName("GPK FWBuilder")
 
-app.on('ready', () => {
+app.on('ready', async () => {
     createWindow()
-    command.upImage(mainWindow)
-    // mainWindow.webContents.openDevTools()
+    await command.upImage(mainWindow)
+    //mainWindow.webContents.openDevTools()
 })
 
 const closing = async(e, mainWindow) => {

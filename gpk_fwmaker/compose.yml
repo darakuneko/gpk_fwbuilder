@@ -8,6 +8,9 @@ services:
     stdin_open: true
     ports:
       - 3123:3000
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
 networks:
   default:
     ipam:
