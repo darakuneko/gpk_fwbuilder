@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron')
+const { contextBridge, ipcRenderer, webUtils } = require('electron')
 
 contextBridge.exposeInMainWorld(
     "api", {
@@ -28,4 +28,6 @@ contextBridge.exposeInMainWorld(
         getStorePath: async () => await ipcRenderer.invoke('getStorePath'),
         on: (channel, func) => ipcRenderer.on(channel, (event, ...args) => func(...args))
     })
+    
+contextBridge.exposeInMainWorld('webUtils', webUtils)
 

@@ -1,4 +1,4 @@
-import React, {useState} from "react"
+import React, {useState, webUtils} from "react"
 import {useStateContext} from "../context.js"
 import {formHelperTextFontSize, inputLabelMiddleFontSize, textFieldLongWidth} from "../style.js"
 import {FormControl, Chip, FormHelperText, FormGroup, FormControlLabel, Checkbox, TextField, MenuItem, Select, Box, InputLabel, Button} from "@mui/material";
@@ -149,10 +149,10 @@ const Convert = () => {
         const file = e.target.files[0]
         if (file){
             kleObj.name = file.name
-            kleObj.path = file.path
+            kleObj.path = window.webUtils.getPathForFile(file)
             setKleObj({...kleObj, kleObj })
 
-            const json = await api.readJson(file.path)
+            const json = await api.readJson(kleObj.path)
             const obj = json.filter(v => !Array.isArray(v))[0]
             if (obj.name) state.convert.kle.kb = obj.name
             if (obj.author) state.convert.kle.user = obj.author
@@ -209,7 +209,7 @@ const Convert = () => {
         if (file){
             const obj = {
                 name: file.name,
-                path: file.path
+                path: window.webUtils.getPathForFile(file)
             }
             id === "info" ? viaObj.info = obj : viaObj.kle = obj
             setViaObj({...viaObj, viaObj })
@@ -221,7 +221,7 @@ const Convert = () => {
         const file = e.target.files[0]
         if (file){
             vilObj.name = file.name
-            vilObj.path = file.path
+            vilObj.path = window.webUtils.getPathForFile(file)
             setVilObj({...vilObj, vilObj })
         }
         if (vilObj.name.length > 0) setDisabledVilCovertButton(false)
