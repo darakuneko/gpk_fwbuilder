@@ -19,6 +19,7 @@ export function StateProvider({children}) {
             tags: [],
             kb: '',
             km: '',
+            commit: '',
             useRepo: false,
         },
         keyboardList: {
@@ -98,6 +99,7 @@ export function StateProvider({children}) {
                 tags: obj.build.tags,
                 kb: obj.build.kb,
                 km: obj.build.km,
+                commit: obj.build.commit,
                 useRepo: obj.build.useRepo,
             },
             keyboardList: {

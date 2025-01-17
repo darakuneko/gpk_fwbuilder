@@ -21,10 +21,13 @@ const Build = () => {
 
     const findFirmware = (state) => state.repository.firmwares.find(r => r.id === state.build.fw)
     const getCommit = (state) => findFirmware(state)?.commit
-    const setCommit = (state, commit) => findFirmware(state).commit = commit
-
+    const setCommit = (state, commit) => {
+        state.build.commit = commit
+        findFirmware(state).commit = commit
+    }
     const handleSelectFW = (e) => {
         state.build.fw = e.target.value
+        setCommit(state, getCommit(state))
         setState(state)
     }
 
