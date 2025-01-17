@@ -9,7 +9,7 @@
     "dist:linux": "npm run build && electron-builder -l"
   },
   "name": "gpk_fwbuilder",
-  "version": "0.11.4",
+  "version": "0.11.5",
   "description": "GPK FWBuilder",
   "homepage": "https://github.com/darakuneko",
   "author": {
