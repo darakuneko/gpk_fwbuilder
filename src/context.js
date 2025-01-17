@@ -19,7 +19,6 @@ export function StateProvider({children}) {
             tags: [],
             kb: '',
             km: '',
-            commit: '',
             useRepo: false,
         },
         keyboardList: {
@@ -54,25 +53,32 @@ export function StateProvider({children}) {
             firmware: "QMK",
             firmwares: [{
                 id: "QMK",
-                url: ""
+                url: "",
+                commit: ""
             }, {
                 id: "Vial",
-                url: ""
+                url: "",
+                commit: ""
             }, {
                 id: "Custom1",
-                url: ""
+                url: "",
+                commit: ""
             }, {
                 id: "Custom2",
-                url: ""
+                url: "",
+                commit: ""
             }, {
                 id: "Custom3",
-                url: ""
+                url: "",
+                commit: ""
             }, {
                 id: "Custom4",
-                url: ""
+                url: "",
+                commit: ""
             }, {
                 id: "Custom5",
-                url: ""
+                url: "",
+                commit: ""
             }],
         },
         setting: {
@@ -92,7 +98,6 @@ export function StateProvider({children}) {
                 tags: obj.build.tags,
                 kb: obj.build.kb,
                 km: obj.build.km,
-                commit: obj.build.commit,
                 useRepo: obj.build.useRepo,
             },
             keyboardList: {

@@ -19,6 +19,10 @@ const Build = () => {
     const [init, setInit] = useState(true)
     const [keyboardList, setKeyboardList] = useState([])
 
+    const findFirmware = (state) => state.repository.firmwares.find(r => r.id === state.build.fw)
+    const getCommit = (state) => findFirmware(state)?.commit
+    const setCommit = (state, commit) => findFirmware(state).commit = commit
+
     const handleSelectFW = (e) => {
         state.build.fw = e.target.value
         setState(state)
@@ -37,11 +41,12 @@ const Build = () => {
         setInit(false)
         return disabledBuildButton
     }
+
     const handleTextChange = (inputName) => (e, v) => {
         if (inputName === 'kb') state.build.kb = v ? v.label : ''
         if (inputName === 'km') state.build.km = v ? v.label : ''
-        if (inputName === 'commit') state.build.commit = e.target.value
-
+        if (inputName === 'commit') setCommit(state, e.target.value)
+        
         setKeyboardEmptyError(!state.build.kb)
         setKeymapEmptyError(!state.build.km)
         validBuildButton()
@@ -74,6 +79,7 @@ const Build = () => {
         state.build.useRepo = e.target.checked
         setState(state)
     }
+
     const waiting = async (start, end, log) => {
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
@@ -98,8 +104,8 @@ const Build = () => {
     const handleCheckout = async () => {
         const start = async () => await api.checkout({
             fw: state.build.fw.toLowerCase(),
-            commit: state.build.commit,
-            tag: state.build.tag
+            tag: state.build.tag,
+            commit: getCommit(state)
         })
         const end = async () => await api.buildCompleted()
         await waiting(start, end, "Checkout....")
@@ -170,7 +176,7 @@ const Build = () => {
                                 disabled={disabledBuildText}
                                 onChange={handleTextChange("commit")}
                                 variant="standard"
-                                value={state.build.commit}
+                                value={getCommit(state)}
                             />
                         </Box>
                     )}
