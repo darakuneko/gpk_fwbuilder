@@ -79,7 +79,7 @@ const cpCfgToCustom = async (dir, kbDir) => {
 }
 
 const checkoutRepo = async (res, dir, fw, commit) => {
-    const result = await exec(`cd ${dir} && git symbolic-ref --short HEAD`)
+    const result = await exec(`cd ${dir} && python3 -m pip install --break-system-packages -r ${dir}/requirements.txt > /dev/null && git symbolic-ref --short HEAD`)
     const branch = result.stdout.replaceAll('\n', '')
     await streamWriteLine(dir, `git fetch origin`, res)
     await streamWriteLine(dir, `git reset --hard ${branch}`, res)
