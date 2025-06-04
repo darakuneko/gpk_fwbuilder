@@ -40,4 +40,6 @@ WORKDIR /server
 
 RUN npm install
 
-CMD node ./src/app.js
+RUN npm run build
+
+CMD node ./dist/app.js
