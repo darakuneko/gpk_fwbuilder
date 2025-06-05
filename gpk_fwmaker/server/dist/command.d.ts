@@ -1,52 +1,45 @@
-import { Response } from 'express';
-interface ExecResult {
-    stdout: string;
-    stderr: string;
+export namespace cmd {
+    export { dirClient };
+    export { dirQMK };
+    export { dirVial };
+    export function dirCustom(fw: any): Promise<string>;
+    export function tags(): Promise<any[]>;
+    export function currentTag(): Promise<string>;
+    export function checkoutQmk(res: any, tag: any): Promise<void>;
+    export function checkoutVial(res: any, repo: any, commit: any): Promise<any>;
+    export function checkoutCustom(res: any, fw: any, commit: any): Promise<{
+        branch: any;
+        dir: string;
+    }>;
+    export function copyKeyboard(fwDir: any, kbDir: any): Promise<void>;
+    export function buildQmkFirmware(res: any, kb: any, km: any): Promise<void>;
+    export function buildVialFirmware(res: any, kb: any, km: any): Promise<void>;
+    export function buildCustomFirmware(res: any, obj: any, kb: any, km: any): Promise<void>;
+    export function updateRepositoryQmk(res: any): Promise<void>;
+    export function updateRepositoryVial(res: any): Promise<void>;
+    export function updateRepositoryCustom(res: any, customDir: any, url: any): Promise<void>;
+    export function deleteRepositoryCustom(res: any, customDir: any): Promise<void>;
+    export function generateQmkFile(kb: any, kbDir: any, mcu: any, layout: any, user: any): Promise<{
+        stdout: string;
+        stderr: string;
+    }>;
+    export function generateVialId(): Promise<string>;
+    export function generateFirmFiles(jsonPath: any): Promise<void>;
+    export function readFirmFiles(filePath: any): Promise<string>;
+    export function readQmkFile(kb: any, filePath: any): Promise<string>;
+    export function write(filePath: any, obj: any): Promise<void>;
+    export function writeFirmFiles(filePath: any, obj: any): Promise<void>;
+    export function writeQmkFile(kb: any, filePath: any, obj: any): Promise<void>;
+    export function cpConfigsToQmk(kbDir: any): Promise<void>;
+    export function cpConfigsToVial(kbDir: any): Promise<void>;
+    export function cpConfigsToCustom(dir: any, kbDir: any): Promise<void>;
+    export function cpDefaultToVail(kbDir: any): Promise<void>;
+    export function mvQmkConfigsToVolume(kbDir: any): Promise<void>;
 }
-interface CustomCheckoutResult {
-    branch: string;
-    dir: string;
-}
-declare const streamResponse: (res: Response, fn: () => Promise<void>) => Promise<void>;
-declare const streamEnd: (res: Response, msg: string) => void;
-declare const streamError: (res: Response, e: any) => void;
-declare const cmd: {
-    dirClient: string;
-    dirQMK: string;
-    dirVial: string;
-    dirCustom: (fw: string) => Promise<string>;
-    tags: () => Promise<string[]>;
-    currentTag: () => Promise<string>;
-    checkoutQmk: (res: Response, tag: string) => Promise<void>;
-    checkoutVial: (res: Response, repo: string, commit: string) => Promise<string>;
-    checkoutCustom: (res: Response, fw: string, commit: string) => Promise<CustomCheckoutResult>;
-    copyKeyboard: (fwDir: string, kbDir: string) => Promise<void>;
-    buildQmkFirmware: (res: Response, kb: string, km: string) => Promise<void>;
-    buildVialFirmware: (res: Response, kb: string, km: string) => Promise<void>;
-    buildCustomFirmware: (res: Response, obj: CustomCheckoutResult, kb: string, km: string) => Promise<void>;
-    updateRepositoryQmk: (res: Response) => Promise<void>;
-    updateRepositoryVial: (res: Response) => Promise<void>;
-    updateRepositoryCustom: (res: Response, customDir: string, url: string) => Promise<void>;
-    deleteRepositoryCustom: (res: Response, customDir: string) => Promise<void>;
-    generateQmkFile: (kb: string, kbDir: string, mcu: string, layout: string, user: string) => Promise<ExecResult>;
-    generateVialId: () => Promise<string>;
-    generateFirmFiles: (jsonPath: string) => Promise<void>;
-    readFirmFiles: (filePath: string) => Promise<string>;
-    readQmkFile: (kb: string, filePath: string) => Promise<string>;
-    write: (filePath: string, obj: string) => Promise<void>;
-    writeFirmFiles: (filePath: string, obj: string) => Promise<void>;
-    writeQmkFile: (kb: string, filePath: string, obj: string) => Promise<void>;
-    cpConfigsToQmk: (kbDir: string) => Promise<void>;
-    cpConfigsToVial: (kbDir: string) => Promise<void>;
-    cpConfigsToCustom: (dir: string, kbDir: string) => Promise<void>;
-    cpDefaultToVail: (kbDir: string) => Promise<void>;
-    mvQmkConfigsToVolume: (kbDir: string) => Promise<void>;
-    buildQmk: (res: Response, kb: string, km: string, tag: string) => Promise<void>;
-    buildVial: (res: Response, kb: string, km: string, tag: string) => Promise<void>;
-    buildCustom: (res: Response, id: string, kb: string, km: string, tag: string) => Promise<void>;
-    generateQmk: (res: Response, keyboard: string, info: any, keymap: any) => Promise<void>;
-    convertKleQmk: (res: Response, layout: any, keyboard: string, mcu: string, bootloader: string) => Promise<void>;
-    convertKleVial: (res: Response, layout: any, keyboard: string, mcu: string, bootloader: string) => Promise<void>;
-    convertViaJson: (res: Response, info: any, layout: any) => Promise<void>;
-};
-export { cmd, streamResponse, streamError, streamEnd };
+export function streamResponse(res: any, fn: any): Promise<void>;
+export function streamError(res: any, e: any): void;
+export function streamEnd(res: any, msg: any): void;
+declare const dirClient: "/root/keyboards";
+declare const dirQMK: "/root/qmk_firmware";
+declare const dirVial: "/root/vial-qmk";
+export {};

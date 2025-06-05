@@ -1,240 +1,348 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const body_parser_1 = __importDefault(require("body-parser"));
-const fs_1 = __importDefault(require("fs"));
-const command_1 = require("./command");
-const vial2c_1 = require("./vial2c/vial2c");
-const util_1 = __importDefault(require("util"));
-const child_process_1 = __importDefault(require("child_process"));
-const multer_1 = __importDefault(require("multer"));
-const exec = util_1.default.promisify(child_process_1.default.exec);
-const app = (0, express_1.default)();
-// Only start server if not in test environment
-if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
-    const server = app.listen(3000, async () => {
-        const address = server.address();
-        const port = typeof address === 'string' ? address : address?.port;
-        console.log("Node.js is listening to PORT:" + port);
-    });
-}
+const express = require('express');
+const bodyParser = require('body-parser');
+const fs = require('fs');
+const path = require('path');
+const { cmd, streamResponse, streamError } = require('./command');
+const { vial2c } = require('./vial2c/vial2c');
+const util = require('util');
+const childProcess = require('child_process');
+const exec = util.promisify(childProcess.exec);
+const app = express();
+const multer = require("multer");
+const server = app.listen(3000, async () => console.log("Node.js is listening to PORT:" + server.address().port));
 const bufferToJson = (buf) => JSON.parse(buf.toString());
 const jsonToStr = (obj) => JSON.stringify(obj, null, 2);
 const getFWDir = async (fw) => {
     const getDir = async (fw) => {
         if (fw === "qmk")
-            return command_1.cmd.dirQMK;
+            return cmd.dirQMK;
         if (fw === "vial")
-            return command_1.cmd.dirVial;
-        return await command_1.cmd.dirCustom(fw);
+            return cmd.dirVial;
+        return await cmd.dirCustom(fw);
     };
     return `${await getDir(fw)}/keyboards`;
 };
-app.use(body_parser_1.default.urlencoded({ extended: true }));
-app.use(body_parser_1.default.json());
-app.get('/', (req, res) => {
-    res.send('GPK FWMaker!');
-});
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.get('/', async (req, res) => res.send('GPK FWMaker!'));
 app.get('/tags/qmk', async (req, res) => {
-    const tags = await command_1.cmd.tags();
+    const tags = await cmd.tags();
     res.send(tags);
 });
-app.get('/update/repository/qmk', async (req, res) => await command_1.cmd.updateRepositoryQmk(res));
-app.get('/update/repository/vial', async (req, res) => await command_1.cmd.updateRepositoryVial(res));
+app.get('/update/repository/qmk', async (req, res) => await cmd.updateRepositoryQmk(res));
+app.get('/update/repository/vial', async (req, res) => await cmd.updateRepositoryVial(res));
 app.post('/update/repository/custom', async (req, res) => {
     const fn = async () => {
         try {
             const id = req.body.id;
             const url = req.body.url;
-            await command_1.cmd.updateRepositoryCustom(res, id, url);
+            await cmd.updateRepositoryCustom(res, id, url);
         }
         catch (e) {
-            (0, command_1.streamError)(res, e);
+            streamError(res, e);
         }
     };
-    await (0, command_1.streamResponse)(res, fn);
+    await streamResponse(res, fn);
 });
+app.post('/delete/repository/custom', async (req, res) => {
+    const fn = async () => {
+        try {
+            const id = req.body.id;
+            await cmd.deleteRepositoryCustom(res, id);
+        }
+        catch (e) {
+            streamError(res, e);
+        }
+    };
+    await streamResponse(res, fn);
+});
+app.get('/update/repository/qmk', async (req, res) => await cmd.updateRepositoryQmk(res));
+app.get('/update/repository/vial', async (req, res) => await cmd.updateRepositoryVial(res));
 app.post('/build/qmk', async (req, res) => {
     const fn = async () => {
         try {
             const kb = req.body.kb;
-            const km = req.body.km;
+            const kbDir = kb.replace(/\/.*/g, "");
+            const km = req.body.km.replace(/:.*|flash/g, "");
             const tag = req.body.tag;
-            await command_1.cmd.buildQmk(res, kb, km, tag);
+            const currentTag = await cmd.currentTag();
+            if (tag !== currentTag)
+                await cmd.checkoutQmk(res, tag);
+            const useRepo = req.body?.useRepo;
+            if (!useRepo)
+                await cmd.cpConfigsToQmk(kbDir);
+            await cmd.buildQmkFirmware(res, kb, km);
         }
         catch (e) {
-            (0, command_1.streamError)(res, e);
+            streamError(res, e);
         }
     };
-    await (0, command_1.streamResponse)(res, fn);
+    await streamResponse(res, fn);
 });
 app.post('/build/vial', async (req, res) => {
     const fn = async () => {
         try {
+            const repo = 'vial';
             const kb = req.body.kb;
-            const km = req.body.km;
-            const tag = req.body.tag;
-            await command_1.cmd.buildVial(res, kb, km, tag);
+            const kbDir = kb.replace(/\/.*/g, "");
+            const km = req.body.km.replace(/:.*|flash/g, "");
+            const commit = "commit" in req.body && req.body.commit.length > 0 ? req.body.commit : repo;
+            await cmd.checkoutVial(res, repo, commit);
+            const useRepo = req.body?.useRepo;
+            if (!useRepo)
+                await cmd.cpConfigsToVial(kbDir);
+            await cmd.buildVialFirmware(res, kb, km);
         }
         catch (e) {
-            (0, command_1.streamError)(res, e);
+            streamError(res, e);
         }
     };
-    await (0, command_1.streamResponse)(res, fn);
+    await streamResponse(res, fn);
 });
 app.post('/build/custom', async (req, res) => {
     const fn = async () => {
         try {
-            const id = req.body.id;
+            const fw = req.body.fw;
             const kb = req.body.kb;
-            const km = req.body.km;
-            const tag = req.body.tag;
-            await command_1.cmd.buildCustom(res, id, kb, km, tag);
+            const kbDir = kb.replace(/\/.*/g, "");
+            const km = req.body.km.replace(/:.*|flash/g, "");
+            const commit = req.body.commit;
+            const obj = await cmd.checkoutCustom(res, fw, commit);
+            const useRepo = req.body?.useRepo;
+            if (!useRepo)
+                await cmd.cpConfigsToCustom(obj.dir, kbDir);
+            await cmd.buildCustomFirmware(res, obj, kb, km);
         }
         catch (e) {
-            (0, command_1.streamError)(res, e);
+            streamError(res, e);
         }
     };
-    await (0, command_1.streamResponse)(res, fn);
+    await streamResponse(res, fn);
 });
-const storage = multer_1.default.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, '/tmp/');
-    },
-    filename: (req, file, cb) => {
-        cb(null, file.originalname);
-    }
-});
-const upload = (0, multer_1.default)({ storage });
-app.post('/generate/qmk/file', upload.fields([
-    { name: 'info', maxCount: 1 },
-    { name: 'keymap', maxCount: 1 }
-]), async (req, res) => {
+app.post('/checkout', async (req, res) => {
     const fn = async () => {
         try {
-            const files = req.files;
-            const infoFile = files['info']?.[0];
-            const keymapFile = files['keymap']?.[0];
-            if (!infoFile || !keymapFile) {
-                throw new Error('Required files not provided');
+            const fw = req.body.fw;
+            if (fw === "qmk") {
+                const tag = req.body.tag;
+                await cmd.checkoutQmk(res, tag);
             }
-            const info = bufferToJson(fs_1.default.readFileSync(infoFile.path));
-            const keymap = bufferToJson(fs_1.default.readFileSync(keymapFile.path));
-            const keyboard = req.body.keyboard;
-            await command_1.cmd.generateQmk(res, keyboard, info, keymap);
-        }
-        catch (e) {
-            (0, command_1.streamError)(res, e);
-        }
-    };
-    await (0, command_1.streamResponse)(res, fn);
-});
-app.post('/convert/kle/qmk', async (req, res) => {
-    const fn = async () => {
-        try {
-            const layout = req.body.layout;
-            const keyboard = req.body.keyboard;
-            const mcu = req.body.mcu;
-            const bootloader = req.body.bootloader;
-            await command_1.cmd.convertKleQmk(res, layout, keyboard, mcu, bootloader);
-        }
-        catch (e) {
-            (0, command_1.streamError)(res, e);
-        }
-    };
-    await (0, command_1.streamResponse)(res, fn);
-});
-app.post('/convert/kle/vial', async (req, res) => {
-    const fn = async () => {
-        try {
-            const layout = req.body.layout;
-            const keyboard = req.body.keyboard;
-            const mcu = req.body.mcu;
-            const bootloader = req.body.bootloader;
-            await command_1.cmd.convertKleVial(res, layout, keyboard, mcu, bootloader);
-        }
-        catch (e) {
-            (0, command_1.streamError)(res, e);
-        }
-    };
-    await (0, command_1.streamResponse)(res, fn);
-});
-app.post('/convert/via/json', upload.fields([
-    { name: 'info', maxCount: 1 },
-    { name: 'layout', maxCount: 1 }
-]), async (req, res) => {
-    const fn = async () => {
-        try {
-            const files = req.files;
-            const infoFile = files['info']?.[0];
-            const layoutFile = files['layout']?.[0];
-            if (!infoFile || !layoutFile) {
-                throw new Error('Required files not provided');
+            else if (fw === "vial") {
+                const repo = 'vial';
+                const commit = "commit" in req.body && req.body.commit.length > 0 ? req.body.commit : repo;
+                await cmd.checkoutVial(res, repo, commit);
             }
-            const info = bufferToJson(fs_1.default.readFileSync(infoFile.path));
-            const layout = bufferToJson(fs_1.default.readFileSync(layoutFile.path));
-            await command_1.cmd.convertViaJson(res, info, layout);
-        }
-        catch (e) {
-            (0, command_1.streamError)(res, e);
-        }
-    };
-    await (0, command_1.streamResponse)(res, fn);
-});
-app.post('/convert/vial/json', upload.single('vial'), async (req, res) => {
-    const fn = async () => {
-        try {
-            if (!req.file) {
-                throw new Error('Vial file not provided');
+            else {
+                const commit = req.body.commit;
+                await cmd.checkoutCustom(res, fw, commit);
             }
-            const vial = bufferToJson(fs_1.default.readFileSync(req.file.path));
-            const result = (0, vial2c_1.vial2c)(vial);
-            res.writeHead(200, { 'Content-Type': 'text/plain' });
-            res.end(result);
+            res.end('finish');
         }
         catch (e) {
-            (0, command_1.streamError)(res, e);
+            streamError(res, e);
         }
     };
-    await (0, command_1.streamResponse)(res, fn);
+    await streamResponse(res, fn);
 });
-app.get('/list/:fw', async (req, res) => {
+app.post('/list/keyboards', async (req, res) => {
+    const d = [];
+    const searchFiles = (dirPath) => {
+        const allDirs = fs.readdirSync(dirPath, { withFileTypes: true });
+        const f = [];
+        allDirs.map(v => {
+            if (v.isDirectory()) {
+                const fp = path.join(dirPath, v.name);
+                f.push(searchFiles(fp));
+                if (fp.match(/\/keymaps\//))
+                    d.push(fp);
+            }
+        });
+    };
     try {
-        const fw = req.params.fw;
-        const fwDir = await getFWDir(fw);
-        if (!fs_1.default.existsSync(fwDir)) {
-            res.status(404).send('Firmware directory not found');
-            return;
-        }
-        const keyboards = fs_1.default.readdirSync(fwDir, { withFileTypes: true })
-            .filter(dirent => dirent.isDirectory())
-            .map(dirent => dirent.name);
-        res.json(keyboards);
+        const fwDir = await getFWDir(req.body.fw);
+        searchFiles(fwDir);
+        const keymapsDirs = d.flat().map(v => v.replace(fwDir, '').split("/keymaps/"));
+        const kb = Array.from(new Set(keymapsDirs.map(v => v[0])));
+        const obj = kb.map(k => {
+            return {
+                kb: k.replace(/\\/g, '/').replace(/^\//, '').replace(/.*\/keyboards\//, ''),
+                km: keymapsDirs.filter(v => v[0] === k).map(v => v[1])
+            };
+        });
+        res.send(obj);
+        res.on('close', () => res.end('finish'));
     }
     catch (e) {
-        res.status(500).send(String(e));
+        res.send(e);
     }
 });
-app.get('/list/:fw/:kb', async (req, res) => {
+app.post('/copy/keyboard', async (req, res) => {
     try {
-        const fw = req.params.fw;
-        const kb = req.params.kb;
-        const kbDir = `${await getFWDir(fw)}/${kb}/keymaps`;
-        if (!fs_1.default.existsSync(kbDir)) {
-            res.status(404).send('Keyboard directory not found');
-            return;
-        }
-        const keymaps = fs_1.default.readdirSync(kbDir, { withFileTypes: true })
-            .filter(dirent => dirent.isDirectory())
-            .map(dirent => dirent.name);
-        res.json(keymaps);
+        const fwDir = await getFWDir(req.body.fw);
+        const kb = req.body.kb;
+        const kbL = kb.toLowerCase().replace(/-| /g, "_");
+        const kbDir = kbL.replace(/\/.*/g, "");
+        await cmd.copyKeyboard(fwDir, kbDir);
+        res.send("finish");
     }
     catch (e) {
-        res.status(500).send(String(e));
+        res.send(e);
     }
 });
-exports.default = app;
+app.post('/generate/qmk/file', async (req, res) => {
+    try {
+        const kb = req.body.kb;
+        const kbL = kb.toLowerCase().replace(/-| /g, "_");
+        const kbDir = kbL.replace(/\/.*/g, "");
+        const mcu = req.body.mcu;
+        const layout = req.body.layout;
+        const user = req.body.user;
+        const result = await cmd.generateQmkFile(kbL, kbDir, mcu, layout, user);
+        const infoQmk = bufferToJson(await cmd.readQmkFile(kbDir, 'info.json'));
+        infoQmk.keyboard_name = kb;
+        infoQmk.manufacturer = user;
+        infoQmk.maintainer = user;
+        await cmd.writeQmkFile(kbDir, 'info.json', jsonToStr(infoQmk));
+        await cmd.mvQmkConfigsToVolume(kbDir);
+        res.send(result);
+    }
+    catch (e) {
+        res.send(e);
+    }
+});
+app.get('/generate/vial/id', async (req, res) => {
+    try {
+        const result = await cmd.generateVialId();
+        res.send(result);
+    }
+    catch (e) {
+        res.send(e);
+    }
+});
+app.post('/convert/via/json', multer().fields([{ name: 'info' }, { name: 'kle' }]), async (req, res) => {
+    try {
+        const info = bufferToJson(req.files['info'][0].buffer);
+        const kle = bufferToJson(req.files['kle'][0].buffer);
+        const km = kle.filter(v => Array.isArray(v));
+        if (!info.keyboard_name)
+            throw new Error("No Property: keyboard_name");
+        if (!info.usb.vid)
+            throw new Error("No Property: usb.vid");
+        if (!info.usb.pid)
+            throw new Error("No Property: usb.pid");
+        if (!info.matrix_size.rows)
+            throw new Error("No Property: matrix_size.rows");
+        if (!info.matrix_size.cols)
+            throw new Error("No Property: matrix_size.cols");
+        const via = {
+            name: info.keyboard_name,
+            vendorId: info.usb.vid,
+            productId: info.usb.pid,
+            lighting: "none",
+            matrix: {
+                rows: info.matrix_size.rows,
+                cols: info.matrix_size.cols,
+            },
+            layouts: {
+                keymap: km
+            }
+        };
+        await cmd.write('/root/keyboards/via.json', jsonToStr(via));
+        res.send('convert');
+    }
+    catch (e) {
+        res.send(e.toString());
+    }
+});
+app.post('/convert/kle/qmk', multer().single('kle'), async (req, res) => {
+    try {
+        const params = JSON.parse(req.body.params);
+        const kb = params.kb;
+        const fileKb = kb.toLowerCase().replace(/-| /g, "_");
+        const kbDir = fileKb.replace(/\/.*/g, "");
+        const mcu = params.mcu;
+        const layout = "fullsize_ansi";
+        const user = params.user;
+        const vid = params.vid;
+        const pid = params.pid;
+        const option = params.option;
+        const rows = params.rows.split(",");
+        const cols = params.cols.split(",");
+        const kle = bufferToJson(req.file.buffer);
+        const kleFileName = 'kle.json';
+        await cmd.writeFirmFiles(kleFileName, jsonToStr(kle));
+        await cmd.generateQmkFile(fileKb, kbDir, mcu, layout, user);
+        await cmd.generateFirmFiles(kleFileName);
+        const vialFirm = bufferToJson(await cmd.readFirmFiles('vial.json'));
+        if (option === 2) {
+            await cmd.write('/root/keyboards/via.json', jsonToStr(vialFirm));
+            res.send("finish!!");
+            return;
+        }
+        let json = 'keyboard.json';
+        let infoQmk = {};
+        try {
+            infoQmk = bufferToJson(await cmd.readQmkFile(fileKb, json));
+        }
+        catch (_) {
+            json = 'info.json';
+            infoQmk = bufferToJson(await cmd.readQmkFile(fileKb, json));
+        }
+        const infoFirm = bufferToJson(await cmd.readFirmFiles('info.json'));
+        infoQmk.keyboard_name = kb;
+        infoQmk.manufacturer = user;
+        infoQmk.maintainer = user;
+        infoQmk.usb.vid = vid;
+        infoQmk.usb.pid = pid;
+        infoQmk.layouts = infoFirm.layouts;
+        infoQmk.matrix_size = {
+            rows: vialFirm.matrix.rows,
+            cols: vialFirm.matrix.cols
+        };
+        infoQmk.matrix_pins = {
+            rows: rows,
+            cols: cols
+        };
+        await cmd.writeQmkFile(fileKb, json, jsonToStr(infoQmk));
+        let configQmk = "";
+        try {
+            configQmk = await cmd.readQmkFile(fileKb, 'config.h');
+        }
+        catch (_) { }
+        if (option === 1) {
+            configQmk = await cmd.readFirmFiles('config.h');
+        }
+        if (configQmk !== "") {
+            await cmd.writeQmkFile(fileKb, 'config.h', configQmk);
+        }
+        const kmFirm = await cmd.readFirmFiles('keymap.c');
+        await cmd.writeQmkFile(fileKb, 'keymaps/default/keymap.c', kmFirm);
+        if (option === 1) {
+            vialFirm.name = kb;
+            vialFirm.vendorId = vid;
+            vialFirm.productId = pid;
+            const rules = `VIA_ENABLE = yes\nVIAL_ENABLE = yes\n`;
+            await cmd.cpDefaultToVail(fileKb);
+            await cmd.writeQmkFile(fileKb, 'keymaps/vial/vial.json', jsonToStr(vialFirm));
+            await cmd.writeQmkFile(fileKb, 'keymaps/vial/rules.mk', rules);
+        }
+        await cmd.mvQmkConfigsToVolume(kbDir);
+        res.send("finish!!");
+    }
+    catch (e) {
+        res.send(e.toString());
+    }
+});
+app.post('/convert/vil/keymap_c', multer().fields([{ name: 'vil' }]), async (req, res) => {
+    try {
+        const keymap = vial2c(bufferToJson(req.files['vil'][0].buffer));
+        await cmd.write(`${cmd.dirClient}/keymap.c`, keymap);
+        await exec(`chmod 777 -R ${cmd.dirClient}/keymap.c`);
+        res.send("finish!!");
+    }
+    catch (e) {
+        res.send(e.toString());
+    }
+});
+module.exports = app;
 //# sourceMappingURL=app.js.map

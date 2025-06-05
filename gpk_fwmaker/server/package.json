@@ -5,34 +5,27 @@
   "description": "GPK_FWMaker_Sever",
   "author": "Daraku-Neko",
   "dependencies": {
-    "@types/express": "^5.0.2",
-    "@types/multer": "^1.4.12",
     "body-parser": "1.20.1",
     "express": "4.18.2",
     "multer": "1.4.5-lts.1"
   },
   "main": "dist/app.js",
-  "license": "MIT",
-  "devDependencies": {
-    "@types/node": "^22.15.29",
-    "@types/supertest": "^6.0.3",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "supertest": "^7.1.1",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.1"
-  },
   "scripts": {
+    "start": "node dist/app.js",
     "build": "tsc",
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch",
-    "lint:ts": "eslint src/**/*.{js,ts}",
-    "check": "npm run type-check && npm run lint:ts",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:watch": "vitest watch",
-    "test:coverage": "vitest run --coverage",
-    "test:api": "vitest run tests/api",
-    "test:unit": "vitest run tests/unit"
+    "lint": "eslint src/**/*.{js,ts}",
+    "check": "npm run type-check && npm run lint"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/express": "^5.0.2",
+    "@types/node": "^22.15.29",
+    "@typescript-eslint/eslint-plugin": "^8.33.1",
+    "@typescript-eslint/parser": "^8.33.1",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-unused-imports": "^4.1.4",
+    "typescript": "^5.8.3"
   }
 }

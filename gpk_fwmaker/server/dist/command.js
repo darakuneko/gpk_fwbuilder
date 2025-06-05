@@ -1,23 +1,17 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.streamEnd = exports.streamError = exports.streamResponse = exports.cmd = void 0;
-const util_1 = __importDefault(require("util"));
-const child_process_1 = __importDefault(require("child_process"));
-const fs_1 = __importDefault(require("fs"));
-const exec = util_1.default.promisify(child_process_1.default.exec);
+const util = require('util');
+const childProcess = require('child_process');
+const exec = util.promisify(childProcess.exec);
+const fs = require('fs');
 const dirClient = '/root/keyboards';
 const dirQMK = '/root/qmk_firmware';
 const dirVial = '/root/vial-qmk';
-const dirCustomRepo = '/root/custom_repository';
+const dirCustomRepo = `/root/custom_repository`;
 const dirFirmFiles = '/firmware-scripts/';
 const execCd = async (dir, line) => await exec(`cd ${dir} && ${line}`);
 const execQMK = async (line) => await execCd(dirQMK, line);
 const execVial = async (line) => await execCd(dirVial, line);
 const execFirmFiles = async (line) => await execCd(dirFirmFiles, line);
-const spawn = (line) => child_process_1.default.spawn(line, { shell: true });
+const spawn = (line) => childProcess.spawn(line, { shell: true });
 const streamWriteLine = async (dir, line, res) => {
     await exec(`cd ${dir} && ${line}`);
     res.write(`${line}\n`);
@@ -47,21 +41,18 @@ const streamResponse = async (res, fn) => {
     res.writeHead(200, { "Content-Type": "text/event-stream" });
     await fn();
 };
-exports.streamResponse = streamResponse;
 const streamLog = (line, res) => {
     const response = spawn(line);
-    response.stdout?.on('data', (data) => res.write(data.toString()));
-    response.stderr?.on('data', (data) => res.write(data.toString()));
+    response.stdout.on('data', (data) => res.write(data.toString()));
+    response.stderr.on('data', (data) => res.write(data.toString()));
     response.on('close', () => res.end(''));
 };
 const streamEnd = (res, msg) => {
     res.end(msg);
 };
-exports.streamEnd = streamEnd;
 const streamError = (res, e) => {
     res.end(e.toString());
 };
-exports.streamError = streamError;
 const buildCustomFW = async (res, dir, branch, kb, km) => {
     await exec(`${findFirmwareL(dir)} -delete`);
     const line = `cd ${dir} && { make ${kb}:${km} || true; } && git checkout ${branch} > /dev/null 2>&1 && ${cpFirmwareL(dir)}`;
@@ -73,7 +64,7 @@ const cpCfgToCustom = async (dir, kbDir) => {
 };
 const checkoutRepo = async (res, dir, fw, commit) => {
     const result = await exec(`cd ${dir} && python3 -m pip install --break-system-packages -r ${dir}/requirements.txt > /dev/null && git symbolic-ref --short HEAD`);
-    const branch = result.stdout.replace(/\n/g, '');
+    const branch = result.stdout.replaceAll('\n', '');
     await streamWriteLine(dir, `git fetch origin`, res);
     await streamWriteLine(dir, `git reset --hard ${branch}`, res);
     await streamWriteLine(dir, `git checkout ${commit.length > 0 ? commit : branch}`, res);
@@ -139,10 +130,7 @@ const cmd = {
     },
     updateRepositoryCustom: async (res, customDir, url) => {
         const dir = `${dirCustomRepo}/${customDir}`;
-        const match = url.match(/\/([^/]+)\.git$/);
-        if (!match)
-            throw new Error('Invalid git URL format');
-        const cloneDir = `${dir}/${match[1]}`;
+        const cloneDir = `${dir}/${url.match(/\/([^/]+)\.git$/)[1]}`;
         const line = `rm -rf ${dir} && mkdir ${dir} && cd ${dir} && git clone ${url} && cd ${cloneDir} && /usr/bin/python3 -m pip install --break-system-packages -r ${cloneDir}/requirements.txt && make git-submodule`;
         streamLog(line, res);
     },
@@ -163,11 +151,11 @@ const cmd = {
     generateFirmFiles: async (jsonPath) => {
         await execFirmFiles(`python3 ./run.py ${jsonPath}`);
     },
-    readFirmFiles: async (filePath) => (await fs_1.default.readFileSync(`${dirFirmFiles}${filePath}`)).toString(),
-    readQmkFile: async (kb, filePath) => (await fs_1.default.readFileSync(`${dirQMK}/keyboards/${kb}/${filePath}`)).toString(),
-    write: async (filePath, obj) => await fs_1.default.writeFileSync(filePath, obj),
-    writeFirmFiles: async (filePath, obj) => await fs_1.default.writeFileSync(`${dirFirmFiles}${filePath}`, obj),
-    writeQmkFile: async (kb, filePath, obj) => await fs_1.default.writeFileSync(`${dirQMK}/keyboards/${kb}/${filePath}`, obj),
+    readFirmFiles: async (filePath) => (await fs.readFileSync(`${dirFirmFiles}${filePath}`)).toString(),
+    readQmkFile: async (kb, filePath) => (await fs.readFileSync(`${dirQMK}/keyboards/${kb}/${filePath}`)).toString(),
+    write: async (filePath, obj) => await fs.writeFileSync(filePath, obj),
+    writeFirmFiles: async (filePath, obj) => await fs.writeFileSync(`${dirFirmFiles}${filePath}`, obj),
+    writeQmkFile: async (kb, filePath, obj) => await fs.writeFileSync(`${dirQMK}/keyboards/${kb}/${filePath}`, obj),
     cpConfigsToQmk: async (kbDir) => {
         await exec(rmKeyboardsL(dirQMK, kbDir));
         await exec(`cp -rf ${dirClient}/${kbDir} ${dirQMK}/keyboards`);
@@ -183,36 +171,10 @@ const cmd = {
         await exec(`rm -rf ${dirClient}/${kbDir} `);
         await exec(`mv -f ${dirQMK}/keyboards/${kbDir} ${dirClient}`);
         await exec(`chmod 777 -R ${dirClient}`);
-    },
-    // Additional methods referenced in app.js but missing from original command.js
-    buildQmk: async (res, kb, km, tag) => {
-        await cmd.checkoutQmk(res, tag);
-        await cmd.buildQmkFirmware(res, kb, km);
-    },
-    buildVial: async (res, kb, km, tag) => {
-        await cmd.checkoutVial(res, 'vial', tag);
-        await cmd.buildVialFirmware(res, kb, km);
-    },
-    buildCustom: async (res, id, kb, km, tag) => {
-        const obj = await cmd.checkoutCustom(res, id, tag);
-        await cmd.buildCustomFirmware(res, obj, kb, km);
-    },
-    generateQmk: async (res, keyboard, info, keymap) => {
-        // Implementation for QMK generation
-        streamError(res, new Error('generateQmk not implemented'));
-    },
-    convertKleQmk: async (res, layout, keyboard, mcu, bootloader) => {
-        // Implementation for KLE to QMK conversion
-        streamError(res, new Error('convertKleQmk not implemented'));
-    },
-    convertKleVial: async (res, layout, keyboard, mcu, bootloader) => {
-        // Implementation for KLE to Vial conversion
-        streamError(res, new Error('convertKleVial not implemented'));
-    },
-    convertViaJson: async (res, info, layout) => {
-        // Implementation for Via JSON conversion
-        streamError(res, new Error('convertViaJson not implemented'));
     }
 };
-exports.cmd = cmd;
+module.exports.cmd = cmd;
+module.exports.streamResponse = streamResponse;
+module.exports.streamError = streamError;
+module.exports.streamEnd = streamEnd;
 //# sourceMappingURL=command.js.map

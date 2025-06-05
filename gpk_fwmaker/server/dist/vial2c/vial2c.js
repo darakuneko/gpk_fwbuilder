@@ -1,6 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.vial2c = void 0;
 const KC_ALIASES = {
     //  "KC_TRNS": "KC_TRANSPARENT",
     "KC_NUMLOCK": "KC_NLCK",
@@ -166,5 +163,5 @@ const vial2c = (json) => {
         .join(",\n");
     return template(keymap);
 };
-exports.vial2c = vial2c;
+module.exports.vial2c = vial2c;
 //# sourceMappingURL=vial2c.js.map
