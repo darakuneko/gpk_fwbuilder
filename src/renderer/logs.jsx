@@ -1,58 +1,59 @@
-import React, {useRef, useCallback, useEffect, useState} from 'react'
-
+import React, {useRef, useEffect, useState} from 'react'
 import {useStateContext} from "../context.jsx"
-import Convert from "ansi-to-html"
-
-const convert = new Convert({ newline: true })
-import parse from 'html-react-parser'
-const sleep = async (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
 const Logs = () => {
     const {state} = useStateContext()
-    const [enableScroll, setEnableScroll] = useState(false)
-    const [countState, setCountState] = useState(0)
+    const textareaRef = useRef(null)
 
-    const scrollEndRef = useRef(null)
+    // Clean up log text for plain text display
+    const cleanLogText = (str) => {
+        if (!str) return ''
+        
+        return str
+            .replace(/\x1b\[[0-9;]*m/g, '') // Remove ANSI color codes
+            .replace(/@@@@init@@@@/g, '')    // Remove init markers
+            .replace(/@@@@finish@@@@/g, '')  // Remove finish markers
+            .replace(/<[^>]*>/g, '')         // Remove HTML tags
+            .replace(/&lt;/g, '<')           // Decode HTML entities
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/\n\n+/g, '\n')         // Replace multiple newlines with single
+            .replace(/^\n+/g, '')            // Remove leading newlines
+            .replace(/.*Compiling keymap with.*\n/g, '') // Remove compilation lines
+            .trim()
+    }
 
-    const scrollToBottom = () => scrollEndRef.current?.scrollIntoView({ behavior: "smooth" })
-
+    // Auto-scroll to bottom when logs update
     useEffect(() => {
-        const fn = async () => {
-            if(countState === 5 || state.logs.match(/@@@@finish@@@@/m)){
-                scrollToBottom()
-                setCountState(0)
-            } else {
-                setCountState(countState + 1)
-            }
+        if (textareaRef.current) {
+            textareaRef.current.scrollTop = textareaRef.current.scrollHeight
         }
-        fn()
-        return () => {}
     }, [state.logs])
 
-    const preQmkParse = (str) => str.replace(/\n\n/g, "\n")
-        .replace(/^\n/g, "")
-        .replace(/.*Compiling keymap with.*\n/, "")
+    // No need for custom context menu handler - Electron handles it
 
-    const parseHtml = (str, isStdOut) => {
-        const html = convert.toHtml(
-            preQmkParse(str)
-            .replace(/\n\n/g, "\n")
-            .replace(/^\n/g, "")
-            .replace(/.*Compiling keymap with.*\n/, "")
-            .replace(/\n/g, "<br />"))
 
-        const h = isStdOut ? html.replace(/\<span style=\"color:/g, "<div style=\"float: right; color:") : html
-
-        return parse(h
-            .replace(/\<p|\<span/g, "<div")
-            .replace(/\<\/p|<\/span/g, "</div"))
-    }
     return (
-        <div className="p-2 flex flex-col">
-            <div>
-                {state.logs && state.logs.length > 0 && parseHtml(state.logs, true)}
-                <div ref={scrollEndRef} />
-            </div>
+        <div className="p-2 h-full flex flex-col">
+            <textarea
+                ref={textareaRef}
+                value={cleanLogText(state.logs)}
+                readOnly
+                className="logs-textarea border-0 focus:outline-none focus:ring-0 flex-1 w-full p-3 font-mono text-sm bg-gray-900 text-green-400 resize-none"
+                style={{
+                    userSelect: 'text',
+                    fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                    minHeight: '200px',
+                    fontSmooth: 'never',
+                    WebkitFontSmoothing: 'none',
+                    MozOsxFontSmoothing: 'unset',
+                    textRendering: 'optimizeSpeed',
+                    fontKerning: 'none'
+                }}
+                placeholder="Logs will appear here..."
+            />
         </div>
     )
 }

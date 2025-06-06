@@ -4,7 +4,7 @@ import { Button, TextInput, Select } from 'flowbite-react'
 
 const {api} = window
 
-const Repository = () => {
+const Repository = ({onClose}) => {
     const {state, setState} = useStateContext()
     const [disabledBuildButton, setDisabledBuildButton] = useState(false)
 
@@ -21,6 +21,11 @@ const Repository = () => {
     }
 
     const handleUpdate = (msg1, msg2) => async () => {
+        // Close modal immediately when update starts
+        if (onClose) {
+            onClose()
+        }
+        
         state.logs = msg1
         state.tabDisabled = true
         setState(state)
@@ -48,36 +53,52 @@ const Repository = () => {
     }
 
     return (
-        <>
-            <div className="pt-2 flex content-center justify-center">
-                <div>
-                    <Select
-                        id="repository-fw-select"
-                        value={state.repository.firmware}
-                        onChange={handleSelectFW}
-                        required
-                    >
-                        {state.repository.firmwares.map((fw, i) =>
-                            (<option
-                                key={`repository-fw-select${fw.id}`}
-                                value={fw.id}
-                            >{fw.id}</option>)
-                        )}
-                    </Select>
+        <div className="p-6">
+            <div className="max-w-2xl mx-auto">
+                
+                <div className="space-y-4 mb-6">
+                    <div>
+                        <label htmlFor="repository-fw-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Firmware
+                        </label>
+                        <Select
+                            id="repository-fw-select"
+                            value={state.repository.firmware}
+                            onChange={handleSelectFW}
+                            required
+                        >
+                            {state.repository.firmwares.map((fw, i) =>
+                                (<option
+                                    key={`repository-fw-select${fw.id}`}
+                                    value={fw.id}
+                                >{fw.id}</option>)
+                            )}
+                        </Select>
+                    </div>
+                    
+                    <div>
+                        <label htmlFor="repository-custom-url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Repository URL
+                        </label>
+                        <TextInput
+                            type="text"
+                            id="repository-custom-url"
+                            placeholder="git clone url"
+                            onChange={handleTextChange}
+                            value={state.repository.firmwares.find(v => v.id === state.repository.firmware).url}
+                            disabled={isStaticFirmware(state.repository.firmware)}
+                            required
+                        />
+                    </div>
                 </div>
-                <div className="ml-2">
-                    <TextInput
-                        type="text"
-                        id={`repository-custom-url`}
-                        placeholder="git clone url"
-                        onChange={handleTextChange}
-                        className="w-80"
-                        value={state.repository.firmwares.find(v => v.id === state.repository.firmware).url}
-                        disabled={isStaticFirmware(state.repository.firmware)}
-                        required
-                    />
+                
+                <div className="text-center mb-6">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                        If it stops due to a network error or other problem, please press the button again.
+                    </p>
                 </div>
-                <div className="pl-4 pt-2 flex justify-center items-center">
+                
+                <div className="flex justify-center">
                     <Button
                         color="blue"
                         onClick={
@@ -85,16 +106,13 @@ const Repository = () => {
                                 "Updated!!")
                         }
                         disabled={state.tabDisabled}
+                        size="lg"
                     >
-                        Update
+                        Update Repository
                     </Button>
                 </div>
             </div>
-            <div className="pt-2 h-10 text-center">
-                If it stops due to a network error or other problem, please press the button again.
-            </div>
-        </>
-
+        </div>
     )
 }
 export default Repository

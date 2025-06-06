@@ -4,10 +4,15 @@ import { Button } from 'flowbite-react'
 
 const {api} = window
 
-const Image = () => {
+const Image = ({onClose}) => {
     const {state, setState} = useStateContext()
 
     const handleUpdate = (msg1, msg2, fn) => async () => {
+        // Close modal immediately when rebuild starts
+        if (onClose) {
+            onClose()
+        }
+        
         state.logs = msg1
         state.tabDisabled = true
         setState(state)
@@ -29,21 +34,27 @@ const Image = () => {
     }
 
     return (
-        <>
-            <div className="flex justify-center items-center pt-4">
-                <Button 
-                    color="red"
-                    disabled={state.tabDisabled}
-                    onClick={handleUpdate("Building.....\n\n", "Rebuild!!", async () => await api.rebuildImage())}
-                >
-                    Image Rebuild
-                </Button>
+        <div className="p-6">
+            <div className="max-w-2xl mx-auto">
+                
+                <div className="text-center mb-6">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                        If it stops due to a network error or other problem, please press the button again.
+                    </p>
+                </div>
+                
+                <div className="flex justify-center">
+                    <Button 
+                        color="red"
+                        disabled={state.tabDisabled}
+                        onClick={handleUpdate("Building.....\n\n", "Rebuild!!", async () => await api.rebuildImage())}
+                        size="lg"
+                    >
+                        Rebuild Docker Image
+                    </Button>
+                </div>
             </div>
-            <div className="h-10 text-center">
-                If it stops due to a network error or other problem, please press the button again.
-            </div>
-        </>
-
+        </div>
     )
 }
 export default Image

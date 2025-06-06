@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Event } from "electron"
+import { app, BrowserWindow, ipcMain, Event, Menu, clipboard } from "electron"
 import Store from 'electron-store'
 import command from './command.ts'
 import { fileURLToPath } from "url"
@@ -43,6 +43,27 @@ app.on('ready', async () => {
     if (mainWindow) {
         await command.upImage(mainWindow)
         mainWindow.webContents.openDevTools()
+        
+        // Setup context menu for logs textarea
+        mainWindow.webContents.on('context-menu', (e, params) => {
+            // Only show context menu when text is selected
+            if (params.selectionText && params.selectionText.trim().length > 0) {
+                const menuTemplate = [
+                    {
+                        label: 'Copy',
+                        click: () => {
+                            clipboard.writeText(params.selectionText)
+                        }
+                    }
+                ]
+                const contextMenu = Menu.buildFromTemplate(menuTemplate)
+                contextMenu.popup({
+                    window: mainWindow,
+                    x: params.x,
+                    y: params.y
+                })
+            }
+        })
     }
 })
 

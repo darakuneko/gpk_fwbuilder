@@ -1,15 +1,20 @@
 import React, {useEffect, useState} from 'react'
 import {getState, useStateContext} from "./context.jsx"
-import { Sidebar, Spinner, Button } from 'flowbite-react'
-import { HiCube, HiCollection, HiRefresh, HiServer, HiPhotograph, HiCog } from 'react-icons/hi'
+import { Sidebar, Spinner, Button, Modal } from 'flowbite-react'
+import { HiCube, HiCollection, HiRefresh, HiServer, HiPhotograph, HiCog, HiChevronRight, HiX } from 'react-icons/hi'
 import Build from "./renderer/build.jsx"
 import Logs from "./renderer/logs.jsx"
 import parse from 'html-react-parser'
 import Repository from "./renderer/repository.jsx"
 import Image from "./renderer/image.jsx"
 import Generate from "./renderer/generate.jsx"
+import GenerateKeyboardFile from "./renderer/generateKeyboardFile.jsx"
+import GenerateVialId from "./renderer/generateVialId.jsx"
 import Convert from "./renderer/convert.jsx"
+import ConvertVialToKeymap from "./renderer/convertVialToKeymap.jsx"
+import ConvertKleToKeyboard from "./renderer/convertKleToKeyboard.jsx"
 import Setting from "./renderer/setting.jsx"
+import ExternalServer from "./renderer/externalServer.jsx"
 
 const {api} = window
 
@@ -17,7 +22,10 @@ const Content = () => {
     const {state, setState} = useStateContext()
     const [initServer, setInitServer] = useState(true)
     const [closeServer, setCloseServer] = useState(false)
-    const [tab, setTab] = useState(0)
+    const [expandedMenu, setExpandedMenu] = useState(null)
+    const [showModal, setShowModal] = useState(false)
+    const [modalContent, setModalContent] = useState(null)
+    const [modalTitle, setModalTitle] = useState('')
 
     useEffect(() => {
         const fn = async () => {
@@ -86,31 +94,128 @@ const Content = () => {
         await api.setSkipCheckDocker(true)
     }
 
-    const handleChange = (tabIndex) => {
-        setTab(tabIndex)
-        state.logs = ''
-        setState(state)
+    const handleCloseModal = () => {
+        setShowModal(false)
+        setModalContent(null)
+        setModalTitle('')
     }
 
-    const tabHeight = (tab) => {
-        if (tab === 2) return '300px'
-        return '400px'
-    }
 
-    const tabs = [
-        { label: "Build", component: <Build/> },
-        { label: "Generate", component: <Generate/> },
-        { label: "Convert", component: <Convert/> },
-        { label: "Repository", component: <Repository/> },
-        { label: "Image", component: <Image/> },
-        { label: "Setting", component: <Setting/> }
+
+    const menuStructure = [
+        { 
+            label: "Build", 
+            icon: HiCube,
+            component: (onClose) => <Build onClose={onClose}/>,
+            hasSubmenu: false,
+            title: "Build Firmware"
+        },
+        { 
+            label: "Generate", 
+            icon: HiCollection,
+            hasSubmenu: true,
+            subItems: [
+                { 
+                    label: "Keyboard File", 
+                    component: (onClose) => <GenerateKeyboardFile onClose={onClose}/>,
+                    title: "QMK Keyboard File Generation"
+                },
+                { 
+                    label: "Vial Unique ID", 
+                    component: (onClose) => <GenerateVialId onClose={onClose}/>,
+                    title: "Vial Unique ID Generation"
+                }
+            ]
+        },
+        { 
+            label: "Convert", 
+            icon: HiRefresh,
+            hasSubmenu: true,
+            subItems: [
+                { 
+                    label: "Vial to Keymap.c", 
+                    component: (onClose) => <ConvertVialToKeymap onClose={onClose}/>,
+                    title: "Convert Vial File to Keymap.c"
+                },
+                { 
+                    label: "KLE to Keyboard File", 
+                    component: (onClose) => <ConvertKleToKeyboard onClose={onClose}/>,
+                    title: "Convert KLE Json to QMK/Vial Files"
+                }
+            ]
+        },
+        { 
+            label: "Setting",
+            icon: HiCog,
+            hasSubmenu: true,
+            subItems: [
+                { 
+                    label: "Repository", 
+                    component: (onClose) => <Repository onClose={onClose}/>,
+                    title: "Repository Management"
+                },
+                { 
+                    label: "Image", 
+                    component: (onClose) => <Image onClose={onClose}/>,
+                    title: "Docker Image Management"
+                },
+                { 
+                    label: "External Server", 
+                    component: (onClose) => <ExternalServer onClose={onClose}/>,
+                    title: "External Server Settings"
+                }
+            ]
+        }
     ]
 
+    const openModal = (title, component) => {
+        setModalTitle(title)
+        setModalContent(component)
+        setShowModal(true)
+    }
+
+    const handleMenuClick = (menuItem, index) => {
+        if (!state.tabDisabled) {
+            if (menuItem.hasSubmenu) {
+                if (menuItem.subItems.length === 1) {
+                    // Single submenu - open modal directly
+                    openModal(menuItem.subItems[0].title, menuItem.subItems[0].component(handleCloseModal))
+                } else {
+                    // Multiple submenus - expand/collapse
+                    if (expandedMenu === index) {
+                        setExpandedMenu(null)
+                    } else {
+                        setExpandedMenu(index)
+                    }
+                }
+            } else {
+                // No submenu - open modal directly
+                openModal(menuItem.title, menuItem.component(handleCloseModal))
+            }
+        }
+    }
+
+    const handleSubMenuClick = (parentIndex, subItem) => {
+        if (!state.tabDisabled) {
+            openModal(subItem.title, subItem.component(handleCloseModal))
+        }
+    }
+
+    const handleContextMenu = (e) => {
+        // Allow default context menu for all elements now that Electron handles it
+        // No need to prevent default anymore
+    }
+
     return (
-        <div className="min-h-screen" style={{ 
-            backgroundColor: 'var(--color-background)', 
-            color: 'var(--color-text-primary)' 
-        }}>
+        <div 
+            className="min-h-screen" 
+            style={{ 
+                backgroundColor: 'var(--color-background)', 
+                color: 'var(--color-text-primary)',
+                userSelect: 'none'
+            }}
+            onContextMenu={handleContextMenu}
+        >
             {(() => {
                 if (closeServer) {
                     return (
@@ -147,73 +252,62 @@ const Content = () => {
                             <Sidebar className="w-64 h-screen bg-gray-50 dark:bg-gray-800">
                                 <Sidebar.Items>
                                     <Sidebar.ItemGroup>
-                                        <Sidebar.Item
-                                            icon={HiCube}
-                                            active={tab === 0}
-                                            onClick={() => !state.tabDisabled && handleChange(0)}
-                                            className={state.tabDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                                        >
-                                            Build
-                                        </Sidebar.Item>
-                                        <Sidebar.Item
-                                            icon={HiCollection}
-                                            active={tab === 1}
-                                            onClick={() => !state.tabDisabled && handleChange(1)}
-                                            className={state.tabDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                                        >
-                                            Generate
-                                        </Sidebar.Item>
-                                        <Sidebar.Item
-                                            icon={HiRefresh}
-                                            active={tab === 2}
-                                            onClick={() => !state.tabDisabled && handleChange(2)}
-                                            className={state.tabDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                                        >
-                                            Convert
-                                        </Sidebar.Item>
-                                        <Sidebar.Item
-                                            icon={HiServer}
-                                            active={tab === 3}
-                                            onClick={() => !state.tabDisabled && handleChange(3)}
-                                            className={state.tabDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                                        >
-                                            Repository
-                                        </Sidebar.Item>
-                                        <Sidebar.Item
-                                            icon={HiPhotograph}
-                                            active={tab === 4}
-                                            onClick={() => !state.tabDisabled && handleChange(4)}
-                                            className={state.tabDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                                        >
-                                            Image
-                                        </Sidebar.Item>
-                                        <Sidebar.Item
-                                            icon={HiCog}
-                                            active={tab === 5}
-                                            onClick={() => !state.tabDisabled && handleChange(5)}
-                                            className={state.tabDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                                        >
-                                            Setting
-                                        </Sidebar.Item>
+                                        {menuStructure.map((menu, index) => (
+                                            <div key={menu.label}>
+                                                <Sidebar.Item
+                                                    icon={menu.icon}
+                                                    active={false}
+                                                    onClick={() => handleMenuClick(menu, index)}
+                                                    className={`${state.tabDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${menu.hasSubmenu ? 'flex items-center justify-between' : ''}`}
+                                                >
+                                                    <span>{menu.label}</span>
+                                                    {menu.hasSubmenu && menu.subItems.length > 1 && (
+                                                        <HiChevronRight 
+                                                            className={`ml-auto transition-transform ${expandedMenu === index ? 'rotate-90' : ''}`}
+                                                        />
+                                                    )}
+                                                </Sidebar.Item>
+                                                {menu.hasSubmenu && menu.subItems.length > 1 && expandedMenu === index && (
+                                                    <div className="ml-6">
+                                                        {menu.subItems.map((subItem, subIndex) => (
+                                                            <Sidebar.Item
+                                                                key={subItem.label}
+                                                                active={false}
+                                                                onClick={() => handleSubMenuClick(index, subItem)}
+                                                                className={`${state.tabDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} text-sm`}
+                                                            >
+                                                                {subItem.label}
+                                                            </Sidebar.Item>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
                                     </Sidebar.ItemGroup>
                                 </Sidebar.Items>
                             </Sidebar>
                             
-                            {/* Main Content Area */}
-                            <div className="flex-1 flex flex-col">
-                                {/* Main Content */}
-                                <div className="overflow-y-auto p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700" style={{ height: tabHeight(tab) }}>
-                                    {tabs[tab].component}
-                                </div>
-                                
-                                {/* Logs Area */}
-                                <div 
-                                    className="flex-1 overflow-y-auto p-4 bg-white dark:bg-gray-900"
-                                    style={{ height: `calc(100vh - ${tabHeight(tab)})` }}
-                                >
-                                    <Logs/>
-                                </div>
+                            {/* Main Content Area - Logs Only */}
+                            <div className="flex-1 overflow-y-auto p-4 bg-white dark:bg-gray-900">
+                                <Logs/>
                             </div>
+                            
+                            {/* Modal for Settings */}
+                            <Modal
+                                show={showModal}
+                                onClose={handleCloseModal}
+                                size="5xl"
+                                position="center"
+                            >
+                                <Modal.Header>
+                                    {modalTitle}
+                                </Modal.Header>
+                                <Modal.Body>
+                                    <div className="max-h-[70vh] overflow-y-auto">
+                                        {modalContent}
+                                    </div>
+                                </Modal.Body>
+                            </Modal>
                         </div>
                     )
                 }

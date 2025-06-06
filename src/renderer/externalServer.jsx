@@ -4,7 +4,7 @@ import { Label, TextInput } from 'flowbite-react'
 
 const {api} = window
 
-const Setting = () => {
+const ExternalServer = ({onClose}) => {
     const {state, setState} = useStateContext()
 
     const handleDockeUrlChange = async (e) => {
@@ -23,7 +23,6 @@ const Setting = () => {
     return (
         <div className="p-6">
             <div className="max-w-2xl mx-auto">
-                <h2 className="text-lg font-semibold mb-6">Settings</h2>
                 
                 <div className="space-y-4 mb-6">
                     <div>
@@ -64,4 +63,4 @@ const Setting = () => {
         </div>
     )
 }
-export default Setting
+export default ExternalServer

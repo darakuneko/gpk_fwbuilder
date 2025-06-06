@@ -5,7 +5,7 @@ import FlowbiteAutocomplete from "../components/FlowbiteAutocomplete.jsx"
 
 const {api} = window
 
-const Build = () => {
+const Build = ({onClose}) => {
     const {state, setState} = useStateContext()
     const [keyboardEmptyError, setKeyboardEmptyError] = useState(false)
     const [keymapEmptyError, setKeymapEmptyError] = useState(false)
@@ -80,7 +80,7 @@ const Build = () => {
         setState(state)
     }
 
-    const waiting = async (start, end, log) => {
+    const waiting = async (start, end, log, onCompleteCallback) => {
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
         state.logs = log
@@ -96,12 +96,20 @@ const Build = () => {
                 state.tabDisabled = false
                 setState(state)
                 clearInterval(id)
+                if (onCompleteCallback) {
+                    onCompleteCallback()
+                }
             }
         }
         id = setInterval(checkFn, 1000)
     }
 
     const handleCheckout = async () => {
+        // Close modal immediately when checkout starts
+        if (onClose) {
+            onClose()
+        }
+        
         const start = async () => await api.checkout({
             fw: state.build.fw.toLowerCase(),
             tag: state.build.tag,
@@ -116,9 +124,17 @@ const Build = () => {
             fw: state.build.fw.toLowerCase(),
             kb: state.build.kb
         })
+        if (onClose) {
+            onClose()
+        }
     }
 
     const handleBuild = async () => {
+        // Close modal immediately when build starts
+        if (onClose) {
+            onClose()
+        }
+        
         const start = async () => await api.build(state.build)
         const end = async () => await api.buildCompleted()
         await waiting(start, end,
@@ -126,8 +142,10 @@ const Build = () => {
     }
 
     return (
-        <div className="flex flex-col space-y-4">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-6">
+            <div className="max-w-4xl mx-auto">
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     <div>
                         <div className="mb-2 block">
                             <Label htmlFor="build-fw-select" value="Firmware" />
@@ -207,45 +225,49 @@ const Build = () => {
                             </p>
                         )}
                     </div>
-            </div>
-            <div className="flex justify-center items-center">
-                <div className="flex items-center">
-                    <Checkbox
-                        id="use-repo"
-                        checked={state.build.useRepo ? state.build.useRepo : false}
-                        onChange={handleUseRepoChange}
-                    />
-                    <Label htmlFor="use-repo" className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
-                        Use Repository Keyboards File
-                    </Label>
                 </div>
-            </div>
-            <div className="flex justify-center items-center gap-2">
-                {state.build.useRepo && (
-                    <>
-                        <Button
-                            color="gray"
-                            onClick={handleCheckout}
-                            disabled={disabledUseRepoButtonButton}
-                        >
-                            Refresh Keyboard List
-                        </Button>
-                        <Button
-                            color="gray"
-                            onClick={handleCopyKeyboardFile}
-                            disabled={disabledUseRepoButtonButton}
-                        >
-                            Copy Keyboard File
-                        </Button>
-                    </>
-                )}
-                <Button
-                    color="blue"
-                    onClick={handleBuild}
-                    disabled={init ? initDisabledBuildButton() : disabledBuildButton}
-                >
-                    Build
-                </Button>
+                
+                <div className="mb-6">
+                    <div className="flex items-center justify-center">
+                        <Checkbox
+                            id="use-repo"
+                            checked={state.build.useRepo ? state.build.useRepo : false}
+                            onChange={handleUseRepoChange}
+                        />
+                        <Label htmlFor="use-repo" className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                            Use Repository Keyboards File
+                        </Label>
+                    </div>
+                </div>
+                
+                <div className="flex justify-center items-center gap-2">
+                    {state.build.useRepo && (
+                        <>
+                            <Button
+                                color="gray"
+                                onClick={handleCheckout}
+                                disabled={disabledUseRepoButtonButton}
+                            >
+                                Refresh Keyboard List
+                            </Button>
+                            <Button
+                                color="gray"
+                                onClick={handleCopyKeyboardFile}
+                                disabled={disabledUseRepoButtonButton}
+                            >
+                                Copy Keyboard File
+                            </Button>
+                        </>
+                    )}
+                    <Button
+                        color="blue"
+                        onClick={handleBuild}
+                        disabled={init ? initDisabledBuildButton() : disabledBuildButton}
+                        size="lg"
+                    >
+                        Build
+                    </Button>
+                </div>
             </div>
         </div>
     )
