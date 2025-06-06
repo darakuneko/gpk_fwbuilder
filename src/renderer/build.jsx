@@ -1,10 +1,7 @@
 import React, {useState} from "react"
-import {useStateContext} from "../context.js"
-import {formHelperTextFontSize, inputLabelMiddleFontSize, textFieldMiddleWidth} from "../style.js"
-
-import {Checkbox, FormControlLabel, FormGroup, Autocomplete, Button, Box,
-    FormHelperText, TextField, InputLabel, Select, MenuItem
-} from "@mui/material";
+import {useStateContext} from "../context.jsx"
+import { Button, Label, TextInput, Select, Checkbox } from 'flowbite-react'
+import FlowbiteAutocomplete from "../components/FlowbiteAutocomplete.jsx"
 
 const {api} = window
 
@@ -129,159 +126,128 @@ const Build = () => {
     }
 
     return (
-        <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-        }}>
-            {state.build.tags.length > 0 ? (
-                <Box
-                    sx={{
-                        pt: 2,
-                        display: 'flex',
-                        alignContent: 'center',
-                        justifyContent: 'center'
-                    }}>
-                    <Box>
-                        <InputLabel sx={{fontSize: inputLabelMiddleFontSize}}>Firmware</InputLabel>
+        <div className="flex flex-col space-y-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <div className="mb-2 block">
+                            <Label htmlFor="build-fw-select" value="Firmware" />
+                        </div>
                         <Select
                             id="build-fw-select"
-                            label="Firmware"
                             value={state.build.fw}
                             onChange={handleSelectFW}
-                            required>
+                            required
+                        >
                             {state.repository.firmwares.map((fw, i) =>
-                                (<MenuItem
+                                (<option
                                     key={`fw-${fw.id}`}
                                     value={fw.id}
-                                    selected={i === 0}
-                                >{fw.id}</MenuItem>)
+                                >{fw.id}</option>)
                             )}
                         </Select>
-                    </Box>
+                    </div>
                     {state.build.fw === "QMK" ? (
-                        <Box sx={{pl: 4}}>
-                            <InputLabel sx={{fontSize: inputLabelMiddleFontSize}}>Tag</InputLabel>
+                        <div>
+                            <div className="mb-2 block">
+                                <Label htmlFor="build-tags-select" value="Tag" />
+                            </div>
                             <Select
                                 id="build-tags-select"
-                                label="Tag"
-                                value={state.build.tag}
+                                value={state.build.tag || ''}
                                 onChange={handleSelectTags}
-                                required>
-                                {state.build.tags.map((tag, i) => (
-                                    <MenuItem key={`tags-${i}`} value={tag}>{tag}</MenuItem>))}
+                                required
+                            >
+                                {(state.build.tags || []).map((tag, i) => (
+                                    <option key={`tags-${i}`} value={tag}>{tag}</option>
+                                ))}
                             </Select>
-                        </Box>
+                        </div>
                     ) : (
-                        <Box sx={{pt: 2}}>
-                            <TextField
+                        <div>
+                            <div className="mb-2 block">
+                                <Label htmlFor="build-commit" value="commit(optional)" />
+                            </div>
+                            <TextInput
+                                type="text"
                                 id="build-commit"
-                                label="commit(optional)"
                                 disabled={disabledBuildText}
                                 onChange={handleTextChange("commit")}
-                                variant="standard"
                                 value={getCommit(state)}
                             />
-                        </Box>
+                        </div>
                     )}
-                    <Box sx={{pt: 2}}>
-                        <Autocomplete
-                            fullWidth
+                    <div>
+                        <FlowbiteAutocomplete
+                            id="build-kb"
+                            label="keyboard"
+                            required
+                            error={keyboardEmptyError}
                             options={state.keyboardList.kb}
-                            renderInput={(params) =>
-                                <TextField
-                                    id="build-kb"
-                                    label="keyboard"
-                                    required
-                                    error={keyboardEmptyError}
-                                    onFocus={handleKbFocus}
-                                    variant="standard"
-                                    style={{width: textFieldMiddleWidth}}
-                                    {...params}
-                                />
-                            }
                             value={state.build.kb}
                             disabled={disabledBuildText}
                             onChange={handleTextChange("kb")}
+                            onFocus={handleKbFocus}
                         />
-
-                    </Box>
-                    <Box sx={{pt: 2}}>
-                        <Autocomplete
-                            fullWidth
+                    </div>
+                    <div>
+                        <FlowbiteAutocomplete
+                            id="build-km"
+                            label="keymap"
+                            required
+                            error={keymapEmptyError}
                             options={state.keyboardList.km}
-                            renderInput={(params) =>
-                                <TextField
-                                    id="build-km"
-                                    label="keymap"
-                                    required
-                                    error={keymapEmptyError}
-                                    onFocus={handleKmFocus}
-                                    variant="standard"
-                                    style={{width: textFieldMiddleWidth}}
-                                    {...params}
-                                />
-                            }
                             value={state.build.km}
                             disabled={disabledBuildText}
                             onChange={handleTextChange("km")}
+                            onFocus={handleKmFocus}
                         />
-                        {
-                            keymapStrError &&
-                            <FormHelperText error sx={{pl: 4, fontSize: formHelperTextFontSize}}>":" "flash" cannot be
-                                used</FormHelperText>
-                        }
-                    </Box>
-                </Box>) : (<div/>)
-            }
-            <Box
-                sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                }}>
-                <FormGroup>
-                    <FormControlLabel
-                        control={<Checkbox checked={state.build.useRepo ? state.build.useRepo : false}
-                                           onChange={handleUseRepoChange}/>}
-                        label="Use Repository Keyboards File"/>
-                </FormGroup>
-            </Box>
-            <Box
-                sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                }}>
+                        {keymapStrError && (
+                            <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                                ":" "flash" cannot be used
+                            </p>
+                        )}
+                    </div>
+            </div>
+            <div className="flex justify-center items-center">
+                <div className="flex items-center">
+                    <Checkbox
+                        id="use-repo"
+                        checked={state.build.useRepo ? state.build.useRepo : false}
+                        onChange={handleUseRepoChange}
+                    />
+                    <Label htmlFor="use-repo" className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                        Use Repository Keyboards File
+                    </Label>
+                </div>
+            </div>
+            <div className="flex justify-center items-center gap-2">
                 {state.build.useRepo && (
                     <>
-                        <Button variant="contained"
-                                onClick={handleCheckout}
-                                disabled={disabledUseRepoButtonButton}
-                                sx={{
-                                    ml: '4px',
-                                    mr: '4px'
-                                }}
-                        >Refresh Keyboard List</Button>
-                        <Button variant="contained"
-                                onClick={handleCopyKeyboardFile}
-                                disabled={disabledUseRepoButtonButton}
-                                sx={{
-                                    ml: '4px',
-                                    mr: '4px'
-                                }}
-                        >Copy Keyboard File</Button>
-                    </>)
-                }
-                <Button variant="contained"
-                        onClick={handleBuild}
-                        disabled={init ? initDisabledBuildButton() : disabledBuildButton}
-                        sx={{
-                            ml: '4px',
-                            mr: '4px'
-                        }}
-                >Build</Button>
-            </Box>
-        </Box>
+                        <Button
+                            color="gray"
+                            onClick={handleCheckout}
+                            disabled={disabledUseRepoButtonButton}
+                        >
+                            Refresh Keyboard List
+                        </Button>
+                        <Button
+                            color="gray"
+                            onClick={handleCopyKeyboardFile}
+                            disabled={disabledUseRepoButtonButton}
+                        >
+                            Copy Keyboard File
+                        </Button>
+                    </>
+                )}
+                <Button
+                    color="blue"
+                    onClick={handleBuild}
+                    disabled={init ? initDisabledBuildButton() : disabledBuildButton}
+                >
+                    Build
+                </Button>
+            </div>
+        </div>
     )
 }
 export default Build

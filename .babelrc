@@ -1,7 +1,0 @@
-{
-  "presets": [
-    "@babel/preset-env",
-    "@babel/react",
-    "@emotion/babel-preset-css-prop"
-  ]
-}

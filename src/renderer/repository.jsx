@@ -1,7 +1,6 @@
 import React, {useState} from "react"
-import {useStateContext} from "../context.js"
-import {textFieldLongWidth} from "../style.js"
-import {Button, TextField, MenuItem, Select, Box} from "@mui/material";
+import {useStateContext} from "../context.jsx"
+import { Button, TextInput, Select } from 'flowbite-react'
 
 const {api} = window
 
@@ -50,67 +49,50 @@ const Repository = () => {
 
     return (
         <>
-            <Box
-                sx={{
-                    pt: 2,
-                    display: 'flex',
-                    alignContent: 'center',
-                    justifyContent: 'center'
-                }}>
-                <Box>
+            <div className="pt-2 flex content-center justify-center">
+                <div>
                     <Select
                         id="repository-fw-select"
-                        label="Firmware"
                         value={state.repository.firmware}
                         onChange={handleSelectFW}
-                        required>
+                        required
+                    >
                         {state.repository.firmwares.map((fw, i) =>
-                            (<MenuItem
+                            (<option
                                 key={`repository-fw-select${fw.id}`}
                                 value={fw.id}
-                                selected={i === 0}
-                            >{fw.id}</MenuItem>)
+                            >{fw.id}</option>)
                         )}
                     </Select>
-                </Box>
-                <Box>
-                    <TextField
+                </div>
+                <div className="ml-2">
+                    <TextInput
+                        type="text"
                         id={`repository-custom-url`}
-                        label="git clone url"
-                        variant="standard"
+                        placeholder="git clone url"
                         onChange={handleTextChange}
-                        style={{width: textFieldLongWidth}}
+                        className="w-80"
                         value={state.repository.firmwares.find(v => v.id === state.repository.firmware).url}
                         disabled={isStaticFirmware(state.repository.firmware)}
                         required
                     />
-                </Box>
-                <Box
-                    sx={{
-                        pl: 4,
-                        pt: 2,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}>
-                    <Button variant="contained"
-                            onClick={
-                                handleUpdate("Updating.....\n\nIt will take a few minutes.\n\n",
-                                    "Updated!!")
-                            }
-                            disabled={state.tabDisabled}
-                    >Update</Button>
-                </Box>
-            </Box>
-            <Box
-                sx={{
-                    pt: 2,
-                    height: '40px',
-                    textAlign: "center"
-                }}
-            >
+                </div>
+                <div className="pl-4 pt-2 flex justify-center items-center">
+                    <Button
+                        color="blue"
+                        onClick={
+                            handleUpdate("Updating.....\n\nIt will take a few minutes.\n\n",
+                                "Updated!!")
+                        }
+                        disabled={state.tabDisabled}
+                    >
+                        Update
+                    </Button>
+                </div>
+            </div>
+            <div className="pt-2 h-10 text-center">
                 If it stops due to a network error or other problem, please press the button again.
-            </Box>
+            </div>
         </>
 
     )

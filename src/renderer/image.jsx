@@ -1,6 +1,6 @@
 import React from "react"
-import {useStateContext} from "../context.js"
-import {Box, Button} from "@mui/material"
+import {useStateContext} from "../context.jsx"
+import { Button } from 'flowbite-react'
 
 const {api} = window
 
@@ -30,26 +30,18 @@ const Image = () => {
 
     return (
         <>
-            <Box sx={{
-                display: 'flex',
-                flexFlow: 'wrap',
-                alignContent: 'center',
-                justifyContent: 'center',
-                height: '140px'
-            }}>
-                <Button variant="contained"
-                        disabled={state.tabDisabled}
-                        onClick={handleUpdate("Building.....\n\n", "Rebuild!!", async () => await api.rebuildImage())}
-                >Image Rebuild</Button>
-            </Box>
-            <Box
-                sx={{
-                    height: '40px',
-                    textAlign: "center"
-                }}
-            >
+            <div className="flex justify-center items-center pt-4">
+                <Button 
+                    color="red"
+                    disabled={state.tabDisabled}
+                    onClick={handleUpdate("Building.....\n\n", "Rebuild!!", async () => await api.rebuildImage())}
+                >
+                    Image Rebuild
+                </Button>
+            </div>
+            <div className="h-10 text-center">
                 If it stops due to a network error or other problem, please press the button again.
-            </Box>
+            </div>
         </>
 
     )

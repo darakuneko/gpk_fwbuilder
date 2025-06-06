@@ -1,0 +1,30 @@
+/* Basic light/dark mode styling without Tailwind imports */
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+  background-color: #f9fafb;
+  color: #111827;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Dark mode */
+.dark body {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+/* Ensure Flowbite components work correctly */
+.dark {
+  color-scheme: dark;
+}
+
+/* Flowbite Sidebar customization */
+[data-testid="flowbite-sidebar-item-group"] {
+  border-top: none !important;
+  padding-top: 0 !important;
+}
+
+/* Let Flowbite handle all component styling */

@@ -1,8 +1,6 @@
-import {Box} from "@mui/material"
-
 import React, {useRef, useCallback, useEffect, useState} from 'react'
 
-import {useStateContext} from "../context.js"
+import {useStateContext} from "../context.jsx"
 import Convert from "ansi-to-html"
 
 const convert = new Convert({ newline: true })
@@ -50,16 +48,12 @@ const Logs = () => {
             .replace(/\<\/p|<\/span/g, "</div"))
     }
     return (
-        <Box sx={{
-            p: 2,
-            display: 'flex',
-            flexDirection: 'column'
-        }}>
-            <Box>
+        <div className="p-2 flex flex-col">
+            <div>
                 {state.logs && state.logs.length > 0 && parseHtml(state.logs, true)}
                 <div ref={scrollEndRef} />
-            </Box>
-        </Box>
+            </div>
+        </div>
     )
 }
 export default Logs

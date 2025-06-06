@@ -40,6 +40,6 @@ WORKDIR /server
 
 RUN npm install
 
-RUN npm run build
+RUN npm install -g ts-node
 
-CMD node ./dist/app.js
+CMD npx ts-node ./src/app.ts

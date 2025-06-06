@@ -26,7 +26,7 @@ const createWindow = () => {
         },
     })
 
-    mainWindow.loadURL(`file://${__dirname}/public/index.html`)
+    mainWindow.loadURL(`file://${path.join(__dirname, '../dist/public/index.html')}`)
     mainWindow.setMenu(null)
     mainWindow.on('close', async (event) => {
         if (!app.isQuiting) await closing(event, mainWindow)
@@ -39,7 +39,7 @@ app.setName("GPK FWBuilder")
 app.on('ready', async () => {
     createWindow()
     await command.upImage(mainWindow)
-    //mainWindow.webContents.openDevTools()
+    mainWindow.webContents.openDevTools()
 })
 
 const closing = async(e, mainWindow) => {

@@ -1,9 +1,19 @@
 # GPK FWBuilder
-Application to create QMK/Vial firmware.  
+
+**English | [日本語](README_ja.md)**
+
+Application to create QMK/Vial firmware with modern Electron-based GUI.
 
 https://github.com/darakuneko/gpk_fwbuilder/assets/5214078/70497d3d-4729-4b58-b9b3-c4626b0f21d9
 
 https://github.com/darakuneko/gpk_fwbuilder/assets/5214078/55f463ee-44eb-4aa6-bde4-87bfe379ebf0
+
+## Tech Stack
+
+- **Frontend**: React 18, Tailwind CSS 4
+- **Backend**: Electron 33, Node.js
+- **Build Tools**: Vite 6, TypeScript 5
+- **Firmware Tools**: Docker-based QMK/Vial build system
 
 CUI version
 -------
@@ -226,3 +236,49 @@ If you get an error like this, please update the repository.
 ```
 error: branch 'x.x.x' not found.
 ```
+
+## Development
+
+### Prerequisites
+- Node.js 18+
+- Docker Desktop
+- Git
+
+### Setup
+```bash
+# Clone the repository
+git clone https://github.com/darakuneko/gpk_fwbuilder.git
+cd gpk_fwbuilder
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Start built application
+npm run start
+```
+
+### Project Structure
+```
+gpk_fwbuilder/
+├── src/                    # React frontend source
+│   ├── components/         # Reusable UI components
+│   ├── renderer/          # Tab content components
+│   ├── context.jsx        # Global state management
+│   └── globals.css        # Tailwind CSS styles
+├── gpk_fwmaker/           # Docker-based build system
+├── dist/                  # Built frontend assets
+└── dist-electron/         # Built Electron main process
+```
+
+### Build Commands
+- `npm run build` - Build for production
+- `npm run build:win` - Build for Windows
+- `npm run dist:win` - Create Windows installer
+- `npm run dist:mac` - Create macOS DMG
+- `npm run dist:linux` - Create Linux AppImage

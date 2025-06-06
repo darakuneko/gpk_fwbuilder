@@ -1,7 +1,6 @@
 import React, {useState} from "react"
-import {useStateContext} from "../context.js"
-import {formHelperTextFontSize, inputLabelMiddleFontSize, textFieldMiddleWidth} from "../style.js"
-import {Box, TextField, InputLabel, MenuItem, Select, Button, FormHelperText}from "@mui/material"
+import {useStateContext} from "../context.jsx"
+import { Button, Label, TextInput, Select } from 'flowbite-react'
 
 const {api} = window
 
@@ -85,96 +84,100 @@ const Generate = () => {
         setState(state)
     }
 
-    const ValidTextField = (<FormHelperText error sx={{ pl: 4, fontSize: formHelperTextFontSize}}>A-Za-z0-9_/- can used</FormHelperText>)
+    
     return (
-        <Box sx={{
-            pl: 4,
-            pr: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center'
-        }}>
-            <Box
-                sx={{
-                    pt: 2,
-                    display: 'flex',
-                    alignContent: 'center',
-                    justifyContent: 'space-between'}} >
-                <Box sx={{ pt: 3, textAlign: "center", width: "150px"}} >QMK<br />Keyboard File</Box>
-                <Box>
-                    <InputLabel sx={{ fontSize: inputLabelMiddleFontSize }} >MCU</InputLabel>
+        <div className="px-4 flex flex-col justify-center">
+            <div className="pt-2 flex content-center justify-between">
+                <div className="pt-3 text-center w-[150px]">
+                    QMK<br />Keyboard File
+                </div>
+                <div>
+                    <div className="mb-2 block">
+                        <Label htmlFor="generate-qmkFile-mcu-select" value="MCU" />
+                    </div>
                     <Select
                         id="generate-qmkFile-mcu-select"
-                        label="MCU"
                         value={state.generate.qmkFile.mcu}
                         onChange={handleSelectMCU}
-                        required>
-                        <MenuItem key="generate-qmkFile-mcu-rp2040" value="RP2040">RP2040</MenuItem>
-                        <MenuItem key="generate-qmkFile-mcu-promicro" value="promicro">Pro Micro</MenuItem>
-                    </Select>
-                </Box>
-                <Box sx={{ pt: 2}}>
-                    <TextField
-                        id="generate-qmkFile-kb"
-                        label="keyboard"
                         required
-                        error={keyboardError}
+                    >
+                        <option value="RP2040">RP2040</option>
+                        <option value="promicro">Pro Micro</option>
+                    </Select>
+                </div>
+                <div className="pt-2">
+                    <div className="mb-2 block">
+                        <Label
+                            htmlFor="generate-qmkFile-kb"
+                            value="keyboard *"
+                            color={keyboardError ? "failure" : "gray"}
+                        />
+                    </div>
+                    <TextInput
+                        type="text"
+                        id="generate-qmkFile-kb"
+                        required
+                        color={keyboardError ? "failure" : "gray"}
                         disabled={disabledBuildText}
                         onChange={handleTextChange("kb")}
-                        variant="standard"
-                        style = {{width: textFieldMiddleWidth}}
                         value={state.generate.qmkFile.kb}
+                        className="w-60"
                     />
-                    {keyboardStrError && ValidTextField}
-                </Box>
-                <Box sx={{ pt: 2}}>
-                    <TextField
+                    {keyboardStrError && (
+                        <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                            A-Za-z0-9_/- can used
+                        </p>
+                    )}
+                </div>
+                <div className="pt-2">
+                    <div className="mb-2 block">
+                        <Label
+                            htmlFor="km"
+                            value="username *"
+                            color={usernameEmptyError ? "failure" : "gray"}
+                        />
+                    </div>
+                    <TextInput
+                        type="text"
                         id="km"
-                        label="username"
                         required
-                        error={usernameEmptyError}
+                        color={usernameEmptyError ? "failure" : "gray"}
                         disabled={disabledBuildText}
                         onChange={handleTextChange("user")}
-                        variant="standard"
-                        style = {{width: textFieldMiddleWidth}}
                         value={state.generate.qmkFile.user}
+                        className="w-60"
                     />
-                    {usernameStrError && ValidTextField}
-                </Box>
-                <Box
-                    sx={{
-                        pl: 4,
-                        pt: 4,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                }} >
-                    <Button variant="contained"
-                            onClick={handleQmkFileSubmit()}
-                            disabled={qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton }
-                    >Generate</Button>
-            </Box>
-            </Box>
-            <Box
-                sx={{
-                    pt: 2,
-                    display: 'flex',
-                    alignContent: 'center',
-                    justifyContent: 'space-between'}} >
-                <Box sx={{ textAlign: "center", width: "150px"}} >Vial<br />Unique ID</Box>
-                <Box
-                    sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }} >
-                    <Button variant="contained"
-                            onClick={handleVailIdSubmit("VialId")}
-                            disabled={ disabledVialID }
-                    >Generate</Button>
-                </Box>
-            </Box>
-        </Box>
+                    {usernameStrError && (
+                        <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                            A-Za-z0-9_/- can used
+                        </p>
+                    )}
+                </div>
+                <div className="pl-4 pt-4 flex justify-center items-center">
+                    <Button
+                        color="blue"
+                        onClick={handleQmkFileSubmit()}
+                        disabled={qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton}
+                    >
+                        Generate
+                    </Button>
+                </div>
+            </div>
+            <div className="pt-2 flex content-center justify-between">
+                <div className="text-center w-[150px]">
+                    Vial<br />Unique ID
+                </div>
+                <div className="flex justify-center items-center">
+                    <Button
+                        color="blue"
+                        onClick={handleVailIdSubmit("VialId")}
+                        disabled={disabledVialID}
+                    >
+                        Generate
+                    </Button>
+                </div>
+            </div>
+        </div>
     )
 }
 export default Generate
