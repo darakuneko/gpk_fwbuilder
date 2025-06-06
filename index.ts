@@ -42,27 +42,32 @@ app.on('ready', async () => {
     createWindow()
     if (mainWindow) {
         await command.upImage(mainWindow)
-        mainWindow.webContents.openDevTools()
+        
+        // Open DevTools only in development environment
+        if (process.env.NODE_ENV === 'development') {
+            mainWindow.webContents.openDevTools()
+        }
         
         // Setup context menu for logs textarea
-        mainWindow.webContents.on('context-menu', (e, params) => {
-            // Only show context menu when text is selected
-            if (params.selectionText && params.selectionText.trim().length > 0) {
-                const menuTemplate = [
-                    {
-                        label: 'Copy',
-                        click: () => {
+        mainWindow.webContents.on('context-menu', (_e, params) => {
+            // Show context menu for any right-click, not just when text is selected
+            const menuTemplate = [
+                {
+                    label: 'Copy',
+                    enabled: !!(params.selectionText && params.selectionText.trim().length > 0),
+                    click: () => {
+                        if (params.selectionText) {
                             clipboard.writeText(params.selectionText)
                         }
                     }
-                ]
-                const contextMenu = Menu.buildFromTemplate(menuTemplate)
-                contextMenu.popup({
-                    window: mainWindow,
-                    x: params.x,
-                    y: params.y
-                })
-            }
+                }
+            ]
+            const contextMenu = Menu.buildFromTemplate(menuTemplate)
+            contextMenu.popup({
+                window: mainWindow!,
+                x: params.x,
+                y: params.y
+            })
         })
     }
 })
@@ -80,21 +85,21 @@ const closing = async (e: Event, mainWindow: BrowserWindow): Promise<void> => {
 ipcMain.handle('setSkipCheckDocker', async (_e, skip: boolean) => await command.setSkipCheckDocker(skip))
 ipcMain.handle('existSever', async () => await command.existSever())
 ipcMain.handle('tags', async () => await command.tags())
-ipcMain.handle('checkout', async (_e, obj: any) => await command.checkout(obj, mainWindow))
-ipcMain.handle('copyKeyboardFile', async (_e, obj: any) => await command.copyKeyboardFile(obj, mainWindow))
-ipcMain.handle('build', async (_e, dat: any) => await command.build(dat, mainWindow))
+ipcMain.handle('checkout', async (_e, obj: any) => await command.checkout(obj, mainWindow!))
+ipcMain.handle('copyKeyboardFile', async (_e, obj: any) => await command.copyKeyboardFile(obj, mainWindow!))
+ipcMain.handle('build', async (_e, dat: any) => await command.build(dat, mainWindow!))
 ipcMain.handle('buildCompleted', () => command.buildCompleted())
 ipcMain.handle('listLocalKeyboards', () => command.listLocalKeyboards(process.platform === 'win32'))
 ipcMain.handle('listRemoteKeyboards', async (_e, fw: string) => await command.listRemoteKeyboards(fw))
 ipcMain.handle('generateQMKFile', async (_e, dat: any) => await command.generateQMKFile(dat))
 ipcMain.handle('generateVialId', async () => await command.generateVialId())
-ipcMain.handle('updateRepository', async (_e, fw: string) => await command.updateRepository(fw, mainWindow))
-ipcMain.handle('updateRepositoryCustom', async (_e, obj: any) => await command.updateRepositoryCustom(obj, mainWindow))
-ipcMain.handle('getState', async () => await store.get('state'))
+ipcMain.handle('updateRepository', async (_e, fw: string) => await command.updateRepository(fw, mainWindow!))
+ipcMain.handle('updateRepositoryCustom', async (_e, obj: any) => await command.updateRepositoryCustom(obj, mainWindow!))
+ipcMain.handle('getState', async () => store.get('state'))
 ipcMain.handle('setState', async (_e, obj: AppState) => {
-    await store.set('state', obj)
+    store.set('state', obj)
 })
-ipcMain.handle('rebuildImage', async () => await command.rebuildImage(mainWindow))
+ipcMain.handle('rebuildImage', async () => await command.rebuildImage(mainWindow!))
 ipcMain.handle('convertVilJson', async (_e, file: any) => await command.convertVilJson(file))
 ipcMain.handle('convertViaJson', async (_e, file: any) => await command.convertViaJson(file))
 ipcMain.handle('convertKleJson', async (_e, obj: any) => await command.convertKleJson(obj))
