@@ -1,5 +1,7 @@
+import type { KeyCodePattern, VialJson, VialKeycode, VialRow } from '../types';
+
 const KC_ALIASES = {
-    //  "KC_TRNS": "KC_TRANSPARENT",
+//  "KC_TRNS": "KC_TRANSPARENT",
     "KC_NUMLOCK": "KC_NLCK",
     "KC_KP_SLASH": "KC_PSLS",
     "KC_KP_ASTERISK": "KC_PAST",
@@ -45,11 +47,11 @@ const KC_ALIASES = {
     "KC_LCTRL": "KC_LCTL",
     "KC_LSHIFT": "KC_LSFT",
     "KC_LALT": "KC_LOPT",
-    //  "KC_LGUI": "KC_LCMD", "KC_LWIN",
+//  "KC_LGUI": "KC_LCMD", "KC_LWIN",
     "KC_RCTRL": "KC_RCTL",
     "KC_RSHIFT": "KC_RSFT",
-    //  "KC_RALT": "KC_ALGR", "KC_ROPT",
-    //  "KC_RGUI": "KC_RCMD", "KC_RWIN",
+//  "KC_RALT": "KC_ALGR", "KC_ROPT",
+//  "KC_RGUI": "KC_RCMD", "KC_RWIN",
     "KC_NONUS_HASH": "KC_NUHS",
     "KC_NONUS_BSLASH": "KC_NUBS",
     "KC_RO": "KC_INT1",
@@ -114,54 +116,65 @@ const KC_ALIASES = {
     "KC_LCAP": "KC_LOCKING_CAPS",
     "KC_LNUM": "KC_LOCKING_NUM",
     "KC_LSCR": "KC_LOCKING_SCROLL"
-};
-const KC_PATTERN = '(KC_[A-Z0-9_]+)';
-const keyCodePattern = [
-    { pattern: new RegExp(KC_PATTERN), result: (p1) => resolveAlias(p1) },
-    { pattern: new RegExp(`^C_S\\(${KC_PATTERN}\\)`), result: (p1) => `LCTL(LSFT(${p1}))` },
-    { pattern: new RegExp(`^HYPR\\(${KC_PATTERN}\\)`), result: (p1) => `LCTL(LSFT(LALT(LGUI(${p1}))))` },
-    { pattern: new RegExp(`^MEH\\(${KC_PATTERN}\\)`), result: (p1) => `LCTL(LSFT(LALT(${p1})))` },
-    { pattern: new RegExp(`^LCAG\\(${KC_PATTERN}\\)`), result: (p1) => `LCTL(LALT(LGUI(${p1})))` },
-    { pattern: new RegExp(`^SGUI\\(${KC_PATTERN}\\)`), result: (p1) => `LGUI(LSFT(${p1}))` },
-    { pattern: new RegExp(`^LCA\\(${KC_PATTERN}\\)`), result: (p1) => `LCTL(LALT(${p1}))` },
-    { pattern: new RegExp(`^LSA\\(${KC_PATTERN}\\)`), result: (p1) => `LSFT(LALT(${p1}))` },
-    { pattern: new RegExp(`^RSA\\(${KC_PATTERN}\\)`), result: (p1) => `RSFT(RALT(${p1}))` },
-    { pattern: new RegExp(`^RCS\\(${KC_PATTERN}\\)`), result: (p1) => `RCTL(RSFT(${p1}))` },
-    { pattern: new RegExp(`^LCG\\(${KC_PATTERN}\\)`), result: (p1) => `LCTL(LGUI(${p1}))` },
-    { pattern: new RegExp(`^RCG\\(${KC_PATTERN}\\)`), result: (p1) => `RCTL(RGUI(${p1}))` },
-    { pattern: new RegExp(`^LT([0-9]+)\\(${KC_PATTERN}\\)`), result: (p1, p2) => `LT(${p1}, ${p2})` },
+} as const;
+
+const KC_PATTERN: string = '(KC_[A-Z0-9_]+)';
+
+const keyCodePattern: KeyCodePattern[] = [
+    { pattern: new RegExp(KC_PATTERN), result: (p1: string): string => resolveAlias(p1) },
+    { pattern: new RegExp(`^C_S\\(${KC_PATTERN}\\)`), result: (p1: string): string => `LCTL(LSFT(${p1}))`},
+    { pattern: new RegExp(`^HYPR\\(${KC_PATTERN}\\)`), result: (p1: string): string => `LCTL(LSFT(LALT(LGUI(${p1}))))`},
+    { pattern: new RegExp(`^MEH\\(${KC_PATTERN}\\)`), result: (p1: string): string => `LCTL(LSFT(LALT(${p1})))`},
+    { pattern: new RegExp(`^LCAG\\(${KC_PATTERN}\\)`), result: (p1: string): string => `LCTL(LALT(LGUI(${p1})))`},
+    { pattern: new RegExp(`^SGUI\\(${KC_PATTERN}\\)`), result: (p1: string): string => `LGUI(LSFT(${p1}))`},
+    { pattern: new RegExp(`^LCA\\(${KC_PATTERN}\\)`), result: (p1: string): string => `LCTL(LALT(${p1}))`},
+    { pattern: new RegExp(`^LSA\\(${KC_PATTERN}\\)`), result: (p1: string): string => `LSFT(LALT(${p1}))`},
+    { pattern: new RegExp(`^RSA\\(${KC_PATTERN}\\)`), result: (p1: string): string => `RSFT(RALT(${p1}))`},
+    { pattern: new RegExp(`^RCS\\(${KC_PATTERN}\\)`), result: (p1: string): string => `RCTL(RSFT(${p1}))`},
+    { pattern: new RegExp(`^LCG\\(${KC_PATTERN}\\)`), result: (p1: string): string => `LCTL(LGUI(${p1}))`},
+    { pattern: new RegExp(`^RCG\\(${KC_PATTERN}\\)`), result: (p1: string): string => `RCTL(RGUI(${p1}))`},
+    { pattern: new RegExp(`^LT([0-9]+)\\(${KC_PATTERN}\\)`), result: (p1: string, p2: string): string => `LT(${p1}, ${p2})`},
 ];
-const resolveAlias = (key) => KC_ALIASES[key] || key;
-const translateKeycode = (keycode) => keyCodePattern
-    .reduce((acc, { pattern, result }) => acc.replace(pattern, (_, p1, p2) => result(p1, p2)), keycode);
-const template = (keymap) => `/* SPDX-License-Identifier: GPL-2.0-or-later */
+
+const resolveAlias = (key: string): string => KC_ALIASES[key] || key
+
+const translateKeycode = (keycode: string): string => keyCodePattern
+        .reduce((acc: string, { pattern, result }): string => acc.replace(pattern, (_: string, p1: string, p2?: string): string => result(p1, p2)), keycode)
+
+const template = (keymap: string): string => `/* SPDX-License-Identifier: GPL-2.0-or-later */
 #include QMK_KEYBOARD_H
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ${keymap}
 };
-`;
-const vial2c = (json) => {
+`
+
+const vial2c = (json: VialJson): string => {
     if (!json.layout || !Array.isArray(json.layout)) {
+        // eslint-disable-next-line no-console
         console.warn("Layout is not found or not in the correct format.");
         return "";
     }
+
     const keymap = json.layout
-        .map((layout, layoutIndex) => {
-        if (!Array.isArray(layout))
-            return null;
-        const rows = layout
-            .map((row) => {
-            const codes = Array.isArray(row) ?
-                row.filter((col) => col !== -1).map(translateKeycode).join(", ") : "";
-            return `\t\t${codes}`;
+        .map((layout: VialRow[], layoutIndex: number): string | null => {
+            if (!Array.isArray(layout)) return null;
+
+            const rows = layout
+                .map((row: VialRow): string => {
+                    const codes =
+                        Array.isArray(row) ?
+                            row.filter((col: VialKeycode): boolean => col !== -1).map((col: VialKeycode): string => translateKeycode(String(col))).join(", ") : ""
+                    return `\t\t${codes}`
+                })
+                .join(",\n");
+
+            return `\t[${layoutIndex}] = LAYOUT(\n${rows}\n\t)`;
         })
-            .join(",\n");
-        return `\t[${layoutIndex}] = LAYOUT(\n${rows}\n\t)`;
-    })
         .filter(Boolean)
         .join(",\n");
-    return template(keymap);
-};
-module.exports.vial2c = vial2c;
-//# sourceMappingURL=vial2c.js.map
+
+    return template(keymap)
+}
+
+export { vial2c }
