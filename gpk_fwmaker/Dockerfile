@@ -2,7 +2,7 @@ FROM debian:12-slim
 
 RUN apt-get update && apt-get install -y locales && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 
-ENV LANG en_US.utf8
+ENV LANG=en_US.utf8
 
 RUN apt-get -y install \
     sudo \
@@ -40,6 +40,6 @@ WORKDIR /server
 
 RUN npm install
 
-RUN npm install -g ts-node
+RUN npx tsc
 
-CMD npx ts-node ./src/app.ts
+CMD node ./dist/app.js
