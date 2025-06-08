@@ -4,8 +4,13 @@ import { Button, Label, TextInput, Select } from 'flowbite-react'
 
 const {api} = window
 
-const GenerateKeyboardFile = ({onClose}) => {
+const GenerateKeyboardFile = ({onShowLogModal, onOperationComplete}) => {
     const {state, setState} = useStateContext()
+    
+    // Guard against uninitialized state
+    if (!state || !state.generate) {
+        return <div>Loading...</div>
+    }
     const [keyboardError, setKeyboardError] = useState(false)
     const [usernameEmptyError, setUsernameEmptyError] = useState(false)
     const [keyboardStrError, setKeyboardStrError] = useState(false)
@@ -17,7 +22,7 @@ const GenerateKeyboardFile = ({onClose}) => {
     const [qmkFile, setQmkFile] = useState(true)
 
     const validBuildButton = () => {
-        const qmkFile = state.generate.qmkFile
+        const qmkFile = state.generate?.qmkFile || {}
         const reg = /^[A-Za-z0-9_/-]+$/
         let validKeyboardStrError = false
         let validUsernameStrError = false
@@ -42,6 +47,7 @@ const GenerateKeyboardFile = ({onClose}) => {
     }
 
     const handleTextChange = (inputName) => (e) => {
+        if (!state.generate?.qmkFile) return
         inputName === 'kb' ? state.generate.qmkFile.kb = e.target.value : state.generate.qmkFile.user = e.target.value
         setKeyboardError(!state.generate.qmkFile.kb)
         setUsernameEmptyError(!state.generate.qmkFile.user)
@@ -50,19 +56,24 @@ const GenerateKeyboardFile = ({onClose}) => {
     }
 
     const handleSelectMCU = (e) => {
+        if (!state.generate?.qmkFile) return
         state.generate.qmkFile.mcu = e.target.value
         setState(state)
     }
 
     const generateMsg =  "Generating...."
     const handleQmkFileSubmit =  () => async () => {
+        if (onShowLogModal) {
+            onShowLogModal()
+        }
+        
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
         state.logs = generateMsg
         state.tabDisabled = true
         setState(state)
 
-        const logs = await api.generateQMKFile(state.generate.qmkFile)
+        const logs = await api.generateQMKFile(state.generate?.qmkFile || {})
 
         setDisabledBuildButton(false)
         setDisabledBuildText(false)
@@ -70,8 +81,8 @@ const GenerateKeyboardFile = ({onClose}) => {
         state.tabDisabled = false
         setState(state)
         
-        if (onClose) {
-            onClose()
+        if (onOperationComplete) {
+            onOperationComplete()
         }
     }
 
@@ -87,7 +98,7 @@ const GenerateKeyboardFile = ({onClose}) => {
                         </div>
                         <Select
                             id="generate-qmkFile-mcu-select"
-                            value={state.generate.qmkFile.mcu}
+                            value={state.generate?.qmkFile?.mcu || 'RP2040'}
                             onChange={handleSelectMCU}
                             required
                         >
@@ -111,7 +122,7 @@ const GenerateKeyboardFile = ({onClose}) => {
                             color={keyboardError ? "failure" : "gray"}
                             disabled={disabledBuildText}
                             onChange={handleTextChange("kb")}
-                            value={state.generate.qmkFile.kb}
+                            value={state.generate?.qmkFile?.kb || ''}
                         />
                         {keyboardStrError && (
                             <p className="mt-2 text-sm text-red-600 dark:text-red-500">
@@ -135,7 +146,7 @@ const GenerateKeyboardFile = ({onClose}) => {
                             color={usernameEmptyError ? "failure" : "gray"}
                             disabled={disabledBuildText}
                             onChange={handleTextChange("user")}
-                            value={state.generate.qmkFile.user}
+                            value={state.generate?.qmkFile?.user || ''}
                         />
                         {usernameStrError && (
                             <p className="mt-2 text-sm text-red-600 dark:text-red-500">
@@ -150,7 +161,6 @@ const GenerateKeyboardFile = ({onClose}) => {
                         color="blue"
                         onClick={handleQmkFileSubmit()}
                         disabled={qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton}
-                        size="lg"
                     >
                         Generate
                     </Button>

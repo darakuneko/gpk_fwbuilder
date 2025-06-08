@@ -86,7 +86,10 @@ const config: UserConfig = defineConfig({
     }
   },
   optimizeDeps: {
-    include: []
+    include: ['flowbite-react']
+  },
+  define: {
+    global: 'globalThis'
   },
   server: {
     port: 5173,
@@ -94,7 +97,8 @@ const config: UserConfig = defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
+      '@': resolve(__dirname, 'src'),
+      'tailwindcss/version.js': resolve(__dirname, 'node_modules/tailwindcss/package.json')
     }
   }
 });

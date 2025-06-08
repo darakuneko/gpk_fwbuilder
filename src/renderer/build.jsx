@@ -5,8 +5,13 @@ import FlowbiteAutocomplete from "../components/FlowbiteAutocomplete.jsx"
 
 const {api} = window
 
-const Build = ({onClose}) => {
+const Build = ({onShowLogModal, onOperationComplete}) => {
     const {state, setState} = useStateContext()
+    
+    // Guard against uninitialized state
+    if (!state || !state.build || !state.repository) {
+        return <div>Loading...</div>
+    }
     const [keyboardEmptyError, setKeyboardEmptyError] = useState(false)
     const [keymapEmptyError, setKeymapEmptyError] = useState(false)
     const [keymapStrError, setKeymapStrError] = useState(false)
@@ -105,9 +110,9 @@ const Build = ({onClose}) => {
     }
 
     const handleCheckout = async () => {
-        // Close modal immediately when checkout starts
-        if (onClose) {
-            onClose()
+        // Show log modal when checkout starts
+        if (onShowLogModal) {
+            onShowLogModal()
         }
         
         const start = async () => await api.checkout({
@@ -117,6 +122,10 @@ const Build = ({onClose}) => {
         })
         const end = async () => await api.buildCompleted()
         await waiting(start, end, "Checkout....")
+        
+        if (onOperationComplete) {
+            onOperationComplete()
+        }
     }
 
     const handleCopyKeyboardFile = async () => {
@@ -124,21 +133,22 @@ const Build = ({onClose}) => {
             fw: state.build.fw.toLowerCase(),
             kb: state.build.kb
         })
-        if (onClose) {
-            onClose()
-        }
     }
 
     const handleBuild = async () => {
-        // Close modal immediately when build starts
-        if (onClose) {
-            onClose()
+        // Show log modal when build starts
+        if (onShowLogModal) {
+            onShowLogModal()
         }
         
         const start = async () => await api.build(state.build)
         const end = async () => await api.buildCompleted()
         await waiting(start, end,
             "Building....\n\nIt will take some time if the first build or tag has changed.\n\n")
+        
+        if (onOperationComplete) {
+            onOperationComplete()
+        }
     }
 
     return (
@@ -244,14 +254,14 @@ const Build = ({onClose}) => {
                     {state.build.useRepo && (
                         <>
                             <Button
-                                color="gray"
+                                color="light"
                                 onClick={handleCheckout}
                                 disabled={disabledUseRepoButtonButton}
                             >
                                 Refresh Keyboard List
                             </Button>
                             <Button
-                                color="gray"
+                                color="light"
                                 onClick={handleCopyKeyboardFile}
                                 disabled={disabledUseRepoButtonButton}
                             >
@@ -263,7 +273,6 @@ const Build = ({onClose}) => {
                         color="blue"
                         onClick={handleBuild}
                         disabled={init ? initDisabledBuildButton() : disabledBuildButton}
-                        size="lg"
                     >
                         Build
                     </Button>

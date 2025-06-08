@@ -1,6 +1,6 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useState, useMemo} from 'react'
 import {getState, useStateContext} from "./context.jsx"
-import { Sidebar, Spinner, Button, Modal } from 'flowbite-react'
+import { Sidebar, SidebarItems, SidebarItemGroup, SidebarItem, Spinner, Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'flowbite-react'
 import { HiCube, HiCollection, HiRefresh, HiServer, HiPhotograph, HiCog, HiChevronRight, HiX } from 'react-icons/hi'
 import Build from "./renderer/build.jsx"
 import Logs from "./renderer/logs.jsx"
@@ -23,9 +23,10 @@ const Content = () => {
     const [initServer, setInitServer] = useState(true)
     const [closeServer, setCloseServer] = useState(false)
     const [expandedMenu, setExpandedMenu] = useState(null)
-    const [showModal, setShowModal] = useState(false)
-    const [modalContent, setModalContent] = useState(null)
-    const [modalTitle, setModalTitle] = useState('')
+    const [currentContent, setCurrentContent] = useState(null)
+    const [currentTitle, setCurrentTitle] = useState('')
+    const [showLogModal, setShowLogModal] = useState(false)
+    const [operationInProgress, setOperationInProgress] = useState(false)
 
     useEffect(() => {
         const fn = async () => {
@@ -49,7 +50,7 @@ const Content = () => {
                     clearInterval(id)
                     setInitServer(false)
                 } else if (exist === 404) {
-                    state.logs = 'connecting....\nIf the connection does not work for a long time, please start up again or delete the docker image once.'
+                    state.logs = 'If the connection does not work for a long time, please start up again or delete the docker image once.'
                     setState(state)
                 }
             }
@@ -73,8 +74,10 @@ const Content = () => {
     useEffect(() => {
         api.on("streamLog", async (log, init) => {
             const s = init ? state : await getState()
-            s.logs = log
-            setState(s)
+            if (s) {
+                s.logs = log
+                setState(s)
+            }
         })
         return () => {
         }
@@ -82,9 +85,11 @@ const Content = () => {
 
     useEffect(() => {
         api.on("streamBuildLog", async (log) => {
-            const state = await getState()
-            log.match(/@@@@init@@@@/m) ? state.logs = '' : state.logs = state.logs + log
-            setState(state)
+            const currentState = await getState()
+            if (currentState) {
+                log.match(/@@@@init@@@@/m) ? currentState.logs = '' : currentState.logs = currentState.logs + log
+                setState(currentState)
+            }
         })
         return () => {
         }
@@ -94,19 +99,28 @@ const Content = () => {
         await api.setSkipCheckDocker(true)
     }
 
-    const handleCloseModal = () => {
-        setShowModal(false)
-        setModalContent(null)
-        setModalTitle('')
+    const handleShowLogModal = () => {
+        setShowLogModal(true)
+        setOperationInProgress(true)
+    }
+
+    const handleCloseLogModal = () => {
+        if (!operationInProgress) {
+            setShowLogModal(false)
+        }
+    }
+
+    const handleOperationComplete = () => {
+        setOperationInProgress(false)
     }
 
 
 
-    const menuStructure = [
+    const menuStructure = useMemo(() => [
         { 
             label: "Build", 
             icon: HiCube,
-            component: (onClose) => <Build onClose={onClose}/>,
+            component: () => <Build onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
             hasSubmenu: false,
             title: "Build Firmware"
         },
@@ -117,12 +131,12 @@ const Content = () => {
             subItems: [
                 { 
                     label: "Keyboard File", 
-                    component: (onClose) => <GenerateKeyboardFile onClose={onClose}/>,
+                    component: () => <GenerateKeyboardFile onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
                     title: "QMK Keyboard File Generation"
                 },
                 { 
                     label: "Vial Unique ID", 
-                    component: (onClose) => <GenerateVialId onClose={onClose}/>,
+                    component: () => <GenerateVialId onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
                     title: "Vial Unique ID Generation"
                 }
             ]
@@ -134,12 +148,12 @@ const Content = () => {
             subItems: [
                 { 
                     label: "Vial to Keymap.c", 
-                    component: (onClose) => <ConvertVialToKeymap onClose={onClose}/>,
+                    component: () => <ConvertVialToKeymap onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
                     title: "Convert Vial File to Keymap.c"
                 },
                 { 
                     label: "KLE to Keyboard File", 
-                    component: (onClose) => <ConvertKleToKeyboard onClose={onClose}/>,
+                    component: () => <ConvertKleToKeyboard onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
                     title: "Convert KLE Json to QMK/Vial Files"
                 }
             ]
@@ -151,35 +165,34 @@ const Content = () => {
             subItems: [
                 { 
                     label: "Repository", 
-                    component: (onClose) => <Repository onClose={onClose}/>,
+                    component: () => <Repository onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
                     title: "Repository Management"
                 },
                 { 
                     label: "Image", 
-                    component: (onClose) => <Image onClose={onClose}/>,
+                    component: () => <Image onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
                     title: "Docker Image Management"
                 },
                 { 
                     label: "External Server", 
-                    component: (onClose) => <ExternalServer onClose={onClose}/>,
+                    component: () => <ExternalServer onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
                     title: "External Server Settings"
                 }
             ]
         }
-    ]
+    ], [handleShowLogModal, handleOperationComplete])
 
-    const openModal = (title, component) => {
-        setModalTitle(title)
-        setModalContent(component)
-        setShowModal(true)
+    const showContent = (title, component) => {
+        setCurrentTitle(title)
+        setCurrentContent(component)
     }
 
     const handleMenuClick = (menuItem, index) => {
-        if (!state.tabDisabled) {
+        if (!state?.tabDisabled && state) {
             if (menuItem.hasSubmenu) {
                 if (menuItem.subItems.length === 1) {
-                    // Single submenu - open modal directly
-                    openModal(menuItem.subItems[0].title, menuItem.subItems[0].component(handleCloseModal))
+                    // Single submenu - show content directly
+                    showContent(menuItem.subItems[0].title, menuItem.subItems[0].component())
                 } else {
                     // Multiple submenus - expand/collapse
                     if (expandedMenu === index) {
@@ -189,19 +202,19 @@ const Content = () => {
                     }
                 }
             } else {
-                // No submenu - open modal directly
-                openModal(menuItem.title, menuItem.component(handleCloseModal))
+                // No submenu - show content directly
+                showContent(menuItem.title, menuItem.component())
             }
         }
     }
 
-    const handleSubMenuClick = (parentIndex, subItem) => {
-        if (!state.tabDisabled) {
-            openModal(subItem.title, subItem.component(handleCloseModal))
+    const handleSubMenuClick = (_, subItem) => {
+        if (!state?.tabDisabled && state) {
+            showContent(subItem.title, subItem.component())
         }
     }
 
-    const handleContextMenu = (e) => {
+    const handleContextMenu = () => {
         // Allow default context menu for all elements now that Electron handles it
         // No need to prevent default anymore
     }
@@ -219,29 +232,30 @@ const Content = () => {
             {(() => {
                 if (closeServer) {
                     return (
-                        <div className="flex justify-center items-center min-h-screen">
-                            <div className="w-[300px] h-[200px] text-center">
-                                <div className="pt-4 text-blue-400 animate-pulse text-lg font-medium">Terminating.....</div>
+                        <div className="flex justify-center items-center h-screen">
+                            <div className="text-center">
+                                <div className="text-blue-400 animate-pulse text-lg font-medium">Terminating.....</div>
                             </div>
                         </div>
                     )
                 } else if (initServer) {
                     return (
-                        <div className="flex justify-center p-4">
-                            <div className="min-w-full text-center">
-                                <div className="p-4 text-center">
+                        <div className="flex justify-center items-center h-screen">
+                            <div className="text-center max-w-md w-full px-4">
+                                <div className="mb-6">
                                     <Spinner size="lg" className="mb-4" />
                                     <div className="text-blue-400 animate-pulse text-lg font-medium mb-2">Initializing.....</div>
-                                    <div className="text-blue-400 animate-pulse text-sm">May take more than 10 minutes</div>
+                                    <div className="text-blue-400 animate-pulse text-sm mb-4">May take more than 10 minutes</div>
                                 </div>
-                                <Button 
-                                    color="blue"
-                                    className="mt-4"
-                                    onClick={handleSkipDockerCheck}
-                                >
-                                    Skip Docker Check
-                                </Button>
-                                <div className="pt-8 text-left">{parse(state.logs.replace(/\n/g, "<br>"))}</div>
+                                <div className="flex justify-center mb-6">
+                                    <Button 
+                                        color="light"
+                                        onClick={handleSkipDockerCheck}
+                                    >
+                                        Skip Docker Check
+                                    </Button>
+                                </div>
+                                <div className="text-left text-sm max-h-40 overflow-y-auto">{parse(state.logs.replace(/\n/g, "<br>"))}</div>
                             </div>
                         </div>
                     )
@@ -250,63 +264,95 @@ const Content = () => {
                         <div className="flex h-screen">
                             {/* Sidebar Navigation */}
                             <Sidebar className="w-64 h-screen bg-gray-50 dark:bg-gray-800">
-                                <Sidebar.Items>
-                                    <Sidebar.ItemGroup>
+                                <SidebarItems>
+                                    <SidebarItemGroup>
                                         {menuStructure.map((menu, index) => (
                                             <div key={menu.label}>
-                                                <Sidebar.Item
-                                                    icon={menu.icon}
-                                                    active={false}
-                                                    onClick={() => handleMenuClick(menu, index)}
-                                                    className={`${state.tabDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${menu.hasSubmenu ? 'flex items-center justify-between' : ''}`}
-                                                >
-                                                    <span>{menu.label}</span>
+                                                <div className="relative">
+                                                    <SidebarItem
+                                                        icon={menu.icon}
+                                                        active={false}
+                                                        onClick={() => handleMenuClick(menu, index)}
+                                                        className={`${state?.tabDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} !h-12 !flex !items-center`}
+                                                    >
+                                                        <span className="flex-1">{menu.label}</span>
+                                                    </SidebarItem>
                                                     {menu.hasSubmenu && menu.subItems.length > 1 && (
                                                         <HiChevronRight 
-                                                            className={`ml-auto transition-transform ${expandedMenu === index ? 'rotate-90' : ''}`}
+                                                            className={`absolute right-6 top-1/2 transform -translate-y-1/2 transition-transform ${expandedMenu === index ? 'rotate-90' : ''} pointer-events-none text-gray-400`}
                                                         />
                                                     )}
-                                                </Sidebar.Item>
+                                                </div>
                                                 {menu.hasSubmenu && menu.subItems.length > 1 && expandedMenu === index && (
                                                     <div className="ml-6">
-                                                        {menu.subItems.map((subItem, subIndex) => (
-                                                            <Sidebar.Item
+                                                        {menu.subItems.map((subItem) => (
+                                                            <SidebarItem
                                                                 key={subItem.label}
                                                                 active={false}
                                                                 onClick={() => handleSubMenuClick(index, subItem)}
-                                                                className={`${state.tabDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} text-sm`}
+                                                                className={`${state?.tabDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} text-sm flex items-center h-10`}
                                                             >
-                                                                {subItem.label}
-                                                            </Sidebar.Item>
+                                                                <span className="ml-3">{subItem.label}</span>
+                                                            </SidebarItem>
                                                         ))}
                                                     </div>
                                                 )}
                                             </div>
                                         ))}
-                                    </Sidebar.ItemGroup>
-                                </Sidebar.Items>
+                                    </SidebarItemGroup>
+                                </SidebarItems>
                             </Sidebar>
                             
-                            {/* Main Content Area - Logs Only */}
-                            <div className="flex-1 overflow-y-auto p-4 bg-white dark:bg-gray-900">
-                                <Logs/>
+                            {/* Main Content Area */}
+                            <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900">
+                                {currentContent ? (
+                                    <div className="p-4">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                                {currentTitle}
+                                            </h2>
+                                            <Button
+                                                color="light"
+                                                onClick={() => setShowLogModal(true)}
+                                            >
+                                                Show Logs
+                                            </Button>
+                                        </div>
+                                        {currentContent}
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-center h-full">
+                                        <p className="text-gray-500 dark:text-gray-400">
+                                            Select a menu item to get started
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                             
-                            {/* Modal for Settings */}
+                            {/* Log Modal for Operations */}
                             <Modal
-                                show={showModal}
-                                onClose={handleCloseModal}
-                                size="5xl"
-                                position="center"
+                                show={showLogModal}
+                                size="7xl"
+                                onClose={handleCloseLogModal}
+                                dismissible={false}
                             >
-                                <Modal.Header>
-                                    {modalTitle}
-                                </Modal.Header>
-                                <Modal.Body>
-                                    <div className="max-h-[70vh] overflow-y-auto">
-                                        {modalContent}
+                                <ModalHeader>
+                                    <div className="flex items-center justify-between w-full">
+                                        <span>Operation Log</span>
                                     </div>
-                                </Modal.Body>
+                                </ModalHeader>
+                                <ModalBody className="p-1">
+                                    <div className="h-[75vh] overflow-hidden p-1">
+                                        <Logs/>
+                                    </div>
+                                </ModalBody>
+                                
+                                    <ModalFooter>
+                                        <Button color="light" onClick={handleCloseLogModal}>
+                                            Close
+                                        </Button>
+                                    </ModalFooter>
+                                
                             </Modal>
                         </div>
                     )

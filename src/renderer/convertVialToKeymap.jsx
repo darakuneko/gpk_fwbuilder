@@ -5,8 +5,13 @@ import FileUpload from "../components/FileUpload.jsx"
 
 const {api} = window
 
-const ConvertVialToKeymap = ({onClose}) => {
+const ConvertVialToKeymap = ({onShowLogModal, onOperationComplete}) => {
     const {state, setState} = useStateContext()
+    
+    // Guard against uninitialized state
+    if (!state) {
+        return <div>Loading...</div>
+    }
     const [vilObj, setVilObj] = useState({
         name : "",
         path : "",
@@ -16,18 +21,23 @@ const ConvertVialToKeymap = ({onClose}) => {
     const convertMsg =  "Convert...."
 
     const handleVilFileSubmit = async () => {
+        if (onShowLogModal) {
+            onShowLogModal()
+        }
+        
         state.logs = convertMsg
         state.tabDisabled = true
         setState(state)
         setDisabledVilCovertButton(true)
+        
         const log = await api.convertVilJson(vilObj)
         state.logs = log
         state.tabDisabled = false
         setState(state)
         setDisabledVilCovertButton(false)
         
-        if (onClose) {
-            onClose()
+        if (onOperationComplete) {
+            onOperationComplete()
         }
     }
 

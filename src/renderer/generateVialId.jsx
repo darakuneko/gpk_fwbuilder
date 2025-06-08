@@ -4,11 +4,20 @@ import { Button } from 'flowbite-react'
 
 const {api} = window
 
-const GenerateVialId = ({onClose}) => {
+const GenerateVialId = ({onShowLogModal, onOperationComplete}) => {
     const {state, setState} = useStateContext()
+    
+    // Guard against uninitialized state
+    if (!state) {
+        return <div>Loading...</div>
+    }
 
     const generateMsg =  "Generating...."
     const handleVailIdSubmit =  () => async () => {
+        if (onShowLogModal) {
+            onShowLogModal()
+        }
+        
         state.logs = generateMsg
         state.tabDisabled = true
         setState(state)
@@ -17,8 +26,8 @@ const GenerateVialId = ({onClose}) => {
         state.tabDisabled = false
         setState(state)
         
-        if (onClose) {
-            onClose()
+        if (onOperationComplete) {
+            onOperationComplete()
         }
     }
 
@@ -30,7 +39,6 @@ const GenerateVialId = ({onClose}) => {
                     <Button
                         color="blue"
                         onClick={handleVailIdSubmit("VialId")}
-                        size="lg"
                     >
                         Generate Unique ID
                     </Button>

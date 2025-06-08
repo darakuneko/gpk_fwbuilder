@@ -36,21 +36,15 @@ const Logs = () => {
 
 
     return (
-        <div className="p-2 h-full flex flex-col">
+        <div className="w-full h-full flex flex-col">
             <textarea
                 ref={textareaRef}
                 value={cleanLogText(state.logs)}
                 readOnly
-                className="logs-textarea border-0 focus:outline-none focus:ring-0 flex-1 w-full p-3 font-mono text-sm bg-gray-900 text-green-400 resize-none"
-                style={{
-                    userSelect: 'text',
-                    fontFamily: 'Consolas, Monaco, "Courier New", monospace',
-                    minHeight: '200px',
-                    fontSmooth: 'never',
-                    WebkitFontSmoothing: 'none',
-                    MozOsxFontSmoothing: 'unset',
-                    textRendering: 'optimizeSpeed',
-                    fontKerning: 'none'
+                className="logs-textarea border-0 focus:outline-none focus:ring-0 
+                flex-1 w-full font-mono text-sm bg-gray-900 text-green-400 resize-none"
+                style={{ 
+                    minHeight: 'calc(90dvh - 200px)' 
                 }}
                 placeholder="Logs will appear here..."
             />

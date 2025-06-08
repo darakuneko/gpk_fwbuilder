@@ -4,13 +4,18 @@ import { Button } from 'flowbite-react'
 
 const {api} = window
 
-const Image = ({onClose}) => {
+const Image = ({onShowLogModal, onOperationComplete}) => {
     const {state, setState} = useStateContext()
+    
+    // Guard against uninitialized state
+    if (!state) {
+        return <div>Loading...</div>
+    }
 
     const handleUpdate = (msg1, msg2, fn) => async () => {
-        // Close modal immediately when rebuild starts
-        if (onClose) {
-            onClose()
+        // Show log modal when rebuild starts
+        if (onShowLogModal) {
+            onShowLogModal()
         }
         
         state.logs = msg1
@@ -28,9 +33,14 @@ const Image = ({onClose}) => {
                 state.tabDisabled = false
                 setState(state)
                 clearInterval(id)
+                
+                // Operation complete
+                if (onOperationComplete) {
+                    onOperationComplete()
+                }
             }
         }
-        id = setInterval(await checkFn, 1000)
+        id = setInterval(checkFn, 1000)
     }
 
     return (
@@ -48,7 +58,6 @@ const Image = ({onClose}) => {
                         color="red"
                         disabled={state.tabDisabled}
                         onClick={handleUpdate("Building.....\n\n", "Rebuild!!", async () => await api.rebuildImage())}
-                        size="lg"
                     >
                         Rebuild Docker Image
                     </Button>

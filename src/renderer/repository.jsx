@@ -4,36 +4,42 @@ import { Button, TextInput, Select } from 'flowbite-react'
 
 const {api} = window
 
-const Repository = ({onClose}) => {
+const Repository = ({onShowLogModal, onOperationComplete}) => {
     const {state, setState} = useStateContext()
-    const [disabledBuildButton, setDisabledBuildButton] = useState(false)
+    
+    // Guard against uninitialized state
+    if (!state || !state.repository) {
+        return <div>Loading...</div>
+    }
 
     const isStaticFirmware = (firmware) => firmware === "QMK" || firmware === "Vial"
     const handleSelectFW = (e) => {
+        if (!state.repository) return
         state.repository.firmware = e.target.value
         setState(state)
     }
 
     const handleTextChange = (e) => {
+        if (!state.repository?.firmwares) return
         state.repository.firmwares = state.repository.firmwares
             .map(v => v.id === state.repository.firmware ? { ...v, url: e.target.value } : v);
         setState(state)
     }
 
     const handleUpdate = (msg1, msg2) => async () => {
-        // Close modal immediately when update starts
-        if (onClose) {
-            onClose()
+        // Show log modal when update starts
+        if (onShowLogModal) {
+            onShowLogModal()
         }
         
         state.logs = msg1
         state.tabDisabled = true
         setState(state)
-        if(isStaticFirmware(state.repository.firmware)) {
+        if(isStaticFirmware(state.repository?.firmware)) {
             await api.updateRepository(state.repository.firmware)
         } else {
-            const obj = state.repository.firmwares.find(v => v.id === state.repository.firmware)
-            await api.updateRepositoryCustom(obj)
+            const obj = state.repository?.firmwares?.find(v => v.id === state.repository?.firmware)
+            if (obj) await api.updateRepositoryCustom(obj)
         }
 
         let id
@@ -47,9 +53,14 @@ const Repository = ({onClose}) => {
                 state.tabDisabled = false
                 setState(state)
                 clearInterval(id)
+                
+                // Operation complete
+                if (onOperationComplete) {
+                    onOperationComplete()
+                }
             }
         }
-        id = setInterval(await checkFn, 1000)
+        id = setInterval(checkFn, 1000)
     }
 
     return (
@@ -63,11 +74,11 @@ const Repository = ({onClose}) => {
                         </label>
                         <Select
                             id="repository-fw-select"
-                            value={state.repository.firmware}
+                            value={state.repository?.firmware || ''}
                             onChange={handleSelectFW}
                             required
                         >
-                            {state.repository.firmwares.map((fw, i) =>
+                            {(state.repository?.firmwares || []).map((fw) =>
                                 (<option
                                     key={`repository-fw-select${fw.id}`}
                                     value={fw.id}
@@ -85,8 +96,8 @@ const Repository = ({onClose}) => {
                             id="repository-custom-url"
                             placeholder="git clone url"
                             onChange={handleTextChange}
-                            value={state.repository.firmwares.find(v => v.id === state.repository.firmware).url}
-                            disabled={isStaticFirmware(state.repository.firmware)}
+                            value={state.repository?.firmwares?.find(v => v.id === state.repository?.firmware)?.url || ''}
+                            disabled={isStaticFirmware(state.repository?.firmware)}
                             required
                         />
                     </div>
@@ -106,7 +117,6 @@ const Repository = ({onClose}) => {
                                 "Updated!!")
                         }
                         disabled={state.tabDisabled}
-                        size="lg"
                     >
                         Update Repository
                     </Button>
