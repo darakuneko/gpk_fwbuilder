@@ -11,6 +11,7 @@ const PinSelectorModal = ({
     onConfirm 
 }) => {
     const [tempSelectedPins, setTempSelectedPins] = useState([...selectedPins])
+    const [animatingIndex, setAnimatingIndex] = useState(null)
 
     const handlePinToggle = (pin) => {
         if (tempSelectedPins.includes(pin)) {
@@ -22,17 +23,29 @@ const PinSelectorModal = ({
 
     const handleMoveUp = (index) => {
         if (index > 0) {
-            const newPins = [...tempSelectedPins]
-            ;[newPins[index - 1], newPins[index]] = [newPins[index], newPins[index - 1]]
-            setTempSelectedPins(newPins)
+            setAnimatingIndex(index)
+            setTimeout(() => {
+                const newPins = [...tempSelectedPins]
+                ;[newPins[index - 1], newPins[index]] = [newPins[index], newPins[index - 1]]
+                setTempSelectedPins(newPins)
+                // Keep highlighting the moved item (now at index-1)
+                setAnimatingIndex(index - 1)
+                setTimeout(() => setAnimatingIndex(null), 200)
+            }, 300)
         }
     }
 
     const handleMoveDown = (index) => {
         if (index < tempSelectedPins.length - 1) {
-            const newPins = [...tempSelectedPins]
-            ;[newPins[index], newPins[index + 1]] = [newPins[index + 1], newPins[index]]
-            setTempSelectedPins(newPins)
+            setAnimatingIndex(index)
+            setTimeout(() => {
+                const newPins = [...tempSelectedPins]
+                ;[newPins[index], newPins[index + 1]] = [newPins[index + 1], newPins[index]]
+                setTempSelectedPins(newPins)
+                // Keep highlighting the moved item (now at index+1)
+                setAnimatingIndex(index + 1)
+                setTimeout(() => setAnimatingIndex(null), 200)
+            }, 300)
         }
     }
 
@@ -54,6 +67,7 @@ const PinSelectorModal = ({
     React.useEffect(() => {
         if (isOpen) {
             setTempSelectedPins([...selectedPins])
+            setAnimatingIndex(null)
         }
     }, [isOpen, selectedPins])
 
@@ -63,15 +77,20 @@ const PinSelectorModal = ({
                 {title}
             </ModalHeader>
             <ModalBody>
-                <div className="space-y-6">
+                <div 
+                    className="space-y-6"
+                    style={{
+                        height: 'calc(90dvh - 160px)',
+                        maxHeight: 'calc(90dvh - 160px)',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}
+                >
                     {/* Available Pins Section */}
-                    <div>
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                            Available Pins
-                        </h3>
-                        
+                    <div className="flex-shrink-0">
                         {/* Pin Grid */}
-                        <div className="grid grid-cols-5 gap-2 max-h-64 overflow-y-auto p-2 border border-gray-200 dark:border-gray-600 rounded-lg">
+                        <div className="grid grid-cols-5 gap-2 max-h-72 overflow-y-auto p-2 border border-gray-200 dark:border-gray-600 rounded-lg">
                             {availablePins.map((pin) => (
                                 <button
                                     key={pin}
@@ -89,67 +108,92 @@ const PinSelectorModal = ({
                     </div>
 
                     {/* Selected Pins Section */}
-                    <div>
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+                    <div className="flex-1 min-h-0 flex flex-col">
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3 flex-shrink-0">
                             Selected Pins ({tempSelectedPins.length})
                         </h3>
                         
                         {tempSelectedPins.length > 0 ? (
-                            <div className="space-y-2 max-h-48 overflow-y-auto">
-                                {tempSelectedPins.map((pin, index) => (
-                                    <div 
-                                        key={`${pin}-${index}`}
-                                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
-                                    >
-                                        <div className="flex items-center space-x-3">
-                                            <span className="text-sm font-medium text-gray-500 dark:text-gray-400 min-w-[20px]">
-                                                {index + 1}
-                                            </span>
-                                            <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                                {pin}
-                                            </span>
+                            <div className="flex-1 min-h-0 flex flex-col">
+                                <div 
+                                    className="flex-1 overflow-y-auto space-y-2 pr-2"
+                                    style={{
+                                        maxHeight: '300px',
+                                        minHeight: '120px'
+                                    }}
+                                >
+                                    {tempSelectedPins.map((pin, index) => (
+                                        <div 
+                                            key={`${pin}-${index}`}
+                                            className={`flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 transition-all duration-300 ${
+                                                animatingIndex === index 
+                                                    ? 'transform scale-105 bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900 dark:to-cyan-900 border-blue-400 dark:border-blue-500 shadow-xl ring-2 ring-blue-300 dark:ring-blue-600 ring-opacity-50' 
+                                                    : 'hover:bg-gray-100 dark:hover:bg-gray-600'
+                                            }`}
+                                        >
+                                            <div className="flex items-center space-x-3">
+                                                <span className="text-sm font-medium text-gray-500 dark:text-gray-400 min-w-[20px]">
+                                                    {index + 1}
+                                                </span>
+                                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {pin}
+                                                </span>
+                                            </div>
+                                            
+                                            <div className="flex items-center space-x-1">
+                                                <button
+                                                    onClick={() => handleMoveUp(index)}
+                                                    disabled={index === 0 || animatingIndex !== null}
+                                                    className="p-1 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                                                    style={{ cursor: index === 0 || animatingIndex !== null ? 'not-allowed' : 'pointer' }}
+                                                >
+                                                    <HiArrowUp className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleMoveDown(index)}
+                                                    disabled={index === tempSelectedPins.length - 1 || animatingIndex !== null}
+                                                    className="p-1 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                                                    style={{ cursor: index === tempSelectedPins.length - 1 || animatingIndex !== null ? 'not-allowed' : 'pointer' }}
+                                                >
+                                                    <HiArrowDown className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRemove(pin)}
+                                                    disabled={animatingIndex !== null}
+                                                    className="p-1 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                                                    style={{ cursor: animatingIndex !== null ? 'not-allowed' : 'pointer' }}
+                                                >
+                                                    <HiX className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </div>
-                                        
-                                        <div className="flex items-center space-x-1">
-                                            <button
-                                                onClick={() => handleMoveUp(index)}
-                                                disabled={index === 0}
-                                                className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                <HiArrowUp className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleMoveDown(index)}
-                                                disabled={index === tempSelectedPins.length - 1}
-                                                className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                <HiArrowDown className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleRemove(pin)}
-                                                className="p-1 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                                            >
-                                                <HiX className="w-4 h-4" />
-                                            </button>
-                                        </div>
+                                    ))}
+                                </div>
+                                
+                                {/* Array Output */}
+                                <div className="mt-4 bg-gray-100 dark:bg-gray-800 rounded-lg flex-shrink-0">
+                                    <div className="p-3 pb-2">
+                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Array Output:
+                                        </p>
                                     </div>
-                                ))}
+                                    <div 
+                                        className="px-3 pb-3"
+                                        style={{
+                                            maxHeight: '100px',
+                                            overflow: 'auto',
+                                            border: '1px solid transparent'
+                                        }}
+                                    >
+                                        <pre className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words m-0 p-0">
+                                            ["{tempSelectedPins.join('", "')}"]
+                                        </pre>
+                                    </div>
+                                </div>
                             </div>
                         ) : (
-                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                            <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
                                 No pins selected
-                            </div>
-                        )}
-
-                        {/* Array Output */}
-                        {tempSelectedPins.length > 0 && (
-                            <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Array Output:
-                                </p>
-                                <code className="text-sm text-gray-800 dark:text-gray-200">
-                                    ["{tempSelectedPins.join('", "')}"]
-                                </code>
                             </div>
                         )}
                     </div>
@@ -157,7 +201,7 @@ const PinSelectorModal = ({
             </ModalBody>
             <ModalFooter>
                 <Button color="blue" onClick={handleConfirm}>
-                    Confirm
+                    OK
                 </Button>
                 <Button color="light" onClick={handleCancel}>
                     Cancel

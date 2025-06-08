@@ -78,7 +78,7 @@ const FlowbiteMultiSelect = ({
                                 {!disabled && (
                                     <button
                                         type="button"
-                                        className="inline-flex items-center p-1 ms-2 text-xs text-blue-400 bg-transparent rounded-sm hover:bg-blue-200 hover:text-blue-900 dark:hover:bg-blue-800 dark:hover:text-blue-300"
+                                        className="inline-flex items-center p-1 ms-2 text-xs text-blue-400 bg-transparent rounded-sm hover:bg-blue-200 hover:text-blue-900 dark:hover:bg-blue-800 dark:hover:text-blue-300 cursor-pointer"
                                         onClick={(e) => {
                                             e.stopPropagation()
                                             removeTag(item)

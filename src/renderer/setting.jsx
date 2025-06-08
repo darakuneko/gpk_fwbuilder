@@ -21,7 +21,7 @@ const Setting = () => {
     }
 
     return (
-        <div className="p-6">
+        <div className="p-4">
             <div className="max-w-2xl mx-auto">
                 <h2 className="text-lg font-semibold mb-6">Settings</h2>
                 

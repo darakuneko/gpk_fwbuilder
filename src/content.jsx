@@ -77,6 +77,12 @@ const Content = () => {
             if (s) {
                 s.logs = log
                 setState(s)
+                
+                // Check if operation is in progress
+                const isFinished = log.includes('finish!!') || 
+                                  log.includes('Converted!!') ||
+                                  log.includes('Generate!!')
+                setOperationInProgress(s.tabDisabled && !isFinished)
             }
         })
         return () => {
@@ -89,11 +95,29 @@ const Content = () => {
             if (currentState) {
                 log.match(/@@@@init@@@@/m) ? currentState.logs = '' : currentState.logs = currentState.logs + log
                 setState(currentState)
+                
+                // Check if operation is in progress
+                const isFinished = log.includes('finish!!') || 
+                                  log.includes('Converted!!') ||
+                                  log.includes('Generate!!')
+                setOperationInProgress(currentState.tabDisabled && !isFinished)
             }
         })
         return () => {
         }
     }, [])
+
+    // Monitor tabDisabled state changes
+    useEffect(() => {
+        if (state.logs) {
+            const isFinished = state.logs.includes('finish!!') || 
+                              state.logs.includes('Converted!!') ||
+                              state.logs.includes('Generate!!')
+            setOperationInProgress(state.tabDisabled && !isFinished)
+        } else {
+            setOperationInProgress(false)
+        }
+    }, [state.tabDisabled, state.logs])
 
     const handleSkipDockerCheck = async () => {
         await api.setSkipCheckDocker(true)
@@ -333,8 +357,8 @@ const Content = () => {
                             <Modal
                                 show={showLogModal}
                                 size="7xl"
-                                onClose={handleCloseLogModal}
-                                dismissible={false}
+                                onClose={operationInProgress ? () => {} : handleCloseLogModal}
+                                dismissible={!operationInProgress}
                             >
                                 <ModalHeader>
                                     <div className="flex items-center justify-between w-full">
@@ -348,7 +372,12 @@ const Content = () => {
                                 </ModalBody>
                                 
                                     <ModalFooter>
-                                        <Button color="light" onClick={handleCloseLogModal}>
+                                        <Button 
+                                            color="light" 
+                                            onClick={handleCloseLogModal}
+                                            disabled={operationInProgress}
+                                            className={operationInProgress ? 'cursor-not-allowed opacity-50' : ''}
+                                        >
                                             Close
                                         </Button>
                                     </ModalFooter>

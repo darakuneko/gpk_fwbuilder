@@ -64,7 +64,7 @@ const Repository = ({onShowLogModal, onOperationComplete}) => {
     }
 
     return (
-        <div className="p-6">
+        <div className="p-4">
             <div className="max-w-2xl mx-auto">
                 
                 <div className="space-y-4 mb-6">

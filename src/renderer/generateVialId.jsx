@@ -32,7 +32,7 @@ const GenerateVialId = ({onShowLogModal, onOperationComplete}) => {
     }
 
     return (
-        <div className="p-6">
+        <div className="p-4">
             <div className="max-w-2xl mx-auto">
                 
                 <div className="flex justify-center">

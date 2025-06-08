@@ -78,7 +78,7 @@ const MultiSelect = ({
                                 {!disabled && (
                                     <button
                                         type="button"
-                                        className="ml-1 text-white hover:text-gray-300"
+                                        className="ml-1 text-white hover:text-gray-300 cursor-pointer"
                                         onClick={(e) => {
                                             e.stopPropagation()
                                             removeTag(item)
