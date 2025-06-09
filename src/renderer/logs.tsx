@@ -1,7 +1,7 @@
 import React, {useRef, useEffect, useState, useCallback} from 'react'
-import {useStateContext} from "../context.jsx"
+import {useStateContext} from "../context"
 import { TextInput, Button } from 'flowbite-react'
-import { cleanLogText, parseLogColors, isOperationComplete } from '../utils/logParser.js'
+import { cleanLogText, parseLogColors, isOperationComplete } from '../utils/logParser'
 
 const Logs = ({pageKey}) => {
     const {state, getPageLog} = useStateContext()

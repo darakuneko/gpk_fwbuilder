@@ -1,6 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react'
 
-const Autocomplete = ({ 
+interface AutocompleteOption {
+    label: string;
+    value: string;
+}
+
+interface AutocompleteProps {
+    options?: AutocompleteOption[];
+    value: string;
+    onChange: (event: React.ChangeEvent<HTMLInputElement> | null, option: AutocompleteOption | null) => void;
+    onFocus?: () => Promise<void> | void;
+    disabled?: boolean;
+    placeholder?: string;
+    label?: string;
+    error?: boolean;
+    required?: boolean;
+    id?: string;
+    className?: string;
+    inputClassName?: string;
+}
+
+const Autocomplete: React.FC<AutocompleteProps> = ({ 
     options = [], 
     value, 
     onChange, 
@@ -16,9 +36,9 @@ const Autocomplete = ({
 }) => {
     const [isOpen, setIsOpen] = useState(false)
     const [inputValue, setInputValue] = useState(value || '')
-    const [filteredOptions, setFilteredOptions] = useState(options)
-    const wrapperRef = useRef(null)
-    const inputRef = useRef(null)
+    const [filteredOptions, setFilteredOptions] = useState<AutocompleteOption[]>(options)
+    const wrapperRef = useRef<HTMLDivElement>(null)
+    const inputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         setInputValue(value || '')
@@ -29,8 +49,8 @@ const Autocomplete = ({
     }, [options])
 
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
                 setIsOpen(false)
             }
         }
@@ -41,7 +61,7 @@ const Autocomplete = ({
         }
     }, [])
 
-    const handleInputChange = (e) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value
         setInputValue(value)
         
@@ -59,7 +79,7 @@ const Autocomplete = ({
         setIsOpen(true)
     }
 
-    const handleOptionClick = (option) => {
+    const handleOptionClick = (option: AutocompleteOption) => {
         setInputValue(option.label)
         onChange(null, option)
         setIsOpen(false)

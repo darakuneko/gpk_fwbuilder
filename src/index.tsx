@@ -1,8 +1,8 @@
 import React, { useEffect } from "react"
 import { createRoot } from 'react-dom/client'
-import {StateProvider} from "./context.jsx"
-import Content from "./content.jsx"
-import { useTheme } from "./hooks/useTheme.js"
+import {StateProvider} from "./context"
+import Content from "./content"
+import { useTheme } from "./hooks/useTheme"
 import 'flowbite/dist/flowbite.min.css'
 import "./globals.css"
 

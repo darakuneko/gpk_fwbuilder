@@ -2,7 +2,7 @@ import Convert from "ansi-to-html"
 
 const convert = new Convert({ newline: true })
 
-export const cleanLogText = (str) => {
+export const cleanLogText = (str: string): string => {
     if (!str) return ''
     
     let cleaned = str
@@ -39,7 +39,7 @@ export const cleanLogText = (str) => {
     }
 }
 
-export const isBuildLog = (str) => {
+export const isBuildLog = (str: string): boolean => {
     if (!str) return false
     
     const buildPatterns = [
@@ -60,7 +60,7 @@ export const isBuildLog = (str) => {
     return buildPatterns.some(pattern => pattern.test(str))
 }
 
-export const parseLogColors = (str) => {        
+export const parseLogColors = (str: string): { __html: string } => {        
     if (!str) return { __html: 'Logs will appear here...' }
 
     if (isBuildLog(str)) {
@@ -84,11 +84,11 @@ export const parseLogColors = (str) => {
     }
 }
 
-const preQmkParse = (str) => str.replace(/\n\n/g, "\n")
+const preQmkParse = (str: string): string => str.replace(/\n\n/g, "\n")
     .replace(/^\n/g, "")
     .replace(/.*Compiling keymap with.*\n/, "")
 
-const alignStatusIndicators = (text) => {
+const alignStatusIndicators = (text: string): string => {
     if (!text) return ''
     
     const lines = text.split('\n')
@@ -122,7 +122,7 @@ const alignStatusIndicators = (text) => {
     return alignedLines.join('\n')
 }
 
-export const isOperationComplete = (log) => {
+export const isOperationComplete = (log: string): boolean => {
     if (!log) return false
     return log.includes('finish!!') || 
            log.includes('Converted!!') ||
@@ -131,7 +131,7 @@ export const isOperationComplete = (log) => {
            log.includes('Rebuild!!')
 }
 
-export const getOperationType = (log) => {
+export const getOperationType = (log: string): string => {
     if (!log) return 'unknown'
     
     if (log.includes('Building.....')) return 'build'

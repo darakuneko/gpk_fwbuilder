@@ -1,8 +1,8 @@
 import React, {useState} from "react"
-import {useStateContext} from "../context.jsx"
+import {useStateContext} from "../context"
 import { Button, Label, TextInput, Select, Checkbox, HelperText } from 'flowbite-react'
-import PinSelectorModal from "../components/PinSelectorModal.jsx"
-import FileUpload from "../components/FileUpload.jsx"
+import PinSelectorModal from "../components/PinSelectorModal"
+import FileUpload from "../components/FileUpload"
 
 const {api} = window
 
@@ -159,7 +159,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
         
         try {
             // Validate file type
-            if (!file.name.toLowerCase().endsWith('.json')) {
+            if (!file.name.toLowerCase().endsWith('on')) {
                 setKleFileError(true)
                 setKleFileErrorMessage("Please select a valid JSON file.")
                 return
@@ -248,7 +248,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                             <FileUpload
                                 id="kle-file"
                                 label="Choose KLE JSON File"
-                                accept=".json"
+                                accept="on"
                                 onChange={handleKleFileUpload}
                                 filename={kleObj.name}
                                 variant="outlined"
@@ -405,13 +405,13 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                                         className="mr-2"
                                     />
                                     <Label htmlFor="only-via" className="text-sm">
-                                        Only via.json
+                                        Only viaon
                                     </Label>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Matrix Configuration - only when not "Only via.json" */}
+                        {/* Matrix Configuration - only when not "Only viaon" */}
                         {state.convert.kle.option !== 2 && (
                             <>
                                 {/* Rows Configuration */}

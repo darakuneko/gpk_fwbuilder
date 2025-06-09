@@ -1,11 +1,15 @@
 import React from "react"
-import {useStateContext} from "../context.jsx"
+import {useStateContext} from "../context"
 import { Button, Label } from 'flowbite-react'
-import { cleanLogText, isOperationComplete } from '../utils/logParser.js'
+import { cleanLogText, isOperationComplete } from '../utils/logParser'
 
 const {api} = window
 
-const GenerateVialId = ({onOperationComplete}) => {
+interface GenerateVialIdProps {
+    onOperationComplete?: () => void;
+}
+
+const GenerateVialId: React.FC<GenerateVialIdProps> = ({onOperationComplete}) => {
     const {state, setState, setPageLog, getPageLog} = useStateContext()
     
     // Guard against uninitialized state
@@ -13,8 +17,8 @@ const GenerateVialId = ({onOperationComplete}) => {
         return <div>Loading...</div>
     }
 
-    const generateMsg =  "Generating...."
-    const handleVailIdSubmit =  () => async () => {
+    const generateMsg: string = "Generating...."
+    const handleVailIdSubmit = () => async () => {
         setPageLog('generateVialId', generateMsg)
         state.tabDisabled = true
         setState(state)

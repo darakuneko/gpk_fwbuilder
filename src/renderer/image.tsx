@@ -1,5 +1,5 @@
 import React from "react"
-import {useStateContext} from "../context.jsx"
+import {useStateContext} from "../context"
 import { Button } from 'flowbite-react'
 
 const {api} = window

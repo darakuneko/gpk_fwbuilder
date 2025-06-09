@@ -1,13 +1,23 @@
 import React from 'react'
 
-const FileUpload = ({ 
+interface FileUploadProps {
+    label: string;
+    accept?: string;
+    onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    filename?: string;
+    id?: string;
+    className?: string;
+    variant?: "outlined" | "contained";
+}
+
+const FileUpload: React.FC<FileUploadProps> = ({ 
     label, 
     accept = "*/*", 
     onChange, 
     filename = "", 
     id = "",
     className = "",
-    variant = "outlined" // "outlined" | "contained"
+    variant = "outlined"
 }) => {
     const baseClasses = "px-4 py-2 rounded transition-colors duration-200 font-medium cursor-pointer text-center w-full"
     const variantClasses = variant === "contained" 

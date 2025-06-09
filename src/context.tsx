@@ -1,14 +1,29 @@
-import React, {createContext, useContext, useState} from 'react'
+import React, {createContext, useContext, useState, ReactNode} from 'react'
 
-const stateContext = createContext({})
-
-export function useStateContext() {
-    return useContext(stateContext)
+interface StateContextType {
+    state: any;
+    setState: (state: any) => void;
+    setPageLog: (page: string, log: string) => void;
+    getPageLog: (page: string) => string;
 }
 
-let _state
+const stateContext = createContext<StateContextType | undefined>(undefined)
 
-export function StateProvider({children}) {
+export function useStateContext(): StateContextType {
+    const context = useContext(stateContext);
+    if (!context) {
+        throw new Error('useStateContext must be used within StateProvider');
+    }
+    return context;
+}
+
+let _state: any
+
+interface StateProviderProps {
+    children: ReactNode;
+}
+
+export function StateProvider({children}: StateProviderProps) {
 
     const [state, _setState] = useState({
         version: '',
@@ -99,7 +114,7 @@ export function StateProvider({children}) {
         }
     })
 
-    const setState = async (obj) => {
+    const setState = async (obj: any) => {
         _state = obj
         _setState({
             build: {
@@ -163,7 +178,7 @@ export function StateProvider({children}) {
         })
     }
 
-    const setPageLog = (pageName, logContent) => {
+    const setPageLog = (pageName: string, logContent: string) => {
         if (!_state.pageLogs) {
             _state.pageLogs = {
                 build: "",
@@ -185,7 +200,7 @@ export function StateProvider({children}) {
         }))
     }
 
-    const getPageLog = (pageName) => {
+    const getPageLog = (pageName: string) => {
         return _state?.pageLogs?.[pageName] || ""
     }
 

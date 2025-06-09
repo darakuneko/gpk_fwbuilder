@@ -1,8 +1,8 @@
 import React, {useState} from "react"
-import {useStateContext} from "../context.jsx"
+import {useStateContext} from "../context"
 import { Button, Label } from 'flowbite-react'
-import FileUpload from "../components/FileUpload.jsx"
-import { cleanLogText } from '../utils/logParser.js'
+import FileUpload from "../components/FileUpload"
+import { cleanLogText } from '../utils/logParser'
 
 const {api} = window
 

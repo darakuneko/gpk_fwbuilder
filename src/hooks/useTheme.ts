@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 
-export const useTheme = () => {
-  const [theme, setTheme] = useState(() => {
+interface UseThemeReturn {
+  theme: string;
+  isLight: boolean;
+  isDark: boolean;
+}
+
+export const useTheme = (): UseThemeReturn => {
+  const [theme, setTheme] = useState<string>(() => {
     // Check if we're in browser environment
     if (typeof window === 'undefined') return 'light';
     
@@ -29,7 +35,7 @@ export const useTheme = () => {
     // Listen for system theme changes and auto-update
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     
-    const handleChange = (e) => {
+    const handleChange = (e: MediaQueryListEvent) => {
       setTheme(e.matches ? 'dark' : 'light');
     };
 

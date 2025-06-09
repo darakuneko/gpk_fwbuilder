@@ -2,7 +2,16 @@ import React, { useState } from 'react'
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from 'flowbite-react'
 import { HiArrowUp, HiArrowDown, HiX } from 'react-icons/hi'
 
-const PinSelectorModal = ({ 
+interface PinSelectorModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    title: string;
+    availablePins: string[];
+    selectedPins: string[];
+    onConfirm: (pins: string[]) => void;
+}
+
+const PinSelectorModal: React.FC<PinSelectorModalProps> = ({ 
     isOpen, 
     onClose, 
     title, 
@@ -11,9 +20,9 @@ const PinSelectorModal = ({
     onConfirm 
 }) => {
     const [tempSelectedPins, setTempSelectedPins] = useState([...selectedPins])
-    const [animatingIndex, setAnimatingIndex] = useState(null)
+    const [animatingIndex, setAnimatingIndex] = useState<number | null>(null)
 
-    const handlePinToggle = (pin) => {
+    const handlePinToggle = (pin: string) => {
         if (tempSelectedPins.includes(pin)) {
             setTempSelectedPins(tempSelectedPins.filter(p => p !== pin))
         } else {
@@ -21,7 +30,7 @@ const PinSelectorModal = ({
         }
     }
 
-    const handleMoveUp = (index) => {
+    const handleMoveUp = (index: number) => {
         if (index > 0) {
             setAnimatingIndex(index)
             setTimeout(() => {
@@ -35,7 +44,7 @@ const PinSelectorModal = ({
         }
     }
 
-    const handleMoveDown = (index) => {
+    const handleMoveDown = (index: number) => {
         if (index < tempSelectedPins.length - 1) {
             setAnimatingIndex(index)
             setTimeout(() => {

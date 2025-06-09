@@ -1,7 +1,28 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, CSSProperties } from 'react'
 import { Label } from 'flowbite-react'
 
-const FlowbiteAutocomplete = ({ 
+interface FlowbiteAutocompleteOption {
+    label: string;
+    value: string;
+}
+
+interface FlowbiteAutocompleteProps {
+    options?: FlowbiteAutocompleteOption[];
+    value: string;
+    onChange?: (event: React.ChangeEvent<HTMLInputElement> | { target: { value: string } }, option: FlowbiteAutocompleteOption | null) => void;
+    onFocus?: (event: React.FocusEvent<HTMLInputElement>) => void;
+    disabled?: boolean;
+    placeholder?: string;
+    label?: string;
+    error?: boolean;
+    required?: boolean;
+    id?: string;
+    className?: string;
+    inputClassName?: string;
+    style?: CSSProperties;
+}
+
+const FlowbiteAutocomplete: React.FC<FlowbiteAutocompleteProps> = ({ 
     options = [], 
     value, 
     onChange, 
@@ -18,9 +39,9 @@ const FlowbiteAutocomplete = ({
 }) => {
     const [isOpen, setIsOpen] = useState(false)
     const [inputValue, setInputValue] = useState(value || '')
-    const [filteredOptions, setFilteredOptions] = useState(options)
-    const wrapperRef = useRef(null)
-    const inputRef = useRef(null)
+    const [filteredOptions, setFilteredOptions] = useState<FlowbiteAutocompleteOption[]>(options)
+    const wrapperRef = useRef<HTMLDivElement>(null)
+    const inputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         setInputValue(value || '')
@@ -31,8 +52,8 @@ const FlowbiteAutocomplete = ({
     }, [options])
 
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
                 setIsOpen(false)
             }
         }
@@ -43,7 +64,7 @@ const FlowbiteAutocomplete = ({
         }
     }, [])
 
-    const handleInputChange = (e) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value
         setInputValue(value)
         
@@ -56,7 +77,7 @@ const FlowbiteAutocomplete = ({
         setIsOpen(true)
     }
 
-    const handleInputFocus = (e) => {
+    const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
         setIsOpen(true)
         onFocus && onFocus(e)
     }
@@ -67,7 +88,7 @@ const FlowbiteAutocomplete = ({
         }, 200)
     }
 
-    const handleOptionClick = (option) => {
+    const handleOptionClick = (option: FlowbiteAutocompleteOption) => {
         setInputValue(option.label)
         onChange && onChange({ target: { value: option.label } }, option)
         setIsOpen(false)

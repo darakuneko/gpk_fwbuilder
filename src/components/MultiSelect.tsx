@@ -1,6 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react'
 
-const MultiSelect = ({ 
+interface MultiSelectProps {
+    options?: string[];
+    value?: string[];
+    onChange: (event: { target: { value: string[] } }) => void;
+    disabled?: boolean;
+    label?: string;
+    error?: boolean;
+    required?: boolean;
+    id?: string;
+    className?: string;
+    placement?: 'top' | 'bottom';
+}
+
+const MultiSelect: React.FC<MultiSelectProps> = ({ 
     options = [], 
     value = [], 
     onChange, 
@@ -13,11 +26,11 @@ const MultiSelect = ({
     placement = 'bottom'
 }) => {
     const [isOpen, setIsOpen] = useState(false)
-    const wrapperRef = useRef(null)
+    const wrapperRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
                 setIsOpen(false)
             }
         }
@@ -34,7 +47,7 @@ const MultiSelect = ({
         }
     }
 
-    const handleOptionClick = (option) => {
+    const handleOptionClick = (option: string) => {
         const newValue = value.includes(option) 
             ? value.filter(v => v !== option)
             : [...value, option]
@@ -43,7 +56,7 @@ const MultiSelect = ({
         onChange(event)
     }
 
-    const removeTag = (option) => {
+    const removeTag = (option: string) => {
         const newValue = value.filter(v => v !== option)
         const event = { target: { value: newValue } }
         onChange(event)

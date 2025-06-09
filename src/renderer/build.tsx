@@ -1,10 +1,15 @@
 import React, {useState, useEffect} from "react"
-import {useStateContext} from "../context.jsx"
+import {useStateContext} from "../context"
 import { Button, Label, TextInput, Select, Checkbox, HelperText } from 'flowbite-react'
 
 const {api} = window
 
-const Build = ({onShowLogModal, onOperationComplete}) => {
+interface BuildProps {
+    onShowLogModal?: () => void;
+    onOperationComplete?: () => void;
+}
+
+const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}) => {
     const {state, setState, setPageLog} = useStateContext()
     
     // Guard against uninitialized state
@@ -18,15 +23,15 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
     const [disabledBuildText, setDisabledBuildText] = useState(false)
     const [disabledUseRepoButtonButton, setDisabledUseRepoButtonButton] = useState(false)
     const [init, setInit] = useState(true)
-    const [keyboardList, setKeyboardList] = useState([])
+    const [keyboardList, setKeyboardList] = useState<string[]>([])
 
-    const findFirmware = (state) => state.repository.firmwares.find(r => r.id === state.build.fw)
-    const getCommit = (state) => findFirmware(state)?.commit
-    const setCommit = (state, commit) => {
+    const findFirmware = (state: any) => state.repository.firmwares.find((r: any) => r.id === state.build.fw)
+    const getCommit = (state: any) => findFirmware(state)?.commit
+    const setCommit = (state: any, commit: string) => {
         state.build.commit = commit
         findFirmware(state).commit = commit
     }
-    const handleSelectFW = (e) => {
+    const handleSelectFW = (e: React.ChangeEvent<HTMLSelectElement>) => {
         state.build.fw = e.target.value
         setCommit(state, getCommit(state))
         setState(state)

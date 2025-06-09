@@ -1,17 +1,22 @@
-import React, {useState, webUtils} from "react"
-import {useStateContext} from "../context.jsx"
+import React, {useState} from "react"
+import {useStateContext} from "../context"
 import { Button, Label, TextInput, Select, Checkbox, HelperText, FileInput } from 'flowbite-react'
-import MultiSelect from "../components/MultiSelect.jsx"
+import MultiSelect from "../components/MultiSelect"
 
 const {api} = window
 
-const Convert = () => {
+const Convert: React.FC = () => {
     const {state, setState} = useStateContext()
-    const [vilObj, setVilObj] = useState({
+    interface FileObj {
+        name: string;
+        path: string;
+    }
+
+    const [vilObj, setVilObj] = useState<FileObj>({
         name : "",
         path : "",
     })
-    const [kleObj, setKleObj] = useState({
+    const [kleObj, setKleObj] = useState<FileObj>({
         name : "",
         path : "",
     })
@@ -250,7 +255,7 @@ const Convert = () => {
                             <Label className="mb-2 block" htmlFor="kle">KLE JSON file</Label>
                             <FileInput
                                 id="kle"
-                                accept=".json"
+                                accept="on"
                                 onChange={handleKleFileUpload}
                             />
                             {kleObj.name && (
@@ -300,7 +305,7 @@ const Convert = () => {
                                             className="mr-2"
                                         />
                                         <Label htmlFor="only-via" className="text-sm">
-                                            Only via.json
+                                            Only viaon
                                         </Label>
                                     </div>
                                 </div>
@@ -416,7 +421,7 @@ const Convert = () => {
                     <div className="border border-gray-200 dark:border-gray-700 rounded p-4 mb-4">
                         <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">Matrix Pin Configuration</h5>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                            Configure the GPIO pins for your keyboard matrix. Not required for "Only via.json" option.
+                            Configure the GPIO pins for your keyboard matrix. Not required for "Only viaon" option.
                         </p>
                         <div className="space-y-4">
                             <MultiSelect

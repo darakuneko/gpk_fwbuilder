@@ -1,21 +1,21 @@
 import React, {useEffect, useState, useMemo} from 'react'
-import {getState, useStateContext} from "./context.jsx"
+import {getState, useStateContext} from "./context"
 import { Sidebar, SidebarItems, SidebarItemGroup, SidebarItem, Spinner, Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'flowbite-react'
 import { HiCube, HiCollection, HiRefresh, HiServer, HiPhotograph, HiCog, HiChevronRight, HiX } from 'react-icons/hi'
-import Build from "./renderer/build.jsx"
-import Logs from "./renderer/logs.jsx"
+import Build from "./renderer/build"
+import Logs from "./renderer/logs"
 import parse from 'html-react-parser'
-import Repository from "./renderer/repository.jsx"
-import Image from "./renderer/image.jsx"
-import Generate from "./renderer/generate.jsx"
-import GenerateKeyboardFile from "./renderer/generateKeyboardFile.jsx"
-import GenerateVialId from "./renderer/generateVialId.jsx"
-import Convert from "./renderer/convert.jsx"
-import ConvertVialToKeymap from "./renderer/convertVialToKeymap.jsx"
-import ConvertKleToKeyboard from "./renderer/convertKleToKeyboard.jsx"
-import Setting from "./renderer/setting.jsx"
-import ExternalServer from "./renderer/externalServer.jsx"
-import { isOperationComplete } from './utils/logParser.js'
+import Repository from "./renderer/repository"
+import Image from "./renderer/image"
+import Generate from "./renderer/generate"
+import GenerateKeyboardFile from "./renderer/generateKeyboardFile"
+import GenerateVialId from "./renderer/generateVialId"
+import Convert from "./renderer/convert"
+import ConvertVialToKeymap from "./renderer/convertVialToKeymap"
+import ConvertKleToKeyboard from "./renderer/convertKleToKeyboard"
+import Setting from "./renderer/setting"
+import ExternalServer from "./renderer/externalServer"
+import { isOperationComplete } from './utils/logParser'
 
 const {api} = window
 
