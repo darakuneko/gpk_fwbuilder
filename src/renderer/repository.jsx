@@ -1,11 +1,11 @@
-import React, {useState} from "react"
+import React from "react"
 import {useStateContext} from "../context.jsx"
-import { Button, TextInput, Select } from 'flowbite-react'
+import { Button, TextInput, Select, Label } from 'flowbite-react'
 
 const {api} = window
 
 const Repository = ({onShowLogModal, onOperationComplete}) => {
-    const {state, setState} = useStateContext()
+    const {state, setState, setPageLog} = useStateContext()
     
     // Guard against uninitialized state
     if (!state || !state.repository) {
@@ -32,7 +32,7 @@ const Repository = ({onShowLogModal, onOperationComplete}) => {
             onShowLogModal()
         }
         
-        state.logs = msg1
+        setPageLog('repository', msg1)
         state.tabDisabled = true
         setState(state)
         if(isStaticFirmware(state.repository?.firmware)) {
@@ -49,7 +49,7 @@ const Repository = ({onShowLogModal, onOperationComplete}) => {
             if (buildCompleted && exist) {
                 state.build.tags = await api.tags()
                 state.build.tag = state.build.tags[0]
-                state.logs = msg2
+                setPageLog('repository', msg2)
                 state.tabDisabled = false
                 setState(state)
                 clearInterval(id)
@@ -65,64 +65,64 @@ const Repository = ({onShowLogModal, onOperationComplete}) => {
 
     return (
         <div className="p-4">
-            <div className="max-w-2xl mx-auto">
-                
-                <div className="space-y-4 mb-6">
-                    <div>
-                        <label htmlFor="repository-fw-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Firmware
-                        </label>
-                        <Select
-                            id="repository-fw-select"
-                            value={state.repository?.firmware || ''}
-                            onChange={handleSelectFW}
-                            required
-                        >
-                            {(state.repository?.firmwares || []).map((fw) =>
-                                (<option
-                                    key={`repository-fw-select${fw.id}`}
-                                    value={fw.id}
-                                >{fw.id}</option>)
-                            )}
-                        </Select>
+            <div className="max-w-4xl mx-auto space-y-6">
+                <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
+                    <div className="space-y-4">
+                        <div>
+                            <Label className="mb-2 block" htmlFor="repository-fw-select">
+                                Firmware
+                            </Label>
+                            <Select
+                                id="repository-fw-select"
+                                value={state.repository?.firmware || ''}
+                                onChange={handleSelectFW}
+                                required
+                            >
+                                {(state.repository?.firmwares || []).map((fw) =>
+                                    (<option
+                                        key={`repository-fw-select${fw.id}`}
+                                        value={fw.id}
+                                    >{fw.id}</option>)
+                                )}
+                            </Select>
+                        </div>
+                        
+                        <div>
+                            <Label className="mb-2 block" htmlFor="repository-custom-url">
+                                Repository URL
+                            </Label>
+                            <TextInput
+                                type="text"
+                                id="repository-custom-url"
+                                placeholder="git clone url"
+                                onChange={handleTextChange}
+                                value={state.repository?.firmwares?.find(v => v.id === state.repository?.firmware)?.url || ''}
+                                disabled={isStaticFirmware(state.repository?.firmware)}
+                                required
+                            />
+                        </div>
+                        
+                        <div className="text-center pt-4">
+                            <Button
+                                color="blue"
+                                className={`w-full ${state.tabDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                                style={state.tabDisabled ? { opacity: 0.5 } : {}}
+                                onClick={
+                                    state.tabDisabled 
+                                        ? () => {} 
+                                        : handleUpdate("Updating.....\n\nIt will take a few minutes.\n\n", "Updated!!")
+                                }
+                                disabled={false}
+                            >
+                                Update Repository
+                            </Button>
+                            <div className="text-center space-y-2 pt-4">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                    If it stops due to a network error or other problem, please press the button again.
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div>
-                        <label htmlFor="repository-custom-url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Repository URL
-                        </label>
-                        <TextInput
-                            type="text"
-                            id="repository-custom-url"
-                            placeholder="git clone url"
-                            onChange={handleTextChange}
-                            value={state.repository?.firmwares?.find(v => v.id === state.repository?.firmware)?.url || ''}
-                            disabled={isStaticFirmware(state.repository?.firmware)}
-                            required
-                        />
-                    </div>
-                </div>
-                
-                <div className="text-center mb-6">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                        If it stops due to a network error or other problem, please press the button again.
-                    </p>
-                </div>
-                
-                <div className="flex justify-center">
-                    <Button
-                        color="blue"
-                        className={state.tabDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}
-                        style={state.tabDisabled ? { opacity: 0.5 } : {}}
-                        onClick={
-                            state.tabDisabled 
-                                ? () => {} 
-                                : handleUpdate("Updating.....\n\nIt will take a few minutes.\n\n", "Updated!!")
-                        }
-                        disabled={false}
-                    >
-                        Update Repository
-                    </Button>
                 </div>
             </div>
         </div>

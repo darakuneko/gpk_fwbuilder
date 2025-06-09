@@ -87,7 +87,16 @@ export function StateProvider({children}) {
             fwDir: ""
         },
         logs: "",
-        tabDisabled: false
+        tabDisabled: false,
+        pageLogs: {
+            build: "",
+            generateKeyboardFile: "",
+            generateVialId: "",
+            convertVialToKeymap: "",
+            convertKleToKeyboard: "",
+            repository: "",
+            image: ""
+        }
     })
 
     const setState = async (obj) => {
@@ -142,12 +151,49 @@ export function StateProvider({children}) {
             storePath:  obj.storePath,
             logs: obj.logs,
             tabDisabled: obj.tabDisabled,
+            pageLogs: obj.pageLogs || {
+                build: "",
+                generateKeyboardFile: "",
+                generateVialId: "",
+                convertVialToKeymap: "",
+                convertKleToKeyboard: "",
+                repository: "",
+                image: ""
+            }
         })
+    }
+
+    const setPageLog = (pageName, logContent) => {
+        if (!_state.pageLogs) {
+            _state.pageLogs = {
+                build: "",
+                generateKeyboardFile: "",
+                generateVialId: "",
+                convertVialToKeymap: "",
+                convertKleToKeyboard: "",
+                repository: "",
+                image: ""
+            }
+        }
+        _state.pageLogs[pageName] = logContent
+        _setState(prevState => ({
+            ...prevState,
+            pageLogs: {
+                ...prevState.pageLogs,
+                [pageName]: logContent
+            }
+        }))
+    }
+
+    const getPageLog = (pageName) => {
+        return _state?.pageLogs?.[pageName] || ""
     }
 
     const value = {
         state,
-        setState
+        setState,
+        setPageLog,
+        getPageLog
     }
 
     return (

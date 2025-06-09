@@ -1,6 +1,6 @@
 import React, {useState} from "react"
 import {useStateContext} from "../context.jsx"
-import { Button, Label, TextInput, Select } from 'flowbite-react'
+import { Button, Label, TextInput, Select, HelperText } from 'flowbite-react'
 
 const {api} = window
 
@@ -86,99 +86,115 @@ const Generate = () => {
 
     
     return (
-        <div className="px-4 flex flex-col justify-center">
-            <div className="pt-2 flex content-center justify-between">
-                <div className="pt-3 text-center w-[150px]">
-                    QMK<br />Keyboard File
-                </div>
-                <div>
-                    <div className="mb-2 block">
-                        <Label htmlFor="generate-qmkFile-mcu-select" value="MCU" />
+        <div className="p-4">
+            <div className="max-w-4xl mx-auto space-y-6">
+                
+                {/* QMK Keyboard File Generation */}
+                <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Generate template QMK keyboard configuration files for your custom keyboard project.
+                    </p>
+                    
+                    {/* Configuration Parameters */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded p-4 mb-4">
+                        <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">Configuration Parameters</h5>
+                        <div className="grid grid-cols-1 gap-4">
+                        <div>
+                            <Label className="mb-1 block" htmlFor="generate-qmkFile-mcu-select">MCU</Label>
+                            <Select
+                                id="generate-qmkFile-mcu-select"
+                                value={state.generate.qmkFile.mcu}
+                                onChange={handleSelectMCU}
+                                required
+                                sizing="sm"
+                            >
+                                <option value="RP2040">RP2040</option>
+                                <option value="promicro">Pro Micro</option>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label
+                                className={`mb-1 block ${keyboardError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+                                htmlFor="generate-qmkFile-kb"
+                            >
+                                Keyboard Name *
+                            </Label>
+                            <TextInput
+                                type="text"
+                                id="generate-qmkFile-kb"
+                                required
+                                color={keyboardError ? "failure" : "gray"}
+                                disabled={disabledBuildText}
+                                onChange={handleTextChange("kb")}
+                                value={state.generate.qmkFile.kb}
+                                sizing="sm"
+                            />
+                            {keyboardStrError && (
+                                <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
+                                    A-Za-z0-9_/- can be used
+                                </HelperText>
+                            )}
+                        </div>
+                        <div>
+                            <Label
+                                className={`mb-1 block ${usernameEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+                                htmlFor="km"
+                            >
+                                Username *
+                            </Label>
+                            <TextInput
+                                type="text"
+                                id="km"
+                                required
+                                color={usernameEmptyError ? "failure" : "gray"}
+                                disabled={disabledBuildText}
+                                onChange={handleTextChange("user")}
+                                value={state.generate.qmkFile.user}
+                                sizing="sm"
+                            />
+                            {usernameStrError && (
+                                <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
+                                    A-Za-z0-9_/- can be used
+                                </HelperText>
+                            )}
+                        </div>
                     </div>
-                    <Select
-                        id="generate-qmkFile-mcu-select"
-                        value={state.generate.qmkFile.mcu}
-                        onChange={handleSelectMCU}
-                        required
-                    >
-                        <option value="RP2040">RP2040</option>
-                        <option value="promicro">Pro Micro</option>
-                    </Select>
-                </div>
-                <div className="pt-2">
-                    <div className="mb-2 block">
-                        <Label
-                            htmlFor="generate-qmkFile-kb"
-                            value="keyboard *"
-                            color={keyboardError ? "failure" : "gray"}
-                        />
                     </div>
-                    <TextInput
-                        type="text"
-                        id="generate-qmkFile-kb"
-                        required
-                        color={keyboardError ? "failure" : "gray"}
-                        disabled={disabledBuildText}
-                        onChange={handleTextChange("kb")}
-                        value={state.generate.qmkFile.kb}
-                        className="w-60"
-                    />
-                    {keyboardStrError && (
-                        <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                            A-Za-z0-9_/- can used
-                        </p>
-                    )}
-                </div>
-                <div className="pt-2">
-                    <div className="mb-2 block">
-                        <Label
-                            htmlFor="km"
-                            value="username *"
-                            color={usernameEmptyError ? "failure" : "gray"}
-                        />
+                    
+                    {/* Generate Action */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded p-4">
+                        <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">Generate Files</h5>
+                        <Button
+                            color="blue"
+                            className={`w-full ${(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                            style={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? { opacity: 0.5 } : {}}
+                            onClick={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? () => {} : handleQmkFileSubmit()}
+                            disabled={false}
+                        >
+                            Generate
+                        </Button>
                     </div>
-                    <TextInput
-                        type="text"
-                        id="km"
-                        required
-                        color={usernameEmptyError ? "failure" : "gray"}
-                        disabled={disabledBuildText}
-                        onChange={handleTextChange("user")}
-                        value={state.generate.qmkFile.user}
-                        className="w-60"
-                    />
-                    {usernameStrError && (
-                        <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                            A-Za-z0-9_/- can used
-                        </p>
-                    )}
                 </div>
-                <div className="pl-4 pt-4 flex justify-center items-center">
-                    <Button
-                        color="blue"
-                        className={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? 'cursor-not-allowed' : 'cursor-pointer'}
-                        style={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? { opacity: 0.5 } : {}}
-                        onClick={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? () => {} : handleQmkFileSubmit()}
-                        disabled={false}
-                    >
-                        Generate
-                    </Button>
-                </div>
-            </div>
-            <div className="pt-2 flex content-center justify-between">
-                <div className="text-center w-[150px]">
-                    Vial<br />Unique ID
-                </div>
-                <div className="flex justify-center items-center">
-                    <Button
-                        color="blue"
-                        className={disabledVialID ? 'cursor-not-allowed' : 'cursor-pointer'}
-                        style={disabledVialID ? { opacity: 0.5 } : {}}
-                        onClick={disabledVialID ? () => {} : handleVailIdSubmit("VialId")}
-                        disabled={false}
-                    >
-                        Generate
-                    </Button>
+                
+                {/* Vial Unique ID Generation */}
+                <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Generate a unique identifier for Vial keyboard configuration. Each keyboard needs a unique ID.
+                    </p>
+                    
+                    {/* ID Generation Action */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded p-4">
+                        <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">Generate ID</h5>
+                        <Button
+                            color="blue"
+                            className={`w-full ${disabledVialID ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                            style={disabledVialID ? { opacity: 0.5 } : {}}
+                            onClick={disabledVialID ? () => {} : handleVailIdSubmit("VialId")}
+                            disabled={false}
+                        >
+                            Generate Unique ID
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>

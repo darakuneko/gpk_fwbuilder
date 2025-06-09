@@ -1,8 +1,7 @@
 import React, {useState, webUtils} from "react"
 import {useStateContext} from "../context.jsx"
-import { Button, Label, TextInput, Select, Checkbox } from 'flowbite-react'
+import { Button, Label, TextInput, Select, Checkbox, HelperText, FileInput } from 'flowbite-react'
 import MultiSelect from "../components/MultiSelect.jsx"
-import FileUpload from "../components/FileUpload.jsx"
 
 const {api} = window
 
@@ -199,232 +198,263 @@ const Convert = () => {
     }
 
     return (
-        <div className="flex flex-col">
-            <div className="pt-2 text-center">vil(Export Vial File) to keymap.c</div>
-            <div className="pt-2 px-4 flex content-center justify-center">
-                <FileUpload
-                    id="vil"
-                    label="vil file"
-                    accept=".vil"
-                    onChange={handleVilFileUpload}
-                    filename={vilObj.name}
-                    className="mr-4 w-[200px]"
-                />
-                <div className="flex justify-center items-center">
+        <div className="p-4">
+            <div className="max-w-4xl mx-auto space-y-6">
+                
+                {/* Vial to Keymap Section */}
+                <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Convert Vial export files (.vil) to QMK keymap.c files for custom keyboard firmware.
+                    </p>
+                    
+                    {/* File Input and Conversion */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded p-4">
+                        <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">File Input</h5>
+                        <div className="space-y-4">
+                            <div>
+                                <Label className="mb-2 block" htmlFor="vil">Vial file (.vil)</Label>
+                                <FileInput
+                                    id="vil"
+                                    accept=".vil"
+                                    onChange={handleVilFileUpload}
+                                />
+                                {vilObj.name && (
+                                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">
+                                        Selected: {vilObj.name}
+                                    </p>
+                                )}
+                            </div>
+                            <Button
+                                color="blue"
+                                className={`w-full ${disabledVilCovertButton ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                                style={disabledVilCovertButton ? { opacity: 0.5 } : {}}
+                                onClick={disabledVilCovertButton ? () => {} : handleVilFileSubmit}
+                                disabled={false}
+                            >
+                                Convert
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* KLE to QMK/Vial Section */}
+                <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Convert Keyboard Layout Editor (KLE) JSON files to complete QMK/Vial keyboard firmware.
+                    </p>
+                    
+                    {/* File Upload */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded p-4 mb-4">
+                        <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">KLE File Input</h5>
+                        <div>
+                            <Label className="mb-2 block" htmlFor="kle">KLE JSON file</Label>
+                            <FileInput
+                                id="kle"
+                                accept=".json"
+                                onChange={handleKleFileUpload}
+                            />
+                            {kleObj.name && (
+                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">
+                                    Selected: {kleObj.name}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                    
+                    {/* Configuration Section */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded p-4 mb-4">
+                        <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">Configuration</h5>
+                        <div className="grid grid-cols-1 gap-4">
+                            <div>
+                                <Label className="mb-1 block" htmlFor="convert-kle-mcu-select">MCU</Label>
+                                <Select
+                                    id="convert-kle-mcu-select"
+                                    value={state.convert.kle.mcu}
+                                    onChange={handleSelectMCU}
+                                    required
+                                    sizing="sm"
+                                >
+                                    <option value="RP2040">RP2040</option>
+                                    <option value="promicro">Pro Micro</option>
+                                </Select>
+                            </div>
+                            <div>
+                                <Label className="mb-1 block">Output Options</Label>
+                                <div className="space-y-1">
+                                    <div className="flex items-center">
+                                        <Checkbox
+                                            id="vial-settings"
+                                            checked={state.convert.kle.option === 1}
+                                            onChange={handleKleOptionChange(1)}
+                                            className="mr-2"
+                                        />
+                                        <Label htmlFor="vial-settings" className="text-sm">
+                                            Add Vial Settings
+                                        </Label>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <Checkbox
+                                            id="only-via"
+                                            checked={state.convert.kle.option === 2}
+                                            onChange={handleKleOptionChange(2)}
+                                            className="mr-2"
+                                        />
+                                        <Label htmlFor="only-via" className="text-sm">
+                                            Only via.json
+                                        </Label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Keyboard Information Section */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded p-4 mb-4">
+                        <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">Keyboard Information</h5>
+                        <div className="grid grid-cols-1 gap-4">
+                            <div>
+                                <Label
+                                    className={`mb-1 block ${keyboardError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+                                    htmlFor="convert-kle-kb"
+                                >
+                                    Keyboard Name *
+                                </Label>
+                                <TextInput
+                                    type="text"
+                                    id="convert-kle-kb"
+                                    required
+                                    color={keyboardError ? "failure" : "gray"}
+                                    disabled={disabledConvertText}
+                                    onChange={handleTextChange("kb")}
+                                    value={state.convert.kle.kb}
+                                    sizing="sm"
+                                />
+                                {keyboardStrError && (
+                                    <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
+                                        A-Za-z0-9 _/- can be used
+                                    </HelperText>
+                                )}
+                            </div>
+                            <div>
+                                <Label
+                                    className={`mb-1 block ${usernameEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+                                    htmlFor="km"
+                                >
+                                    Username *
+                                </Label>
+                                <TextInput
+                                    type="text"
+                                    id="km"
+                                    required
+                                    color={usernameEmptyError ? "failure" : "gray"}
+                                    disabled={disabledConvertText}
+                                    onChange={handleTextChange("user")}
+                                    value={state.convert.kle.user}
+                                    sizing="sm"
+                                />
+                                {usernameStrError && (
+                                    <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
+                                        A-Za-z0-9 _/- can be used
+                                    </HelperText>
+                                )}
+                            </div>
+                            <div>
+                                <Label
+                                    className={`mb-1 block ${vidEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+                                    htmlFor="vid"
+                                >
+                                    Vendor ID *
+                                </Label>
+                                <TextInput
+                                    type="text"
+                                    id="vid"
+                                    required
+                                    color={vidEmptyError ? "failure" : "gray"}
+                                    disabled={disabledConvertText}
+                                    onChange={handleTextChange("vid")}
+                                    value={state.convert.kle.vid}
+                                    sizing="sm"
+                                />
+                                {vidStrError && (
+                                    <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
+                                        A-Z0-9x can be used
+                                    </HelperText>
+                                )}
+                            </div>
+                            <div>
+                                <Label
+                                    className={`mb-1 block ${pidEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+                                    htmlFor="pid"
+                                >
+                                    Product ID *
+                                </Label>
+                                <TextInput
+                                    type="text"
+                                    id="pid"
+                                    required
+                                    color={pidEmptyError ? "failure" : "gray"}
+                                    disabled={disabledConvertText}
+                                    onChange={handleTextChange("pid")}
+                                    value={state.convert.kle.pid}
+                                    sizing="sm"
+                                />
+                                {pidStrError && (
+                                    <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
+                                        A-Z0-9x can be used
+                                    </HelperText>
+                                )}
+                                {pidSameError && (
+                                    <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
+                                        Must be other than 0x0000
+                                    </HelperText>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Matrix Pins Section */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded p-4 mb-4">
+                        <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">Matrix Pin Configuration</h5>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                            Configure the GPIO pins for your keyboard matrix. Not required for "Only via.json" option.
+                        </p>
+                        <div className="space-y-4">
+                            <MultiSelect
+                                id="convert-kle-rows"
+                                label="Matrix Pins - Rows"
+                                options={state.convert.kle.mcu === 'promicro' ? state.convert.pins.promicro : state.convert.pins.rp2040}
+                                value={pinRows}
+                                onChange={handleTextChange("rows")}
+                                error={rowsEmptyError}
+                                disabled={state.convert.kle.option === 2 ? true : disabledConvertText}
+                                required
+                                className="w-full max-w-4xl"
+                            />
+                            <MultiSelect
+                                id="convert-kle-cols"
+                                label="Matrix Pins - Columns"
+                                options={state.convert.kle.mcu === 'promicro' ? state.convert.pins.promicro : state.convert.pins.rp2040}
+                                value={pinCols}
+                                onChange={handleTextChange("cols")}
+                                error={colsEmptyError}
+                                disabled={state.convert.kle.option === 2 ? true : disabledConvertText}
+                                required
+                                className="w-full max-w-4xl"
+                            />
+                        </div>
+                    </div>
+                    
+                    {/* Convert Button */}
                     <Button
                         color="blue"
-                        className={disabledVilCovertButton ? 'cursor-not-allowed' : 'cursor-pointer'}
-                        style={disabledVilCovertButton ? { opacity: 0.5 } : {}}
-                        onClick={disabledVilCovertButton ? () => {} : handleVilFileSubmit}
+                        className={`w-full ${disabledKleConvertButton ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                        style={disabledKleConvertButton ? { opacity: 0.5 } : {}}
+                        onClick={disabledKleConvertButton ? () => {} : handleKleFileSubmit()}
                         disabled={false}
                     >
                         Convert
                     </Button>
                 </div>
-            </div>
-            
-            
-            <div className="pt-4 text-center">Convert from KLE Json to QMK/Vial files</div>
-            <div className="pt-2 text-center">
-                <FileUpload
-                    id="kle"
-                    label="kle Json"
-                    accept=".json"
-                    onChange={handleKleFileUpload}
-                    filename={kleObj.name}
-                    className="w-[200px]"
-                />
-            </div>
-            
-            <div className="flex content-center justify-around">
-                <div className="pr-4 pt-2 flex flex-col justify-center items-center">
-                    <div>
-                        <div className="mb-2 block">
-                            <Label htmlFor="convert-kle-mcu-select" value="MCU" />
-                        </div>
-                        <Select
-                            id="convert-kle-mcu-select"
-                            value={state.convert.kle.mcu}
-                            onChange={handleSelectMCU}
-                            required
-                        >
-                            <option value="RP2040">RP2040</option>
-                            <option value="promicro">Pro Micro</option>
-                        </Select>
-                    </div>
-                    <div className="pt-2">
-                        <div className="mb-2 block">
-                            <Label value="Option" />
-                        </div>
-                        <div className="flex flex-col">
-                                <div className="flex items-center mb-2">
-                                <Checkbox
-                                    id="vial-settings"
-                                    checked={state.convert.kle.option === 1}
-                                    onChange={handleKleOptionChange(1)}
-                                />
-                                <Label htmlFor="vial-settings" className="ml-2">
-                                    Add Vial Settings
-                                </Label>
-                            </div>
-                            <div className="flex items-center">
-                                <Checkbox
-                                    id="only-via"
-                                    checked={state.convert.kle.option === 2}
-                                    onChange={handleKleOptionChange(2)}
-                                />
-                                <Label htmlFor="only-via" className="ml-2">
-                                    Only via.json
-                                </Label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div className="flex flex-col">
-                    <div>
-                        <div className="mb-2 block">
-                            <Label
-                                htmlFor="convert-kle-kb"
-                                value="keyboard *"
-                                color={keyboardError ? "failure" : "gray"}
-                            />
-                        </div>
-                        <TextInput
-                            type="text"
-                            id="convert-kle-kb"
-                            required
-                            color={keyboardError ? "failure" : "gray"}
-                            disabled={disabledConvertText}
-                            onChange={handleTextChange("kb")}
-                            value={state.convert.kle.kb}
-                            className="w-80"
-                        />
-                        {keyboardStrError && (
-                            <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                                A-Za-z0-9 _/- can used
-                            </p>
-                        )}
-                    </div>
-                    <div>
-                        <div className="mb-2 block">
-                            <Label
-                                htmlFor="km"
-                                value="username *"
-                                color={usernameEmptyError ? "failure" : "gray"}
-                            />
-                        </div>
-                        <TextInput
-                            type="text"
-                            id="km"
-                            required
-                            color={usernameEmptyError ? "failure" : "gray"}
-                            disabled={disabledConvertText}
-                            onChange={handleTextChange("user")}
-                            value={state.convert.kle.user}
-                            className="w-80"
-                        />
-                        {usernameStrError && (
-                            <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                                A-Za-z0-9 _/- can used
-                            </p>
-                        )}
-                    </div>
-                    <div>
-                        <div className="mb-2 block">
-                            <Label
-                                htmlFor="vid"
-                                value="Vendor ID *"
-                                color={vidEmptyError ? "failure" : "gray"}
-                            />
-                        </div>
-                        <TextInput
-                            type="text"
-                            id="vid"
-                            required
-                            color={vidEmptyError ? "failure" : "gray"}
-                            disabled={disabledConvertText}
-                            onChange={handleTextChange("vid")}
-                            value={state.convert.kle.vid}
-                            className="w-80"
-                        />
-                        {vidStrError && (
-                            <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                                A-Z0-9x can used
-                            </p>
-                        )}
-                    </div>
-                    <div>
-                        <div className="mb-2 block">
-                            <Label
-                                htmlFor="pid"
-                                value="Product ID *"
-                                color={pidEmptyError ? "failure" : "gray"}
-                            />
-                        </div>
-                        <TextInput
-                            type="text"
-                            id="pid"
-                            required
-                            color={pidEmptyError ? "failure" : "gray"}
-                            disabled={disabledConvertText}
-                            onChange={handleTextChange("pid")}
-                            value={state.convert.kle.pid}
-                            className="w-80"
-                        />
-                        {pidStrError && (
-                            <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                                A-Z0-9x can used
-                            </p>
-                        )}
-                        {pidSameError && (
-                            <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                                other than 0x0000
-                            </p>
-                        )}
-                    </div>
-                </div>
-            </div>
-            
-            <div className="pt-4 flex flex-col text-center items-center">
-                <div className="mb-4">
-                    <MultiSelect
-                        id="convert-kle-rows"
-                        label="matrix pins - rows"
-                        options={state.convert.kle.mcu === 'promicro' ? state.convert.pins.promicro : state.convert.pins.rp2040}
-                        value={pinRows}
-                        onChange={handleTextChange("rows")}
-                        error={rowsEmptyError}
-                        disabled={state.convert.kle.option === 2 ? true : disabledConvertText}
-                        required
-                        className="w-[800px]"
-                    />
-                </div>
-                <div className="mb-4">
-                    <MultiSelect
-                        id="convert-kle-cols"
-                        label="matrix pins - cols"
-                        options={state.convert.kle.mcu === 'promicro' ? state.convert.pins.promicro : state.convert.pins.rp2040}
-                        value={pinCols}
-                        onChange={handleTextChange("cols")}
-                        error={colsEmptyError}
-                        disabled={state.convert.kle.option === 2 ? true : disabledConvertText}
-                        required
-                        className="w-[800px]"
-                    />
-                </div>
-            </div>
-            
-            <div className="pt-4 flex justify-center items-center">
-                <Button
-                    color="blue"
-                    className={disabledKleConvertButton ? 'cursor-not-allowed' : 'cursor-pointer'}
-                    style={disabledKleConvertButton ? { opacity: 0.5 } : {}}
-                    onClick={disabledKleConvertButton ? () => {} : handleKleFileSubmit()}
-                    disabled={false}
-                >
-                    Convert
-                </Button>
             </div>
         </div>
     )

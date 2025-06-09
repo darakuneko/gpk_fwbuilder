@@ -53,13 +53,12 @@ const FlowbiteMultiSelect = ({
     return (
         <div ref={wrapperRef} className={`relative ${className}`}>
             {label && (
-                <div className="mb-2 block">
-                    <Label 
-                        htmlFor={id} 
-                        value={`${label}${required ? ' *' : ''}`}
-                        className={`text-sm font-medium ${error ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-                    />
-                </div>
+                <Label 
+                    className={`mb-2 block text-sm font-medium ${error ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+                    htmlFor={id}
+                >
+                    {`${label}${required ? ' *' : ''}`}
+                </Label>
             )}
             <div
                 className={selectClasses}

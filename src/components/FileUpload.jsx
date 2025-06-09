@@ -9,16 +9,16 @@ const FileUpload = ({
     className = "",
     variant = "outlined" // "outlined" | "contained"
 }) => {
-    const baseClasses = "px-4 py-2 rounded transition-colors duration-200 font-medium cursor-pointer inline-block text-center"
+    const baseClasses = "px-4 py-2 rounded transition-colors duration-200 font-medium cursor-pointer text-center w-full"
     const variantClasses = variant === "contained" 
         ? "bg-blue-400 text-gray-900 hover:bg-blue-300"
-        : "border border-gray-600 text-gray-100 hover:bg-gray-700"
+        : "border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 bg-gray-50 dark:bg-gray-700"
 
     return (
-        <div className={`flex flex-col items-center ${className}`}>
+        <div className={className}>
             <label 
                 htmlFor={id}
-                className={`${baseClasses} ${variantClasses}`}
+                className={`${baseClasses} ${variantClasses} block`}
             >
                 {label}
                 <input 
@@ -30,8 +30,8 @@ const FileUpload = ({
                 />
             </label>
             {filename && (
-                <div className="mt-2 text-sm text-gray-300 text-center max-w-[200px] truncate">
-                    {filename}
+                <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 truncate">
+                    Selected: {filename}
                 </div>
             )}
         </div>

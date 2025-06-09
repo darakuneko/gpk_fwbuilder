@@ -1,11 +1,11 @@
 import React, {useState, useEffect} from "react"
 import {useStateContext} from "../context.jsx"
-import { Button, Label, TextInput, Select, Checkbox } from 'flowbite-react'
+import { Button, Label, TextInput, Select, Checkbox, HelperText } from 'flowbite-react'
 
 const {api} = window
 
 const Build = ({onShowLogModal, onOperationComplete}) => {
-    const {state, setState} = useStateContext()
+    const {state, setState, setPageLog} = useStateContext()
     
     // Guard against uninitialized state
     if (!state || !state.build || !state.repository) {
@@ -140,7 +140,7 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
     const waiting = async (start, end, log, onCompleteCallback) => {
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
-        state.logs = log
+        setPageLog('build', log)
         state.tabDisabled = true
         setState(state)
         await start()
@@ -205,13 +205,11 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
 
     return (
         <div className="p-4">
-            <div className="max-w-4xl mx-auto">
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="max-w-4xl mx-auto space-y-6">
+                <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
+                    <div className="grid grid-cols-1 gap-4">
                     <div>
-                        <div className="mb-2 block">
-                            <Label htmlFor="build-fw-select" value="Firmware" />
-                        </div>
+                        <Label className="mb-2 block" htmlFor="build-fw-select">Firmware</Label>
                         <Select
                             id="build-fw-select"
                             value={state.build.fw}
@@ -228,9 +226,7 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
                     </div>
                     {state.build.fw === "QMK" ? (
                         <div>
-                            <div className="mb-2 block">
-                                <Label htmlFor="build-tags-select" value="Tag" />
-                            </div>
+                            <Label className="mb-2 block" htmlFor="build-tags-select">Tag</Label>
                             <Select
                                 id="build-tags-select"
                                 value={state.build.tag || ''}
@@ -244,9 +240,7 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
                         </div>
                     ) : (
                         <div>
-                            <div className="mb-2 block">
-                                <Label htmlFor="build-commit" value="commit(optional)" />
-                            </div>
+                            <Label className="mb-2 block" htmlFor="build-commit">commit(optional)</Label>
                             <TextInput
                                 type="text"
                                 id="build-commit"
@@ -257,13 +251,12 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
                         </div>
                     )}
                     <div>
-                        <div className="mb-2 block">
-                            <Label 
-                                htmlFor="build-kb-select" 
-                                value="Keyboard *" 
-                                className={keyboardEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}
-                            />
-                        </div>
+                        <Label 
+                            className={`mb-2 block ${keyboardEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`} 
+                            htmlFor="build-kb-select"
+                        >
+                            Keyboard *
+                        </Label>
                         <Select
                             id="build-kb-select"
                             value={state.build.kb || ''}
@@ -281,19 +274,16 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
                             ))}
                         </Select>
                         {keyboardEmptyError && (
-                            <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                                Keyboard is required
-                            </p>
+                            <HelperText className="mt-2 text-sm text-red-600 dark:text-red-500">Keyboard is required</HelperText>
                         )}
                     </div>
                     <div>
-                        <div className="mb-2 block">
-                            <Label 
-                                htmlFor="build-km-select" 
-                                value="Keymap *" 
-                                className={keymapEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}
-                            />
-                        </div>
+                        <Label 
+                            className={`mb-2 block ${keymapEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`} 
+                            htmlFor="build-km-select"
+                        >
+                            Keymap *
+                        </Label>
                         <Select
                             id="build-km-select"
                             value={state.build.km || ''}
@@ -310,20 +300,14 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
                             ))}
                         </Select>
                         {keymapEmptyError && (
-                            <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                                Keymap is required
-                            </p>
+                            <HelperText className="mt-2 text-sm text-red-600 dark:text-red-500">Keymap is required</HelperText>
                         )}
                         {keymapStrError && (
-                            <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                                ":" "flash" cannot be used
-                            </p>
+                            <HelperText className="mt-2 text-sm text-red-600 dark:text-red-500">":" "flash" cannot be used</HelperText>
                         )}
                     </div>
-                </div>
-                
-                <div className="mb-6">
-                    <div className="flex items-center justify-center">
+                                        
+                    <div className="flex items-center mb-4">
                         <Checkbox
                             id="use-repo"
                             checked={state.build.useRepo ? state.build.useRepo : false}
@@ -333,11 +317,10 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
                             Use Repository Keyboards File
                         </Label>
                     </div>
-                </div>
-                
-                <div className="flex justify-center items-center gap-2">
+                    
+                    {/* Repository Actions */}
                     {state.build.useRepo && (
-                        <>
+                        <div className="flex justify-center items-center gap-2">
                             <Button
                                 color="light"
                                 className={disabledUseRepoButtonButton ? 'cursor-not-allowed' : 'cursor-pointer'}
@@ -356,17 +339,19 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
                             >
                                 Copy Keyboard File
                             </Button>
-                        </>
+                        </div>
                     )}
+                                        
                     <Button
                         color="blue"
-                        className={(init ? initDisabledBuildButton() : disabledBuildButton) ? 'cursor-not-allowed' : 'cursor-pointer'}
+                        className={`w-full ${(init ? initDisabledBuildButton() : disabledBuildButton) ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         style={(init ? initDisabledBuildButton() : disabledBuildButton) ? { opacity: 0.5 } : {}}
                         onClick={(init ? initDisabledBuildButton() : disabledBuildButton) ? () => {} : handleBuild}
                         disabled={false}
                     >
                         Build
                     </Button>
+                    </div>
                 </div>
             </div>
         </div>

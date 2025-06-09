@@ -1,18 +1,14 @@
 import React, {useState} from "react"
 import {useStateContext} from "../context.jsx"
-import { Button, Label, TextInput, Select, Checkbox } from 'flowbite-react'
+import { Button, Label, TextInput, Select, Checkbox, HelperText } from 'flowbite-react'
 import PinSelectorModal from "../components/PinSelectorModal.jsx"
 import FileUpload from "../components/FileUpload.jsx"
 
 const {api} = window
 
 const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
-    const {state, setState} = useStateContext()
+    const {state, setState, setPageLog} = useStateContext()
     
-    // Guard against uninitialized state
-    if (!state || !state.convert) {
-        return <div>Loading...</div>
-    }
     const [kleObj, setKleObj] = useState({
         name : "",
         path : "",
@@ -35,6 +31,8 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
     const [pidStrError, setPidStrError] = useState(false)
 
     const [pidSameError, setPidSameError] = useState(false)
+    const [kleFileError, setKleFileError] = useState(false)
+    const [kleFileErrorMessage, setKleFileErrorMessage] = useState("")
 
     const [KleOptions, setKleOptions] = useState({
         vial : false,
@@ -42,6 +40,11 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
     })
     const [disabledKleConvertButton, setDisabledKleConvertButton] = useState(true)
     const [disabledConvertText, setDisabledConvertText] = useState(false)
+
+    // Guard against uninitialized state
+    if (!state || !state.convert) {
+        return <div>Loading...</div>
+    }
 
     const validKleConvertButton = () => {
         const kle = state.convert.kle
@@ -114,8 +117,8 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
 
     const handleSelectMCU = (e) => {
         state.convert.kle.mcu = e.target.value
-        state.convert.kle.rows = []
-        state.convert.kle.cols = []
+        state.convert.kle.rows = undefined
+        state.convert.kle.cols = undefined
         setState(state)
         setPinRows([])
         setPinCols([])
@@ -131,15 +134,14 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
         
         setDisabledKleConvertButton(true)
         setDisabledConvertText(true)
-        state.logs = convertMsg
+        setPageLog('convertKleToKeyboard', convertMsg)
         state.tabDisabled = true
         setState(state)
-
         const logs = await api.convertKleJson({params: state.convert.kle, file: kleObj})
 
         setDisabledKleConvertButton(false)
         setDisabledConvertText(false)
-        state.logs = logs
+        setPageLog('convertKleToKeyboard', logs)
         state.tabDisabled = false
         setState(state)
         
@@ -150,17 +152,64 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
 
     const handleKleFileUpload = async (e) => {
         const file = e.target.files[0]
-        if (file){
+        setKleFileError(false)
+        setKleFileErrorMessage("")
+        
+        if (!file) return
+        
+        try {
+            // Validate file type
+            if (!file.name.toLowerCase().endsWith('.json')) {
+                setKleFileError(true)
+                setKleFileErrorMessage("Please select a valid JSON file.")
+                return
+            }
+            
+            // Validate file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                setKleFileError(true)
+                setKleFileErrorMessage("File size must be less than 10MB.")
+                return
+            }
+            
             kleObj.name = file.name
             kleObj.path = window.webUtils.getPathForFile(file)
-            setKleObj({...kleObj, kleObj })
+            setKleObj({...kleObj})
 
-            const json = await api.readJson(kleObj.path)
-            const obj = json.filter(v => !Array.isArray(v))[0]
-            if (obj.name) state.convert.kle.kb = obj.name
-            if (obj.author) state.convert.kle.user = obj.author
-            setState(state)
-            validKleConvertButton()
+            try {
+                const json = await api.readJson(kleObj.path)
+                
+                // Validate JSON structure
+                if (!Array.isArray(json)) {
+                    setKleFileError(true)
+                    setKleFileErrorMessage("Invalid KLE JSON format. Expected an array.")
+                    return
+                }
+                
+                // Extract metadata from KLE JSON
+                const obj = json.filter(v => !Array.isArray(v))[0]
+                if (obj) {
+                    if (obj.name) state.convert.kle.kb = obj.name
+                    if (obj.author) state.convert.kle.user = obj.author
+                }
+                
+                setState(state)
+                validKleConvertButton()
+            } catch (jsonError) {
+                console.error("JSON parsing error:", jsonError)
+                setKleFileError(true)
+                setKleFileErrorMessage("Invalid JSON file. Please check the file format.")
+                kleObj.name = ""
+                kleObj.path = ""
+                setKleObj({...kleObj})
+            }
+        } catch (error) {
+            console.error("File upload error:", error)
+            setKleFileError(true)
+            setKleFileErrorMessage("Failed to read file. Please try again.")
+            kleObj.name = ""
+            kleObj.path = ""
+            setKleObj({...kleObj})
         }
     }
 
@@ -189,26 +238,37 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
 
     return (
         <div className="p-4">
-            <div className="max-w-3xl mx-auto space-y-4">
+            <div className="max-w-4xl mx-auto space-y-6">
                 
                 {/* File Upload */}
                 <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
-                    <h4 className="font-medium mb-3 text-gray-900 dark:text-white">KLE File</h4>
-                    <FileUpload
-                        id="kle"
-                        label="KLE Json file"
-                        accept=".json"
-                        onChange={handleKleFileUpload}
-                        filename={kleObj.name}
-                    />
+                    <div className="space-y-4">
+                        <div>
+                            <Label className="mb-2 block" htmlFor="kle-file">KLE JSON File *</Label>
+                            <FileUpload
+                                id="kle-file"
+                                label="Choose KLE JSON File"
+                                accept=".json"
+                                onChange={handleKleFileUpload}
+                                filename={kleObj.name}
+                                variant="outlined"
+                            />
+                        </div>
+                        {kleFileError && (
+                            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                                <p className="text-sm text-red-700 dark:text-red-400">
+                                    ✗ {kleFileErrorMessage}
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* Configuration */}
+                {/* Configuration - All settings in one frame */}
                 <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
-                    <h4 className="font-medium mb-3 text-gray-900 dark:text-white">Configuration</h4>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                         <div>
-                            <Label htmlFor="convert-kle-mcu-select" value="MCU" className="mb-1" />
+                            <Label className="mb-1 block" htmlFor="convert-kle-mcu-select">MCU</Label>
                             <Select
                                 id="convert-kle-mcu-select"
                                 value={state.convert.kle.mcu}
@@ -220,9 +280,112 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                                 <option value="promicro">Pro Micro</option>
                             </Select>
                         </div>
+                        
                         <div>
-                            <Label value="Output Options" className="mb-1" />
-                            <div className="space-y-1">
+                            <Label
+                                className={`mb-1 block ${keyboardError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+                                htmlFor="convert-kle-kb"
+                            >
+                                Keyboard Name *
+                            </Label>
+                            <TextInput
+                                type="text"
+                                id="convert-kle-kb"
+                                required
+                                color={keyboardError ? "failure" : "gray"}
+                                disabled={disabledConvertText}
+                                onChange={handleTextChange("kb")}
+                                value={state.convert.kle.kb}
+                                sizing="sm"
+                            />
+                            {keyboardStrError && (
+                                <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
+                                    A-Za-z0-9 _/- can be used
+                                </HelperText>
+                            )}
+                        </div>
+                        
+                        <div>
+                            <Label
+                                className={`mb-1 block ${usernameEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+                                htmlFor="km"
+                            >
+                                Username *
+                            </Label>
+                            <TextInput
+                                type="text"
+                                id="km"
+                                required
+                                color={usernameEmptyError ? "failure" : "gray"}
+                                disabled={disabledConvertText}
+                                onChange={handleTextChange("user")}
+                                value={state.convert.kle.user}
+                                sizing="sm"
+                            />
+                            {usernameStrError && (
+                                <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
+                                    A-Za-z0-9 _/- can be used
+                                </HelperText>
+                            )}
+                        </div>
+                        
+                        <div>
+                            <Label
+                                className={`mb-1 block ${vidEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+                                htmlFor="vid"
+                            >
+                                Vendor ID *
+                            </Label>
+                            <TextInput
+                                type="text"
+                                id="vid"
+                                required
+                                color={vidEmptyError ? "failure" : "gray"}
+                                disabled={disabledConvertText}
+                                onChange={handleTextChange("vid")}
+                                value={state.convert.kle.vid}
+                                sizing="sm"
+                            />
+                            {vidStrError && (
+                                <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
+                                    A-Z0-9x can be used
+                                </HelperText>
+                            )}
+                        </div>
+                        
+                        <div>
+                            <Label
+                                className={`mb-1 block ${pidEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+                                htmlFor="pid"
+                            >
+                                Product ID *
+                            </Label>
+                            <TextInput
+                                type="text"
+                                id="pid"
+                                required
+                                color={pidEmptyError ? "failure" : "gray"}
+                                disabled={disabledConvertText}
+                                onChange={handleTextChange("pid")}
+                                value={state.convert.kle.pid}
+                                sizing="sm"
+                            />
+                            {pidStrError && (
+                                <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
+                                    A-Z0-9x can be used
+                                </HelperText>
+                            )}
+                            {pidSameError && (
+                                <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
+                                    Must be other than 0x0000
+                                </HelperText>
+                            )}
+                        </div>
+
+                        {/* Output Options - horizontal layout */}
+                        <div>
+                            <Label className="mb-3 block">Output Options</Label>
+                            <div className="flex gap-6">
                                 <div className="flex items-center">
                                     <Checkbox
                                         id="vial-settings"
@@ -247,190 +410,85 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Matrix Configuration - only when not "Only via.json" */}
+                        {state.convert.kle.option !== 2 && (
+                            <>
+                                {/* Rows Configuration */}
+                                <div>
+                                    <Label 
+                                        className={`mb-2 block ${rowsEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+                                    >
+                                        Matrix pins - rows *
+                                    </Label>
+                                    <Button
+                                        color="light"
+                                        onClick={disabledConvertText ? () => {} : () => setShowRowsModal(true)}
+                                        disabled={false}
+                                        className={disabledConvertText ? 'cursor-not-allowed w-full' : 'cursor-pointer w-full'}
+                                        style={disabledConvertText ? { opacity: 0.5 } : {}}
+                                    >
+                                        <div className="text-left w-full">
+                                            {pinRows.length > 0 ? (
+                                                <span className="text-gray-900 dark:text-white">
+                                                    Selected: {pinRows.join(', ')} ({pinRows.length} pins)
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-500 dark:text-gray-400">
+                                                    Select row pins...
+                                                </span>
+                                            )}
+                                        </div>
+                                    </Button>
+                                    {rowsEmptyError && (
+                                        <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
+                                            Please select row pins
+                                        </HelperText>
+                                    )}
+                                </div>
+
+                                {/* Cols Configuration */}
+                                <div>
+                                    <Label 
+                                        className={`mb-2 block ${colsEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+                                    >
+                                        Matrix pins - cols *
+                                    </Label>
+                                    <Button
+                                        color="light"
+                                        onClick={disabledConvertText ? () => {} : () => setShowColsModal(true)}
+                                        disabled={false}
+                                        className={disabledConvertText ? 'cursor-not-allowed w-full' : 'cursor-pointer w-full'}
+                                        style={disabledConvertText ? { opacity: 0.5 } : {}}
+                                    >
+                                        <div className="text-left w-full">
+                                            {pinCols.length > 0 ? (
+                                                <span className="text-gray-900 dark:text-white">
+                                                    Selected: {pinCols.join(', ')} ({pinCols.length} pins)
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-500 dark:text-gray-400">
+                                                    Select column pins...
+                                                </span>
+                                            )}
+                                        </div>
+                                    </Button>
+                                    {colsEmptyError && (
+                                        <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
+                                            Please select column pins
+                                        </HelperText>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
-
-                {/* Keyboard Information */}
-                <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
-                    <h4 className="font-medium mb-3 text-gray-900 dark:text-white">Keyboard Information</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <Label
-                                htmlFor="convert-kle-kb"
-                                value="Keyboard Name *"
-                                color={keyboardError ? "failure" : "gray"}
-                                className="mb-1"
-                            />
-                            <TextInput
-                                type="text"
-                                id="convert-kle-kb"
-                                required
-                                color={keyboardError ? "failure" : "gray"}
-                                disabled={disabledConvertText}
-                                onChange={handleTextChange("kb")}
-                                value={state.convert.kle.kb}
-                                sizing="sm"
-                            />
-                            {keyboardStrError && (
-                                <p className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                    A-Za-z0-9 _/- can used
-                                </p>
-                            )}
-                        </div>
-                        <div>
-                            <Label
-                                htmlFor="km"
-                                value="Username *"
-                                color={usernameEmptyError ? "failure" : "gray"}
-                                className="mb-1"
-                            />
-                            <TextInput
-                                type="text"
-                                id="km"
-                                required
-                                color={usernameEmptyError ? "failure" : "gray"}
-                                disabled={disabledConvertText}
-                                onChange={handleTextChange("user")}
-                                value={state.convert.kle.user}
-                                sizing="sm"
-                            />
-                            {usernameStrError && (
-                                <p className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                    A-Za-z0-9 _/- can used
-                                </p>
-                            )}
-                        </div>
-                        <div>
-                            <Label
-                                htmlFor="vid"
-                                value="Vendor ID *"
-                                color={vidEmptyError ? "failure" : "gray"}
-                                className="mb-1"
-                            />
-                            <TextInput
-                                type="text"
-                                id="vid"
-                                required
-                                color={vidEmptyError ? "failure" : "gray"}
-                                disabled={disabledConvertText}
-                                onChange={handleTextChange("vid")}
-                                value={state.convert.kle.vid}
-                                sizing="sm"
-                            />
-                            {vidStrError && (
-                                <p className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                    A-Z0-9x can used
-                                </p>
-                            )}
-                        </div>
-                        <div>
-                            <Label
-                                htmlFor="pid"
-                                value="Product ID *"
-                                color={pidEmptyError ? "failure" : "gray"}
-                                className="mb-1"
-                            />
-                            <TextInput
-                                type="text"
-                                id="pid"
-                                required
-                                color={pidEmptyError ? "failure" : "gray"}
-                                disabled={disabledConvertText}
-                                onChange={handleTextChange("pid")}
-                                value={state.convert.kle.pid}
-                                sizing="sm"
-                            />
-                            {pidStrError && (
-                                <p className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                    A-Z0-9x can used
-                                </p>
-                            )}
-                            {pidSameError && (
-                                <p className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                    other than 0x0000
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            
-                {/* Matrix Configuration */}
-                {state.convert.kle.option !== 2 && (
-                    <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
-                        <h4 className="font-medium mb-3 text-gray-900 dark:text-white">Matrix Pin Configuration</h4>
-                        <div className="space-y-3">
-                            {/* Rows Configuration */}
-                            <div>
-                                <Label 
-                                    value="Matrix pins - rows *" 
-                                    className={`mb-2 block ${rowsEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-                                />
-                                <Button
-                                    color="light"
-                                    onClick={disabledConvertText ? () => {} : () => setShowRowsModal(true)}
-                                    disabled={false}
-                                    className={disabledConvertText ? 'cursor-not-allowed w-full' : 'cursor-pointer w-full'}
-                                    style={disabledConvertText ? { opacity: 0.5 } : {}}
-                                >
-                                    <div className="text-left w-full">
-                                        {pinRows.length > 0 ? (
-                                            <span className="text-gray-900 dark:text-white">
-                                                Selected: {pinRows.join(', ')} ({pinRows.length} pins)
-                                            </span>
-                                        ) : (
-                                            <span className="text-gray-500 dark:text-gray-400">
-                                                Select row pins...
-                                            </span>
-                                        )}
-                                    </div>
-                                </Button>
-                                {rowsEmptyError && (
-                                    <p className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                        Please select row pins
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Cols Configuration */}
-                            <div>
-                                <Label 
-                                    value="Matrix pins - cols *" 
-                                    className={`mb-2 block ${colsEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-                                />
-                                <Button
-                                    color="light"
-                                    onClick={disabledConvertText ? () => {} : () => setShowColsModal(true)}
-                                    disabled={false}
-                                    className={disabledConvertText ? 'cursor-not-allowed w-full' : 'cursor-pointer w-full'}
-                                    style={disabledConvertText ? { opacity: 0.5 } : {}}
-                                >
-                                    <div className="text-left w-full">
-                                        {pinCols.length > 0 ? (
-                                            <span className="text-gray-900 dark:text-white">
-                                                Selected: {pinCols.join(', ')} ({pinCols.length} pins)
-                                            </span>
-                                        ) : (
-                                            <span className="text-gray-500 dark:text-gray-400">
-                                                Select column pins...
-                                            </span>
-                                        )}
-                                    </div>
-                                </Button>
-                                {colsEmptyError && (
-                                    <p className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                        Please select column pins
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
             
                 {/* Convert Button */}
-                <div className="flex justify-center pt-2">
+                <div className="pt-2">
                     <Button
                         color="blue"
-                        className={disabledKleConvertButton ? 'cursor-not-allowed' : 'cursor-pointer'}
+                        className={`w-full ${disabledKleConvertButton ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         style={disabledKleConvertButton ? { opacity: 0.5 } : {}}
                         onClick={disabledKleConvertButton ? () => {} : handleKleFileSubmit()}
                         disabled={false}
@@ -449,7 +507,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                 selectedPins={pinRows}
                 onConfirm={(pins) => {
                     setPinRows(pins)
-                    state.convert.kle.rows = pins
+                    state.convert.kle.rows = pins.length > 0 ? pins.join(',') : undefined
                     setState(state)
                     setRowsEmptyError(pins.length === 0)
                     validKleConvertButton()
@@ -464,7 +522,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                 selectedPins={pinCols}
                 onConfirm={(pins) => {
                     setPinCols(pins)
-                    state.convert.kle.cols = pins
+                    state.convert.kle.cols = pins.length > 0 ? pins.join(',') : undefined
                     setState(state)
                     setColsEmptyError(pins.length === 0)
                     validKleConvertButton()

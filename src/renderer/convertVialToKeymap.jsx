@@ -1,12 +1,13 @@
 import React, {useState} from "react"
 import {useStateContext} from "../context.jsx"
-import { Button } from 'flowbite-react'
+import { Button, Label } from 'flowbite-react'
 import FileUpload from "../components/FileUpload.jsx"
+import { cleanLogText } from '../utils/logParser.js'
 
 const {api} = window
 
-const ConvertVialToKeymap = ({onShowLogModal, onOperationComplete}) => {
-    const {state, setState} = useStateContext()
+const ConvertVialToKeymap = ({onOperationComplete}) => {
+    const {state, setState, setPageLog, getPageLog} = useStateContext()
     
     // Guard against uninitialized state
     if (!state) {
@@ -21,17 +22,13 @@ const ConvertVialToKeymap = ({onShowLogModal, onOperationComplete}) => {
     const convertMsg =  "Convert...."
 
     const handleVilFileSubmit = async () => {
-        if (onShowLogModal) {
-            onShowLogModal()
-        }
-        
-        state.logs = convertMsg
+        setPageLog('convertVialToKeymap', convertMsg)
         state.tabDisabled = true
         setState(state)
         setDisabledVilCovertButton(true)
         
         const log = await api.convertVilJson(vilObj)
-        state.logs = log
+        setPageLog('convertVialToKeymap', log)
         state.tabDisabled = false
         setState(state)
         setDisabledVilCovertButton(false)
@@ -53,22 +50,28 @@ const ConvertVialToKeymap = ({onShowLogModal, onOperationComplete}) => {
 
     return (
         <div className="p-4">
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-4xl mx-auto space-y-6">
                 
-                <div className="flex flex-col md:flex-row gap-4 md:items-end">
-                    <div className="flex-1">
-                        <FileUpload
-                            id="vil"
-                            label="Vial file (.vil)"
-                            accept=".vil"
-                            onChange={handleVilFileUpload}
-                            filename={vilObj.name}
-                        />
-                    </div>
-                    <div className="md:flex-shrink-0">
+                {/* File Upload Section */}
+                <div className="border border-gray-300 dark:border-gray-600 rounded p-4">    
+                    <div className="space-y-4">
+                        <div>
+                            <Label className="mb-2 block" htmlFor="vil">Vial file (.vil)</Label>
+                            <div className="w-full">
+                                <FileUpload
+                                    id="vil"
+                                    label="Choose File"
+                                    accept=".vil"
+                                    onChange={handleVilFileUpload}
+                                    filename={vilObj.name}
+                                    className="w-full"
+                                    variant="outlined"
+                                />
+                            </div>
+                        </div>
                         <Button
                             color="blue"
-                            className={disabledVilCovertButton ? 'cursor-not-allowed' : 'cursor-pointer'}
+                            className={`w-full ${disabledVilCovertButton ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                             style={disabledVilCovertButton ? { opacity: 0.5 } : {}}
                             onClick={disabledVilCovertButton ? () => {} : handleVilFileSubmit}
                             disabled={false}
@@ -77,6 +80,30 @@ const ConvertVialToKeymap = ({onShowLogModal, onOperationComplete}) => {
                         </Button>
                     </div>
                 </div>
+                
+                {/* Inline Log Display */}
+                {getPageLog('convertVialToKeymap') && (
+                    <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
+                        <div className="mb-3">
+                            <Label className="block text-sm font-medium text-gray-900 dark:text-white">
+                                Conversion Log
+                            </Label>
+                        </div>
+                        <textarea
+                            value={cleanLogText(getPageLog('convertVialToKeymap')) || ''}
+                            readOnly
+                            className="w-full font-mono text-sm bg-gray-900 text-white rounded p-4 resize-none border-0 focus:outline-none focus:ring-0"
+                            style={{ 
+                                minHeight: '200px',
+                                maxHeight: '400px',
+                                whiteSpace: 'pre',
+                                overflowWrap: 'normal',
+                                wordBreak: 'normal'
+                            }}
+                            placeholder="Logs will appear here..."
+                        />
+                    </div>
+                )}
             </div>
         </div>
     )

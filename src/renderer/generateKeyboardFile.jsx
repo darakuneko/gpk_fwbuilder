@@ -1,16 +1,13 @@
 import React, {useState} from "react"
 import {useStateContext} from "../context.jsx"
-import { Button, Label, TextInput, Select } from 'flowbite-react'
+import { Button, Label, TextInput, Select, HelperText } from 'flowbite-react'
+import { cleanLogText } from '../utils/logParser.js'
 
 const {api} = window
 
-const GenerateKeyboardFile = ({onShowLogModal, onOperationComplete}) => {
-    const {state, setState} = useStateContext()
+const GenerateKeyboardFile = ({onOperationComplete}) => {
+    const {state, setState, setPageLog, getPageLog} = useStateContext()
     
-    // Guard against uninitialized state
-    if (!state || !state.generate) {
-        return <div>Loading...</div>
-    }
     const [keyboardError, setKeyboardError] = useState(false)
     const [usernameEmptyError, setUsernameEmptyError] = useState(false)
     const [keyboardStrError, setKeyboardStrError] = useState(false)
@@ -20,6 +17,11 @@ const GenerateKeyboardFile = ({onShowLogModal, onOperationComplete}) => {
     const [disabledBuildText, setDisabledBuildText] = useState(false)
 
     const [qmkFile, setQmkFile] = useState(true)
+
+    // Guard against uninitialized state
+    if (!state || !state.generate) {
+        return <div>Loading...</div>
+    }
 
     const validBuildButton = () => {
         const qmkFile = state.generate?.qmkFile || {}
@@ -63,13 +65,9 @@ const GenerateKeyboardFile = ({onShowLogModal, onOperationComplete}) => {
 
     const generateMsg =  "Generating...."
     const handleQmkFileSubmit =  () => async () => {
-        if (onShowLogModal) {
-            onShowLogModal()
-        }
-        
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
-        state.logs = generateMsg
+        setPageLog('generateKeyboardFile', generateMsg)
         state.tabDisabled = true
         setState(state)
 
@@ -77,7 +75,7 @@ const GenerateKeyboardFile = ({onShowLogModal, onOperationComplete}) => {
 
         setDisabledBuildButton(false)
         setDisabledBuildText(false)
-        state.logs = logs
+        setPageLog('generateKeyboardFile', logs)
         state.tabDisabled = false
         setState(state)
         
@@ -89,77 +87,73 @@ const GenerateKeyboardFile = ({onShowLogModal, onOperationComplete}) => {
     
     return (
         <div className="p-4">
-            <div className="max-w-4xl mx-auto">
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    <div>
-                        <div className="mb-2 block">
-                            <Label htmlFor="generate-qmkFile-mcu-select" value="MCU" />
-                        </div>
-                        <Select
-                            id="generate-qmkFile-mcu-select"
-                            value={state.generate?.qmkFile?.mcu || 'RP2040'}
-                            onChange={handleSelectMCU}
-                            required
-                        >
-                            <option value="RP2040">RP2040</option>
-                            <option value="promicro">Pro Micro</option>
-                        </Select>
-                    </div>
+            <div className="max-w-4xl mx-auto space-y-6">
+                <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
                     
-                    <div>
-                        <div className="mb-2 block">
+                    <div className="grid grid-cols-1 gap-4 mb-6">
+                        <div>
+                            <Label className="mb-2 block" htmlFor="generate-qmkFile-mcu-select">MCU</Label>
+                            <Select
+                                id="generate-qmkFile-mcu-select"
+                                value={state.generate?.qmkFile?.mcu || 'RP2040'}
+                                onChange={handleSelectMCU}
+                                required
+                            >
+                                <option value="RP2040">RP2040</option>
+                                <option value="promicro">Pro Micro</option>
+                            </Select>
+                        </div>
+                        
+                        <div>
                             <Label
+                                className={`mb-2 block ${keyboardError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
                                 htmlFor="generate-qmkFile-kb"
-                                value="Keyboard *"
+                            >
+                                Keyboard *
+                            </Label>
+                            <TextInput
+                                type="text"
+                                id="generate-qmkFile-kb"
+                                required
                                 color={keyboardError ? "failure" : "gray"}
+                                disabled={disabledBuildText}
+                                onChange={handleTextChange("kb")}
+                                value={state.generate?.qmkFile?.kb || ''}
                             />
+                            {keyboardStrError && (
+                                <HelperText className="mt-2 text-sm text-red-600 dark:text-red-500">
+                                    A-Za-z0-9_/- can be used
+                                </HelperText>
+                            )}
                         </div>
-                        <TextInput
-                            type="text"
-                            id="generate-qmkFile-kb"
-                            required
-                            color={keyboardError ? "failure" : "gray"}
-                            disabled={disabledBuildText}
-                            onChange={handleTextChange("kb")}
-                            value={state.generate?.qmkFile?.kb || ''}
-                        />
-                        {keyboardStrError && (
-                            <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                                A-Za-z0-9_/- can used
-                            </p>
-                        )}
+                        
+                        <div>
+                            <Label
+                                className={`mb-2 block ${usernameEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+                                htmlFor="km"
+                            >
+                                Username *
+                            </Label>
+                            <TextInput
+                                type="text"
+                                id="km"
+                                required
+                                color={usernameEmptyError ? "failure" : "gray"}
+                                disabled={disabledBuildText}
+                                onChange={handleTextChange("user")}
+                                value={state.generate?.qmkFile?.user || ''}
+                            />
+                            {usernameStrError && (
+                                <HelperText className="mt-2 text-sm text-red-600 dark:text-red-500">
+                                    A-Za-z0-9_/- can be used
+                                </HelperText>
+                            )}
+                        </div>
                     </div>
                     
-                    <div>
-                        <div className="mb-2 block">
-                            <Label
-                                htmlFor="km"
-                                value="Username *"
-                                color={usernameEmptyError ? "failure" : "gray"}
-                            />
-                        </div>
-                        <TextInput
-                            type="text"
-                            id="km"
-                            required
-                            color={usernameEmptyError ? "failure" : "gray"}
-                            disabled={disabledBuildText}
-                            onChange={handleTextChange("user")}
-                            value={state.generate?.qmkFile?.user || ''}
-                        />
-                        {usernameStrError && (
-                            <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                                A-Za-z0-9_/- can used
-                            </p>
-                        )}
-                    </div>
-                </div>
-                
-                <div className="flex justify-center">
                     <Button
                         color="blue"
-                        className={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? 'cursor-not-allowed' : 'cursor-pointer'}
+                        className={`w-full ${(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         style={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? { opacity: 0.5 } : {}}
                         onClick={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? () => {} : handleQmkFileSubmit()}
                         disabled={false}
@@ -167,6 +161,30 @@ const GenerateKeyboardFile = ({onShowLogModal, onOperationComplete}) => {
                         Generate
                     </Button>
                 </div>
+                
+                {/* Inline Log Display */}
+                {getPageLog('generateKeyboardFile') && (
+                    <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
+                        <div className="mb-3">
+                            <Label className="block text-sm font-medium text-gray-900 dark:text-white">
+                                Generation Log
+                            </Label>
+                        </div>
+                        <textarea
+                            value={cleanLogText(getPageLog('generateKeyboardFile')) || ''}
+                            readOnly
+                            className="w-full font-mono text-sm bg-gray-900 text-white rounded p-4 resize-none border-0 focus:outline-none focus:ring-0"
+                            style={{ 
+                                minHeight: '200px',
+                                maxHeight: '400px',
+                                whiteSpace: 'pre',
+                                overflowWrap: 'normal',
+                                wordBreak: 'normal'
+                            }}
+                            placeholder="Logs will appear here..."
+                        />
+                    </div>
+                )}
             </div>
         </div>
     )

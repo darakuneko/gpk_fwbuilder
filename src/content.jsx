@@ -15,6 +15,7 @@ import ConvertVialToKeymap from "./renderer/convertVialToKeymap.jsx"
 import ConvertKleToKeyboard from "./renderer/convertKleToKeyboard.jsx"
 import Setting from "./renderer/setting.jsx"
 import ExternalServer from "./renderer/externalServer.jsx"
+import { isOperationComplete } from './utils/logParser.js'
 
 const {api} = window
 
@@ -25,6 +26,8 @@ const Content = () => {
     const [expandedMenu, setExpandedMenu] = useState(null)
     const [currentContent, setCurrentContent] = useState(null)
     const [currentTitle, setCurrentTitle] = useState('')
+    const [currentPageKey, setCurrentPageKey] = useState('')
+    const [currentHideShowLogsButton, setCurrentHideShowLogsButton] = useState(false)
     const [showLogModal, setShowLogModal] = useState(false)
     const [operationInProgress, setOperationInProgress] = useState(false)
 
@@ -79,9 +82,7 @@ const Content = () => {
                 setState(s)
                 
                 // Check if operation is in progress
-                const isFinished = log.includes('finish!!') || 
-                                  log.includes('Converted!!') ||
-                                  log.includes('Generate!!')
+                const isFinished = isOperationComplete(log)
                 setOperationInProgress(s.tabDisabled && !isFinished)
             }
         })
@@ -97,9 +98,7 @@ const Content = () => {
                 setState(currentState)
                 
                 // Check if operation is in progress
-                const isFinished = log.includes('finish!!') || 
-                                  log.includes('Converted!!') ||
-                                  log.includes('Generate!!')
+                const isFinished = isOperationComplete(log)
                 setOperationInProgress(currentState.tabDisabled && !isFinished)
             }
         })
@@ -110,9 +109,7 @@ const Content = () => {
     // Monitor tabDisabled state changes
     useEffect(() => {
         if (state.logs) {
-            const isFinished = state.logs.includes('finish!!') || 
-                              state.logs.includes('Converted!!') ||
-                              state.logs.includes('Generate!!')
+            const isFinished = isOperationComplete(state.logs)
             setOperationInProgress(state.tabDisabled && !isFinished)
         } else {
             setOperationInProgress(false)
@@ -146,7 +143,8 @@ const Content = () => {
             icon: HiCube,
             component: () => <Build onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
             hasSubmenu: false,
-            title: "Build Firmware"
+            title: "Build Firmware",
+            pageKey: "build"
         },
         { 
             label: "Generate", 
@@ -155,13 +153,17 @@ const Content = () => {
             subItems: [
                 { 
                     label: "Keyboard File", 
-                    component: () => <GenerateKeyboardFile onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
-                    title: "QMK Keyboard File Generation"
+                    component: () => <GenerateKeyboardFile onOperationComplete={handleOperationComplete}/>,
+                    title: "QMK Keyboard File Generation",
+                    hideShowLogsButton: true,
+                    pageKey: "generateKeyboardFile"
                 },
                 { 
                     label: "Vial Unique ID", 
-                    component: () => <GenerateVialId onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
-                    title: "Vial Unique ID Generation"
+                    component: () => <GenerateVialId onOperationComplete={handleOperationComplete}/>,
+                    title: "Vial Unique ID Generation",
+                    hideShowLogsButton: true,
+                    pageKey: "generateVialId"
                 }
             ]
         },
@@ -172,13 +174,16 @@ const Content = () => {
             subItems: [
                 { 
                     label: "Vial to Keymap.c", 
-                    component: () => <ConvertVialToKeymap onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
-                    title: "Convert Vial File to Keymap.c"
+                    component: () => <ConvertVialToKeymap onOperationComplete={handleOperationComplete}/>,
+                    title: "Convert Vial File to Keymap.c",
+                    hideShowLogsButton: true,
+                    pageKey: "convertVialToKeymap"
                 },
                 { 
                     label: "KLE to Keyboard File", 
                     component: () => <ConvertKleToKeyboard onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
-                    title: "Convert KLE Json to QMK/Vial Files"
+                    title: "Convert KLE Json to QMK/Vial Files",
+                    pageKey: "convertKleToKeyboard"
                 }
             ]
         },
@@ -190,25 +195,31 @@ const Content = () => {
                 { 
                     label: "Repository", 
                     component: () => <Repository onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
-                    title: "Repository Management"
+                    title: "Repository Management",
+                    pageKey: "repository"
                 },
                 { 
                     label: "Image", 
                     component: () => <Image onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
-                    title: "Docker Image Management"
+                    title: "Docker Image Management",
+                    pageKey: "image"
                 },
                 { 
                     label: "External Server", 
-                    component: () => <ExternalServer onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
-                    title: "External Server Settings"
+                    component: () => <ExternalServer/>,
+                    title: "External Server Settings",
+                    hideShowLogsButton: true,
+                    pageKey: "externalServer"
                 }
             ]
         }
     ], [handleShowLogModal, handleOperationComplete])
 
-    const showContent = (title, component) => {
+    const showContent = (title, component, hideShowLogsButton = false, pageKey = '') => {
         setCurrentTitle(title)
         setCurrentContent(component)
+        setCurrentHideShowLogsButton(hideShowLogsButton)
+        setCurrentPageKey(pageKey)
     }
 
     const handleMenuClick = (menuItem, index) => {
@@ -216,7 +227,7 @@ const Content = () => {
             if (menuItem.hasSubmenu) {
                 if (menuItem.subItems.length === 1) {
                     // Single submenu - show content directly
-                    showContent(menuItem.subItems[0].title, menuItem.subItems[0].component())
+                    showContent(menuItem.subItems[0].title, menuItem.subItems[0].component(), menuItem.subItems[0].hideShowLogsButton, menuItem.subItems[0].pageKey)
                 } else {
                     // Multiple submenus - expand/collapse
                     if (expandedMenu === index) {
@@ -227,14 +238,14 @@ const Content = () => {
                 }
             } else {
                 // No submenu - show content directly
-                showContent(menuItem.title, menuItem.component())
+                showContent(menuItem.title, menuItem.component(), menuItem.hideShowLogsButton, menuItem.pageKey)
             }
         }
     }
 
     const handleSubMenuClick = (_, subItem) => {
         if (!state?.tabDisabled && state) {
-            showContent(subItem.title, subItem.component())
+            showContent(subItem.title, subItem.component(), subItem.hideShowLogsButton, subItem.pageKey)
         }
     }
 
@@ -336,13 +347,15 @@ const Content = () => {
                                             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                                                 {currentTitle}
                                             </h2>
-                                            <Button
-                                                color="light"
-                                                className="cursor-pointer"
-                                                onClick={() => setShowLogModal(true)}
-                                            >
-                                                Show Logs
-                                            </Button>
+                                            {!currentHideShowLogsButton && (
+                                                <Button
+                                                    color="light"
+                                                    className="cursor-pointer"
+                                                    onClick={() => setShowLogModal(true)}
+                                                >
+                                                    Show Logs
+                                                </Button>
+                                            )}
                                         </div>
                                         {currentContent}
                                     </div>
@@ -370,7 +383,7 @@ const Content = () => {
                                 </ModalHeader>
                                 <ModalBody className="p-1">
                                     <div className="h-[75vh] overflow-hidden p-1">
-                                        <Logs/>
+                                        <Logs pageKey={currentPageKey}/>
                                     </div>
                                 </ModalBody>
                                 
