@@ -112,11 +112,14 @@ const Repository = ({onShowLogModal, onOperationComplete}) => {
                 <div className="flex justify-center">
                     <Button
                         color="blue"
+                        className={state.tabDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}
+                        style={state.tabDisabled ? { opacity: 0.5 } : {}}
                         onClick={
-                            handleUpdate("Updating.....\n\nIt will take a few minutes.\n\n",
-                                "Updated!!")
+                            state.tabDisabled 
+                                ? () => {} 
+                                : handleUpdate("Updating.....\n\nIt will take a few minutes.\n\n", "Updated!!")
                         }
-                        disabled={state.tabDisabled}
+                        disabled={false}
                     >
                         Update Repository
                     </Button>

@@ -65,8 +65,10 @@ const ConvertVialToKeymap = ({onShowLogModal, onOperationComplete}) => {
                     />
                     <Button
                         color="blue"
-                        onClick={handleVilFileSubmit}
-                        disabled={disabledVilCovertButton}
+                        className={disabledVilCovertButton ? 'cursor-not-allowed' : 'cursor-pointer'}
+                        style={disabledVilCovertButton ? { opacity: 0.5 } : {}}
+                        onClick={disabledVilCovertButton ? () => {} : handleVilFileSubmit}
+                        disabled={false}
                     >
                         Convert
                     </Button>

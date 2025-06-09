@@ -33,36 +33,78 @@ const Logs = () => {
             .replace(/&quot;/g, '"')
             .replace(/&#39;/g, "'")
             .replace(/&nbsp;/g, ' ')         // Convert non-breaking spaces to regular spaces
-            .replace(/,/g, '\n')             // Convert commas to newlines (from original parsing)
             .replace(/\n\n+/g, '\n')         // Replace multiple newlines with single
             .replace(/^\n+/g, '')            // Remove leading newlines
-            .replace(/.*Compiling keymap with.*\n/g, '') // Remove compilation lines
             .trim()
         
-        // Align status indicators in columns
-        return alignStatusIndicators(cleaned)
+        // Only apply complex cleaning for build logs
+        if (isBuildLog(str)) {
+            cleaned = cleaned
+                .replace(/,/g, '\n')             // Convert commas to newlines (from original parsing)
+                .replace(/.*Compiling keymap with.*\n/g, '') // Remove compilation lines
+                .replace(/\n\n+/g, '\n')         // Replace multiple newlines with single again
+                .trim()
+            
+            // Align status indicators in columns for build logs
+            return alignStatusIndicators(cleaned)
+        } else {
+            // For non-build logs, return cleaned text without complex formatting
+            return cleaned
+        }
     }
 
     const preQmkParse = (str) => str.replace(/\n\n/g, "\n")
         .replace(/^\n/g, "")
         .replace(/.*Compiling keymap with.*\n/, "")
 
+    // Check if the log is a build log (contains build-specific patterns)
+    const isBuildLog = (str) => {
+        if (!str) return false
+        
+        // Build logs typically contain these patterns
+        const buildPatterns = [
+            /Compiling keymap/,
+            /Linking:/,
+            /avr-gcc/,
+            /make\[/,
+            /\.elf/,
+            /\.hex/,
+            /Size after:/,
+            /bytes used/,
+            /Compiling .* for .* with .* keymap/,
+            /arm-none-eabi-gcc/,
+            /qmk compile/,
+            /QMK/
+        ]
+        
+        return buildPatterns.some(pattern => pattern.test(str))
+    }
+
     // Parse ANSI color codes and convert to HTML for div display
     const parseLogColors = (str) => {        
         if (!str) return { __html: 'Logs will appear here...' }
 
-        const html = convert.toHtml(
-            preQmkParse(str)
-            .replace(/,/g, "\n")
-            .replace(/\n\n/g, "\n")
-            .replace(/^\n/g, "")
-            .replace(/.*Compiling keymap with.*\n/, "")
-            .replace(/\n/g, "<br />"))
-            .replace(/\<span style=\"color:/g, "<div style=\"float: right; color:") 
-            .replace(/\<p|\<span/g, "<div")
-            .replace(/\<\/p|<\/span/g, "</div")
-            
-        return { __html:  html }
+        // Only apply complex parsing for build logs
+        if (isBuildLog(str)) {
+            const html = convert.toHtml(
+                preQmkParse(str)
+                .replace(/,/g, "\n")
+                .replace(/\n\n/g, "\n")
+                .replace(/^\n/g, "")
+                .replace(/.*Compiling keymap with.*\n/, "")
+                .replace(/\n/g, "<br />"))
+                .replace(/\<span style=\"color:/g, "<div style=\"float: right; color:") 
+                .replace(/\<p|\<span/g, "<div")
+                .replace(/\<\/p|<\/span/g, "</div")
+                
+            return { __html: html }
+        } else {
+            // For non-build logs, just convert ANSI colors and basic formatting
+            const html = convert.toHtml(str)
+                .replace(/\n/g, "<br />")
+                
+            return { __html: html }
+        }
     }
 
     

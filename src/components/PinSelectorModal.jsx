@@ -95,7 +95,7 @@ const PinSelectorModal = ({
                                 <button
                                     key={pin}
                                     onClick={() => handlePinToggle(pin)}
-                                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors cursor-pointer ${
                                         tempSelectedPins.includes(pin)
                                             ? 'bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-800 dark:border-blue-600 dark:text-blue-100'
                                             : 'bg-gray-100 border-gray-300 text-gray-800 hover:bg-gray-200 dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100 dark:hover:bg-gray-500'
@@ -200,10 +200,10 @@ const PinSelectorModal = ({
                 </div>
             </ModalBody>
             <ModalFooter>
-                <Button color="blue" onClick={handleConfirm}>
+                <Button color="blue" className="cursor-pointer" onClick={handleConfirm}>
                     OK
                 </Button>
-                <Button color="light" onClick={handleCancel}>
+                <Button color="light" className="cursor-pointer" onClick={handleCancel}>
                     Cancel
                 </Button>
             </ModalFooter>

@@ -274,6 +274,7 @@ const Content = () => {
                                 <div className="flex justify-center mb-6">
                                     <Button 
                                         color="light"
+                                        className="cursor-pointer"
                                         onClick={handleSkipDockerCheck}
                                     >
                                         Skip Docker Check
@@ -337,6 +338,7 @@ const Content = () => {
                                             </h2>
                                             <Button
                                                 color="light"
+                                                className="cursor-pointer"
                                                 onClick={() => setShowLogModal(true)}
                                             >
                                                 Show Logs
@@ -359,6 +361,7 @@ const Content = () => {
                                 size="7xl"
                                 onClose={operationInProgress ? () => {} : handleCloseLogModal}
                                 dismissible={!operationInProgress}
+                                className={operationInProgress ? 'modal-disabled-close' : ''}
                             >
                                 <ModalHeader>
                                     <div className="flex items-center justify-between w-full">
@@ -374,9 +377,10 @@ const Content = () => {
                                     <ModalFooter>
                                         <Button 
                                             color="light" 
-                                            onClick={handleCloseLogModal}
-                                            disabled={operationInProgress}
-                                            className={operationInProgress ? 'cursor-not-allowed opacity-50' : ''}
+                                            onClick={operationInProgress ? () => {} : handleCloseLogModal}
+                                            disabled={false}
+                                            className={operationInProgress ? 'cursor-not-allowed' : 'cursor-pointer'}
+                                            style={operationInProgress ? { opacity: 0.5 } : {}}
                                         >
                                             Close
                                         </Button>

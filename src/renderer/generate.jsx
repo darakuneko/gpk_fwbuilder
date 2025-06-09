@@ -156,8 +156,10 @@ const Generate = () => {
                 <div className="pl-4 pt-4 flex justify-center items-center">
                     <Button
                         color="blue"
-                        onClick={handleQmkFileSubmit()}
-                        disabled={qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton}
+                        className={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? 'cursor-not-allowed' : 'cursor-pointer'}
+                        style={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? { opacity: 0.5 } : {}}
+                        onClick={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? () => {} : handleQmkFileSubmit()}
+                        disabled={false}
                     >
                         Generate
                     </Button>
@@ -170,8 +172,10 @@ const Generate = () => {
                 <div className="flex justify-center items-center">
                     <Button
                         color="blue"
-                        onClick={handleVailIdSubmit("VialId")}
-                        disabled={disabledVialID}
+                        className={disabledVialID ? 'cursor-not-allowed' : 'cursor-pointer'}
+                        style={disabledVialID ? { opacity: 0.5 } : {}}
+                        onClick={disabledVialID ? () => {} : handleVailIdSubmit("VialId")}
+                        disabled={false}
                     >
                         Generate
                     </Button>

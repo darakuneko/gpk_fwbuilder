@@ -213,8 +213,10 @@ const Convert = () => {
                 <div className="flex justify-center items-center">
                     <Button
                         color="blue"
-                        onClick={handleVilFileSubmit}
-                        disabled={disabledVilCovertButton}
+                        className={disabledVilCovertButton ? 'cursor-not-allowed' : 'cursor-pointer'}
+                        style={disabledVilCovertButton ? { opacity: 0.5 } : {}}
+                        onClick={disabledVilCovertButton ? () => {} : handleVilFileSubmit}
+                        disabled={false}
                     >
                         Convert
                     </Button>
@@ -416,8 +418,10 @@ const Convert = () => {
             <div className="pt-4 flex justify-center items-center">
                 <Button
                     color="blue"
-                    onClick={handleKleFileSubmit()}
-                    disabled={disabledKleConvertButton}
+                    className={disabledKleConvertButton ? 'cursor-not-allowed' : 'cursor-pointer'}
+                    style={disabledKleConvertButton ? { opacity: 0.5 } : {}}
+                    onClick={disabledKleConvertButton ? () => {} : handleKleFileSubmit()}
+                    disabled={false}
                 >
                     Convert
                 </Button>

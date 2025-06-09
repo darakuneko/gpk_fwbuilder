@@ -28,3 +28,55 @@ body {
 }
 
 /* Let Flowbite handle all component styling */
+
+/* Modal close button enabled state - ensure cursor-pointer */
+button[data-modal-hide],
+.ml-auto.inline-flex.items-center.rounded-lg,
+.ml-auto.inline-flex.items-center.rounded-lg.bg-transparent,
+[role="button"][aria-label*="Close"] {
+  cursor: pointer !important;
+}
+
+/* Modal close button disabled state - comprehensive targeting */
+.modal-disabled-close button[data-modal-hide],
+.modal-disabled-close .ml-auto.inline-flex.items-center.rounded-lg,
+.modal-disabled-close .ml-auto.inline-flex.items-center.rounded-lg.bg-transparent,
+.modal-disabled-close [role="button"][aria-label*="Close"] {
+  cursor: not-allowed !important;
+  opacity: 0.5 !important;
+  pointer-events: auto !important;
+}
+
+.modal-disabled-close button[data-modal-hide]:hover,
+.modal-disabled-close .ml-auto.inline-flex.items-center.rounded-lg:hover,
+.modal-disabled-close .ml-auto.inline-flex.items-center.rounded-lg.bg-transparent:hover,
+.modal-disabled-close [role="button"][aria-label*="Close"]:hover {
+  background-color: transparent !important;
+  color: rgb(156 163 175) !important; /* Keep text-gray-400 color */
+}
+
+/* Additional fallback for any close-like element in disabled modal */
+.modal-disabled-close [class*="close"],
+.modal-disabled-close [class*="dismiss"],
+.modal-disabled-close svg[class*="w-5 h-5"] {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Select boxes - ensure cursor-pointer */
+select,
+[data-testid="flowbite-select"],
+.flowbite-select select,
+select[class*="block w-full"],
+select[class*="border-gray-300"] {
+  cursor: pointer !important;
+}
+
+/* Disabled select boxes */
+select:disabled,
+select[disabled],
+[data-testid="flowbite-select"]:disabled,
+.flowbite-select select:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.5 !important;
+}

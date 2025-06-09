@@ -1,7 +1,6 @@
-import React, {useState} from "react"
+import React, {useState, useEffect} from "react"
 import {useStateContext} from "../context.jsx"
 import { Button, Label, TextInput, Select, Checkbox } from 'flowbite-react'
-import FlowbiteAutocomplete from "../components/FlowbiteAutocomplete.jsx"
 
 const {api} = window
 
@@ -47,12 +46,63 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
         return disabledBuildButton
     }
 
-    const handleTextChange = (inputName) => (e, v) => {
-        if (inputName === 'kb') state.build.kb = v ? v.label : ''
-        if (inputName === 'km') state.build.km = v ? v.label : ''
+    // Initialize component with stored values
+    useEffect(() => {
+        const initializeStoredValues = async () => {
+            // Load keyboard list if keyboard is already selected
+            if (state.build.kb) {
+                const c = state.build.useRepo ? await api.listRemoteKeyboards(state.build.fw) : await api.listLocalKeyboards()
+                state.keyboardList.kb = c?.length > 0 ? c.map(v => {
+                    return {label: v.kb}
+                }) : []
+                setKeyboardList(c)
+                
+                // Load keymap list for selected keyboard
+                if (c?.length > 0) {
+                    const obj = c.find(v => v.kb === state.build.kb)
+                    state.keyboardList.km = obj ? obj.km.map(v => {
+                        return {label: v}
+                    }) : []
+                }
+                
+                setState(state)
+            }
+        }
+        
+        initializeStoredValues()
+    }, []) // Empty dependency array ensures this runs only once on mount
+
+    const handleTextChange = (inputName) => (e) => {
         if (inputName === 'commit') setCommit(state, e.target.value)
+        setState(state)
+    }
+
+    const handleKbSelectChange = async (e) => {
+        const selectedKb = e.target.value
+        state.build.kb = selectedKb
+        
+        // Reset keymap when keyboard changes
+        state.build.km = ''
+        
+        // Update keymap list based on selected keyboard
+        if (selectedKb) {
+            const obj = keyboardList.find(v => v.kb === selectedKb)
+            state.keyboardList.km = obj ? obj.km.map(v => {
+                return {label: v}
+            }) : []
+        } else {
+            state.keyboardList.km = []
+        }
         
         setKeyboardEmptyError(!state.build.kb)
+        setKeymapEmptyError(!state.build.km)
+        validBuildButton()
+        setState(state)
+    }
+
+    const handleKmSelectChange = (e) => {
+        state.build.km = e.target.value
+        
         setKeymapEmptyError(!state.build.km)
         validBuildButton()
         setState(state)
@@ -64,16 +114,18 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
             return {label: v.kb}
         }) : []
         setKeyboardList(c)
+        
+        // Update keymap list if keyboard is already selected
+        if (state.build.kb && c?.length > 0) {
+            const obj = c.find(v => v.kb === state.build.kb)
+            state.keyboardList.km = obj ? obj.km.map(v => {
+                return {label: v}
+            }) : []
+        }
+        
         setState(state)
     }
 
-    const handleKmFocus = async () => {
-        const obj = keyboardList.find(v => v.kb === state.build.kb)
-        state.keyboardList.km = obj ? obj.km.map(v => {
-            return {label: v}
-        }) : []
-        setState(state)
-    }
 
     const handleSelectTags = (e) => {
         state.build.tag = e.target.value
@@ -166,7 +218,7 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
                             onChange={handleSelectFW}
                             required
                         >
-                            {state.repository.firmwares.map((fw, i) =>
+                            {state.repository.firmwares.map((fw) =>
                                 (<option
                                     key={`fw-${fw.id}`}
                                     value={fw.id}
@@ -205,30 +257,63 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
                         </div>
                     )}
                     <div>
-                        <FlowbiteAutocomplete
-                            id="build-kb"
-                            label="keyboard"
-                            required
-                            error={keyboardEmptyError}
-                            options={state.keyboardList.kb}
-                            value={state.build.kb}
-                            disabled={disabledBuildText}
-                            onChange={handleTextChange("kb")}
+                        <div className="mb-2 block">
+                            <Label 
+                                htmlFor="build-kb-select" 
+                                value="Keyboard *" 
+                                className={keyboardEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}
+                            />
+                        </div>
+                        <Select
+                            id="build-kb-select"
+                            value={state.build.kb || ''}
+                            onChange={handleKbSelectChange}
                             onFocus={handleKbFocus}
-                        />
+                            disabled={disabledBuildText}
+                            className={keyboardEmptyError ? 'border-red-500' : ''}
+                            required
+                        >
+                            <option value="">Select keyboard...</option>
+                            {(state.keyboardList.kb || []).map((kb) => (
+                                <option key={kb.label} value={kb.label}>
+                                    {kb.label}
+                                </option>
+                            ))}
+                        </Select>
+                        {keyboardEmptyError && (
+                            <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                                Keyboard is required
+                            </p>
+                        )}
                     </div>
                     <div>
-                        <FlowbiteAutocomplete
-                            id="build-km"
-                            label="keymap"
+                        <div className="mb-2 block">
+                            <Label 
+                                htmlFor="build-km-select" 
+                                value="Keymap *" 
+                                className={keymapEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}
+                            />
+                        </div>
+                        <Select
+                            id="build-km-select"
+                            value={state.build.km || ''}
+                            onChange={handleKmSelectChange}
+                            disabled={disabledBuildText || !state.build.kb}
+                            className={keymapEmptyError ? 'border-red-500' : ''}
                             required
-                            error={keymapEmptyError}
-                            options={state.keyboardList.km}
-                            value={state.build.km}
-                            disabled={disabledBuildText}
-                            onChange={handleTextChange("km")}
-                            onFocus={handleKmFocus}
-                        />
+                        >
+                            <option value="">Select keymap...</option>
+                            {(state.keyboardList.km || []).map((km) => (
+                                <option key={km.label} value={km.label}>
+                                    {km.label}
+                                </option>
+                            ))}
+                        </Select>
+                        {keymapEmptyError && (
+                            <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                                Keymap is required
+                            </p>
+                        )}
                         {keymapStrError && (
                             <p className="mt-2 text-sm text-red-600 dark:text-red-500">
                                 ":" "flash" cannot be used
@@ -255,15 +340,19 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
                         <>
                             <Button
                                 color="light"
-                                onClick={handleCheckout}
-                                disabled={disabledUseRepoButtonButton}
+                                className={disabledUseRepoButtonButton ? 'cursor-not-allowed' : 'cursor-pointer'}
+                                style={disabledUseRepoButtonButton ? { opacity: 0.5 } : {}}
+                                onClick={disabledUseRepoButtonButton ? () => {} : handleCheckout}
+                                disabled={false}
                             >
                                 Refresh Keyboard List
                             </Button>
                             <Button
                                 color="light"
-                                onClick={handleCopyKeyboardFile}
-                                disabled={disabledUseRepoButtonButton}
+                                className={disabledUseRepoButtonButton ? 'cursor-not-allowed' : 'cursor-pointer'}
+                                style={disabledUseRepoButtonButton ? { opacity: 0.5 } : {}}
+                                onClick={disabledUseRepoButtonButton ? () => {} : handleCopyKeyboardFile}
+                                disabled={false}
                             >
                                 Copy Keyboard File
                             </Button>
@@ -271,8 +360,10 @@ const Build = ({onShowLogModal, onOperationComplete}) => {
                     )}
                     <Button
                         color="blue"
-                        onClick={handleBuild}
-                        disabled={init ? initDisabledBuildButton() : disabledBuildButton}
+                        className={(init ? initDisabledBuildButton() : disabledBuildButton) ? 'cursor-not-allowed' : 'cursor-pointer'}
+                        style={(init ? initDisabledBuildButton() : disabledBuildButton) ? { opacity: 0.5 } : {}}
+                        onClick={(init ? initDisabledBuildButton() : disabledBuildButton) ? () => {} : handleBuild}
+                        disabled={false}
                     >
                         Build
                     </Button>

@@ -38,6 +38,7 @@ const GenerateVialId = ({onShowLogModal, onOperationComplete}) => {
                 <div className="flex justify-center">
                     <Button
                         color="blue"
+                        className="cursor-pointer"
                         onClick={handleVailIdSubmit("VialId")}
                     >
                         Generate Unique ID

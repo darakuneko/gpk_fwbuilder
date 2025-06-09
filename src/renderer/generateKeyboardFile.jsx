@@ -159,8 +159,10 @@ const GenerateKeyboardFile = ({onShowLogModal, onOperationComplete}) => {
                 <div className="flex justify-center">
                     <Button
                         color="blue"
-                        onClick={handleQmkFileSubmit()}
-                        disabled={qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton}
+                        className={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? 'cursor-not-allowed' : 'cursor-pointer'}
+                        style={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? { opacity: 0.5 } : {}}
+                        onClick={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? () => {} : handleQmkFileSubmit()}
+                        disabled={false}
                     >
                         Generate
                     </Button>

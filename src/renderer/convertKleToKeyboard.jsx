@@ -367,9 +367,10 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                                 />
                                 <Button
                                     color="light"
-                                    onClick={() => setShowRowsModal(true)}
-                                    disabled={disabledConvertText}
-                                    className="w-full"
+                                    onClick={disabledConvertText ? () => {} : () => setShowRowsModal(true)}
+                                    disabled={false}
+                                    className={disabledConvertText ? 'cursor-not-allowed w-full' : 'cursor-pointer w-full'}
+                                    style={disabledConvertText ? { opacity: 0.5 } : {}}
                                 >
                                     <div className="text-left w-full">
                                         {pinRows.length > 0 ? (
@@ -398,9 +399,10 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                                 />
                                 <Button
                                     color="light"
-                                    onClick={() => setShowColsModal(true)}
-                                    disabled={disabledConvertText}
-                                    className="w-full"
+                                    onClick={disabledConvertText ? () => {} : () => setShowColsModal(true)}
+                                    disabled={false}
+                                    className={disabledConvertText ? 'cursor-not-allowed w-full' : 'cursor-pointer w-full'}
+                                    style={disabledConvertText ? { opacity: 0.5 } : {}}
                                 >
                                     <div className="text-left w-full">
                                         {pinCols.length > 0 ? (
@@ -428,8 +430,10 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                 <div className="flex justify-center pt-2">
                     <Button
                         color="blue"
-                        onClick={handleKleFileSubmit()}
-                        disabled={disabledKleConvertButton}
+                        className={disabledKleConvertButton ? 'cursor-not-allowed' : 'cursor-pointer'}
+                        style={disabledKleConvertButton ? { opacity: 0.5 } : {}}
+                        onClick={disabledKleConvertButton ? () => {} : handleKleFileSubmit()}
+                        disabled={false}
                     >
                         Convert
                     </Button>

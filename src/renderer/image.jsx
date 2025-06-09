@@ -56,8 +56,10 @@ const Image = ({onShowLogModal, onOperationComplete}) => {
                 <div className="flex justify-center">
                     <Button 
                         color="red"
-                        disabled={state.tabDisabled}
-                        onClick={handleUpdate("Building.....\n\n", "Rebuild!!", async () => await api.rebuildImage())}
+                        className={state.tabDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}
+                        style={state.tabDisabled ? { opacity: 0.5 } : {}}
+                        disabled={false}
+                        onClick={state.tabDisabled ? () => {} : handleUpdate("Building.....\n\n", "Rebuild!!", async () => await api.rebuildImage())}
                     >
                         Rebuild Docker Image
                     </Button>
