@@ -27,7 +27,7 @@ export interface KeyboardInfo {
   manufacturer?: string;
   url?: string;
   maintainer?: string;
-  layouts: Record<string, any>;
+  layouts: Record<string, unknown>;
   matrix: {
     rows: number;
     cols: number;
@@ -45,7 +45,7 @@ export interface BuildResult {
 export interface ErrorResponse {
   error: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 export interface LogEntry {
@@ -68,9 +68,9 @@ export interface VialKeymap {
   uid: number;
   layout: {
     labels?: string[];
-    keymap: any[][];
+    keymap: unknown[][];
   };
-  layers: any[][];
+  layers: unknown[][];
 }
 
 export interface FileUploadProps {

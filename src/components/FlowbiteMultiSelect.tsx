@@ -23,40 +23,44 @@ const FlowbiteMultiSelect: React.FC<FlowbiteMultiSelectProps> = ({
     required = false,
     id = '',
     className = ''
-}) => {
+}): React.ReactElement => {
     const [isOpen, setIsOpen] = useState(false)
     const wrapperRef = useRef<HTMLDivElement>(null)
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
+    useEffect((): (() => void) => {
+        const handleClickOutside = (event: MouseEvent): void => {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
                 setIsOpen(false)
             }
         }
 
         document.addEventListener('mousedown', handleClickOutside)
-        return () => {
+        return (): void => {
             document.removeEventListener('mousedown', handleClickOutside)
         }
     }, [])
 
-    const handleToggle = () => {
+    const handleToggle = (): void => {
         if (!disabled) {
             setIsOpen(!isOpen)
         }
     }
 
-    const handleOptionClick = (option: string) => {
+    const handleOptionClick = (option: string): void => {
         const newValue = value.includes(option)
-            ? value.filter(v => v !== option)
+            ? value.filter((v): boolean => v !== option)
             : [...value, option]
         
-        onChange && onChange({ target: { value: newValue } })
+        if (onChange) {
+            onChange({ target: { value: newValue } })
+        }
     }
 
-    const removeTag = (item: string) => {
-        const newValue = value.filter(v => v !== item)
-        onChange && onChange({ target: { value: newValue } })
+    const removeTag = (item: string): void => {
+        const newValue = value.filter((v): boolean => v !== item)
+        if (onChange) {
+            onChange({ target: { value: newValue } })
+        }
     }
 
     // Flowbite official select field classes
@@ -80,7 +84,7 @@ const FlowbiteMultiSelect: React.FC<FlowbiteMultiSelectProps> = ({
                     <span className="text-gray-500 dark:text-gray-400 text-sm">Select options...</span>
                 ) : (
                     <div className="flex flex-wrap gap-1">
-                        {value.map((item, index) => (
+                        {value.map((item, index): React.ReactElement => (
                             <span
                                 key={index}
                                 className="inline-flex items-center px-2 py-1 me-2 text-xs font-medium text-blue-800 bg-blue-100 rounded dark:bg-blue-900 dark:text-blue-300"
@@ -90,7 +94,7 @@ const FlowbiteMultiSelect: React.FC<FlowbiteMultiSelectProps> = ({
                                     <button
                                         type="button"
                                         className="inline-flex items-center p-1 ms-2 text-xs text-blue-400 bg-transparent rounded-sm hover:bg-blue-200 hover:text-blue-900 dark:hover:bg-blue-800 dark:hover:text-blue-300 cursor-pointer"
-                                        onClick={(e) => {
+                                        onClick={(e): void => {
                                             e.stopPropagation()
                                             removeTag(item)
                                         }}
@@ -107,13 +111,13 @@ const FlowbiteMultiSelect: React.FC<FlowbiteMultiSelectProps> = ({
             </div>
             {isOpen && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto dark:bg-gray-700 dark:border-gray-600">
-                    {options.map((option, index) => (
+                    {options.map((option, index): React.ReactElement => (
                         <div
                             key={index}
                             className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-gray-100 text-gray-900 dark:hover:bg-gray-600 dark:text-gray-200 ${
                                 value.includes(option) ? 'bg-blue-50 dark:bg-blue-900/30' : ''
                             }`}
-                            onClick={() => handleOptionClick(option)}
+                            onClick={(): void => handleOptionClick(option)}
                         >
                             <span className="flex items-center">
                                 <span className={`mr-3 text-sm ${value.includes(option) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}>

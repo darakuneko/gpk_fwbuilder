@@ -1,6 +1,7 @@
-import React from "react"
-import {useStateContext} from "../context"
+import React from 'react'
 import { Button, Label } from 'flowbite-react'
+
+import {useStateContext} from "../context"
 import { cleanLogText, isOperationComplete } from '../utils/logParser'
 
 const {api} = window
@@ -9,7 +10,7 @@ interface GenerateVialIdProps {
     onOperationComplete?: () => void;
 }
 
-const GenerateVialId: React.FC<GenerateVialIdProps> = ({onOperationComplete}) => {
+const GenerateVialId: React.FC<GenerateVialIdProps> = ({onOperationComplete}): React.ReactElement => {
     const {state, setState, setPageLog, getPageLog} = useStateContext()
     
     // Guard against uninitialized state
@@ -18,14 +19,15 @@ const GenerateVialId: React.FC<GenerateVialIdProps> = ({onOperationComplete}) =>
     }
 
     const generateMsg: string = "Generating...."
-    const handleVailIdSubmit = () => async () => {
+    const handleVailIdSubmit = (): (() => Promise<void>) => async (): Promise<void> => {
+        if (!state) return
         setPageLog('generateVialId', generateMsg)
         state.tabDisabled = true
-        setState(state)
+        void setState(state)
         const logs = await api.generateVialId()
-        setPageLog('generateVialId', logs)
+        setPageLog('generateVialId', logs as string)
         state.tabDisabled = false
-        setState(state)
+        void setState(state)
         
         if (onOperationComplete) {
             onOperationComplete()
@@ -38,9 +40,9 @@ const GenerateVialId: React.FC<GenerateVialIdProps> = ({onOperationComplete}) =>
                 <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
                     <Button
                         color="blue"
-                        className={`w-full ${state.tabDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                        style={state.tabDisabled ? { opacity: 0.5 } : {}}
-                        onClick={state.tabDisabled ? () => {} : handleVailIdSubmit("VialId")}
+                        className={`w-full ${state?.tabDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                        style={state?.tabDisabled ? { opacity: 0.5 } : {}}
+                        onClick={state?.tabDisabled ? (): void => {} : handleVailIdSubmit()}
                         disabled={false}
                     >
                         Generate Unique ID

@@ -18,7 +18,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     id = "",
     className = "",
     variant = "outlined"
-}) => {
+}): React.ReactElement => {
     const baseClasses = "px-4 py-2 rounded transition-colors duration-200 font-medium cursor-pointer text-center w-full"
     const variantClasses = variant === "contained" 
         ? "bg-blue-400 text-gray-900 hover:bg-blue-300"

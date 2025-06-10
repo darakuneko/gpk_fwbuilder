@@ -7,7 +7,7 @@ interface UseThemeReturn {
 }
 
 export const useTheme = (): UseThemeReturn => {
-  const [theme, setTheme] = useState<string>(() => {
+  const [theme, setTheme] = useState<string>((): string => {
     // Check if we're in browser environment
     if (typeof window === 'undefined') return 'light';
     
@@ -19,7 +19,7 @@ export const useTheme = (): UseThemeReturn => {
     return 'light';
   });
 
-  useEffect(() => {
+  useEffect((): void => {
     const root = document.documentElement;
     
     // Remove all theme classes
@@ -31,17 +31,17 @@ export const useTheme = (): UseThemeReturn => {
     }
   }, [theme]);
 
-  useEffect(() => {
+  useEffect((): (() => void) => {
     // Listen for system theme changes and auto-update
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     
-    const handleChange = (e: MediaQueryListEvent) => {
+    const handleChange = (e: MediaQueryListEvent): void => {
       setTheme(e.matches ? 'dark' : 'light');
     };
 
     mediaQuery.addEventListener('change', handleChange);
     
-    return () => {
+    return (): void => {
       mediaQuery.removeEventListener('change', handleChange);
     };
   }, []);

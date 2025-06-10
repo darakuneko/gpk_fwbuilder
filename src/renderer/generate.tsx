@@ -1,10 +1,11 @@
-import React, {useState} from "react"
-import {useStateContext} from "../context"
+import React, {useState} from 'react'
 import { Button, Label, TextInput, Select, HelperText } from 'flowbite-react'
+
+import {useStateContext} from "../context"
 
 const {api} = window
 
-const Generate = () => {
+const Generate = (): React.ReactElement => {
     const {state, setState} = useStateContext()
     const [keyboardError, setKeyboardError] = useState(false)
     const [usernameEmptyError, setUsernameEmptyError] = useState(false)
@@ -17,71 +18,80 @@ const Generate = () => {
 
     const [qmkFile, setQmkFile] = useState(true)
 
-    const validBuildButton = () => {
+    const validBuildButton = (): void => {
+        if (!state) return
         const qmkFile = state.generate.qmkFile
         const reg = /^[A-Za-z0-9_/-]+$/
         let validKeyboardStrError = false
         let validUsernameStrError = false
 
-        if(qmkFile.kb.length > 0){
+        if(qmkFile.kb && qmkFile.kb.length > 0){
             validKeyboardStrError = (reg).test(qmkFile.kb)
             setKeyboardStrError(!validKeyboardStrError)
         }
-        if(qmkFile.user.length > 0){
+        if(qmkFile.user && qmkFile.user.length > 0){
             validUsernameStrError = (reg).test(qmkFile.user)
             setUsernameStrError(!validUsernameStrError)
         }
 
-        const validDisableButton = qmkFile.kb && qmkFile.user && validKeyboardStrError && validUsernameStrError
+        const validDisableButton = Boolean(qmkFile.kb && qmkFile.user && validKeyboardStrError && validUsernameStrError)
         setDisabledBuildButton(!validDisableButton)
     }
 
-    const qmkFileDisabledBuildButton = () => {
+    const qmkFileDisabledBuildButton = (): boolean => {
         validBuildButton()
         setQmkFile(false)
         return disabledBuildButton
     }
 
-    const handleTextChange = (inputName) => (e) => {
-        inputName === 'kb' ? state.generate.qmkFile.kb = e.target.value : state.generate.qmkFile.user = e.target.value
+    const handleTextChange = (inputName: string): ((e: React.ChangeEvent<HTMLInputElement>) => void) => (e: React.ChangeEvent<HTMLInputElement>): void => {
+        if (!state) return
+        if (inputName === 'kb') {
+            state.generate.qmkFile.kb = e.target.value
+        } else {
+            state.generate.qmkFile.user = e.target.value
+        }
         setKeyboardError(!state.generate.qmkFile.kb)
         setUsernameEmptyError(!state.generate.qmkFile.user)
         validBuildButton()
-        setState(state)
+        void setState(state)
     }
 
-    const handleSelectMCU = (e) => {
+    const handleSelectMCU = (e: React.ChangeEvent<HTMLSelectElement>): void => {
+        if (!state) return
         state.generate.qmkFile.mcu = e.target.value
-        setState(state)
+        void setState(state)
     }
 
     const generateMsg =  "Generating...."
-    const handleQmkFileSubmit =  () => async () => {
+    const handleQmkFileSubmit = (): (() => Promise<void>) => async (): Promise<void> => {
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
         setDisabledVialID(true)
+        if (!state) return
         state.logs = generateMsg
         state.tabDisabled = true
-        setState(state)
+        void setState(state)
 
         const logs = await api.generateQMKFile(state.generate.qmkFile)
 
         setDisabledBuildButton(false)
         setDisabledBuildText(false)
         setDisabledVialID(false)
-        state.logs = logs
+        state.logs = logs as string
         state.tabDisabled = false
-        setState(state)
+        void setState(state)
     }
 
-    const handleVailIdSubmit =  () => async () => {
+    const handleVailIdSubmit = (): (() => Promise<void>) => async (): Promise<void> => {
+        if (!state) return
         state.logs = generateMsg
         state.tabDisabled = true
-        setState(state)
+        void setState(state)
         const logs = await api.generateVialId()
-        state.logs = logs
+        state.logs = logs as string
         state.tabDisabled = false
-        setState(state)
+        void setState(state)
     }
 
     
@@ -103,7 +113,7 @@ const Generate = () => {
                             <Label className="mb-1 block" htmlFor="generate-qmkFile-mcu-select">MCU</Label>
                             <Select
                                 id="generate-qmkFile-mcu-select"
-                                value={state.generate.qmkFile.mcu}
+                                value={state?.generate.qmkFile.mcu || 'RP2040'}
                                 onChange={handleSelectMCU}
                                 required
                                 sizing="sm"
@@ -126,7 +136,7 @@ const Generate = () => {
                                 color={keyboardError ? "failure" : "gray"}
                                 disabled={disabledBuildText}
                                 onChange={handleTextChange("kb")}
-                                value={state.generate.qmkFile.kb}
+                                value={state?.generate.qmkFile.kb || ''}
                                 sizing="sm"
                             />
                             {keyboardStrError && (
@@ -149,7 +159,7 @@ const Generate = () => {
                                 color={usernameEmptyError ? "failure" : "gray"}
                                 disabled={disabledBuildText}
                                 onChange={handleTextChange("user")}
-                                value={state.generate.qmkFile.user}
+                                value={state?.generate.qmkFile.user || ''}
                                 sizing="sm"
                             />
                             {usernameStrError && (
@@ -168,7 +178,7 @@ const Generate = () => {
                             color="blue"
                             className={`w-full ${(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                             style={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? { opacity: 0.5 } : {}}
-                            onClick={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? () => {} : handleQmkFileSubmit()}
+                            onClick={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? (): void => {} : handleQmkFileSubmit()}
                             disabled={false}
                         >
                             Generate
@@ -189,7 +199,7 @@ const Generate = () => {
                             color="blue"
                             className={`w-full ${disabledVialID ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                             style={disabledVialID ? { opacity: 0.5 } : {}}
-                            onClick={disabledVialID ? () => {} : handleVailIdSubmit("VialId")}
+                            onClick={disabledVialID ? (): void => {} : handleVailIdSubmit()}
                             disabled={false}
                         >
                             Generate Unique ID

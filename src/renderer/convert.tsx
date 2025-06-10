@@ -1,11 +1,12 @@
-import React, {useState} from "react"
-import {useStateContext} from "../context"
+import React, {useState} from 'react'
 import { Button, Label, TextInput, Select, Checkbox, HelperText, FileInput } from 'flowbite-react'
+
+import {useStateContext} from "../context"
 import MultiSelect from "../components/MultiSelect"
 
 const {api} = window
 
-const Convert: React.FC = () => {
+const Convert: React.FC = (): React.ReactElement => {
     const {state, setState} = useStateContext()
     interface FileObj {
         name: string;
@@ -20,8 +21,8 @@ const Convert: React.FC = () => {
         name : "",
         path : "",
     })
-    const [pinCols, setPinCols] = React.useState([]);
-    const [pinRows, setPinRows] = React.useState([]);
+    const [pinCols, setPinCols] = React.useState<string[]>([]);
+    const [pinRows, setPinRows] = React.useState<string[]>([]);
 
     const [disabledVilCovertButton, setDisabledVilCovertButton] = useState(true)
 
@@ -46,7 +47,8 @@ const Convert: React.FC = () => {
     const [disabledKleConvertButton, setDisabledKleConvertButton] = useState(true)
     const [disabledConvertText, setDisabledConvertText] = useState(false)
 
-    const validKleConvertButton = () => {
+    const validKleConvertButton = (): void => {
+        if (!state) return
         const kle = state.convert.kle
         const reg1 = /^[A-Za-z0-9 _/-]+$/
         const reg2 = /^[A-Z0-9x]+$/
@@ -77,16 +79,17 @@ const Convert: React.FC = () => {
         }
         const uploadedKleFile = kleObj.name.length > 0
 
-        const validDisableButton = (m2) => {
-            const m1 = kle.kb && kle.user && kle.vid && kle.pid && validKeyboardStrError && validUsernameStrError && validVidStrError
-                && validPidStrError && validPidSameError && uploadedKleFile
+        const validDisableButton = (m2: boolean): boolean => {
+            const m1 = Boolean(kle.kb && kle.user && kle.vid && kle.pid && validKeyboardStrError && validUsernameStrError && validVidStrError
+                && validPidStrError && validPidSameError && uploadedKleFile)
             return m1 && m2
         }
 
-        setDisabledKleConvertButton(isViaObj ? !validDisableButton(true) : !validDisableButton(kle.rows && kle.cols))
+        setDisabledKleConvertButton(isViaObj ? !validDisableButton(true) : !validDisableButton(Boolean(kle.rows && kle.cols)))
     }
 
-    const validKleEmpty = () => {
+    const validKleEmpty = (): void => {
+        if (!state) return
         setKeyboardError(!state.convert.kle.kb)
         setUsernameEmptyError(!state.convert.kle.user)
         setVidEmptyError(!state.convert.kle.vid)
@@ -95,67 +98,79 @@ const Convert: React.FC = () => {
         setColsEmptyError(state.convert.kle.option === 2 ? false : !state.convert.kle.cols)
     }
 
-    const handleTextChange = (inputName) => (e) => {
+    const handleTextChange = (inputName: string): ((e: React.ChangeEvent<HTMLInputElement>) => void) => (e: React.ChangeEvent<HTMLInputElement>): void => {
+        if (!state) return
         const v = e.target.value
         if(inputName === 'kb') state.convert.kle.kb = v
         if(inputName === 'user') state.convert.kle.user = v
         if(inputName === 'vid') state.convert.kle.vid = v
         if(inputName === 'pid') state.convert.kle.pid = v
+
+        validKleEmpty()
+        validKleConvertButton()
+        void setState(state)
+    }
+
+    const handleMultiSelectChange = (inputName: string): ((event: { target: { value: string[] } }) => void) => (event: { target: { value: string[] } }): void => {
+        if (!state) return
+        const v = event.target.value
         if(inputName === 'rows') {
-            state.convert.kle.rows = v.length > 0 ? v.join(',') : undefined
-            setPinRows(v)
+            state.convert.kle.rows = v && v.length > 0 ? v.join(',') : ''
+            setPinRows(v || [])
         }
         if(inputName === 'cols') {
-            state.convert.kle.cols = v.length > 0 ? v.join(',') : undefined
-            setPinCols(v)
+            state.convert.kle.cols = v && v.length > 0 ? v.join(',') : ''
+            setPinCols(v || [])
         }
 
         validKleEmpty()
         validKleConvertButton()
-        setState(state)
+        void setState(state)
     }
 
-    const handleSelectMCU = (e) => {
+    const handleSelectMCU = (e: React.ChangeEvent<HTMLSelectElement>): void => {
+        if (!state) return
         state.convert.kle.mcu = e.target.value
-        setState(state)
+        void setState(state)
         setPinRows([])
         setPinCols([])
     }
 
     const convertMsg =  "Convert...."
-    const handleKleFileSubmit =  () => async () => {
+    const handleKleFileSubmit = (): (() => Promise<void>) => async (): Promise<void> => {
+        if (!state) return
         setDisabledKleConvertButton(true)
         setDisabledConvertText(true)
         state.logs = convertMsg
         state.tabDisabled = true
-        setState(state)
+        void setState(state)
 
         const logs = await api.convertKleJson({params: state.convert.kle, file: kleObj})
 
         setDisabledKleConvertButton(false)
         setDisabledConvertText(false)
-        state.logs = logs
+        state.logs = logs as string
         state.tabDisabled = false
-        setState(state)
+        void setState(state)
     }
 
-    const handleKleFileUpload = async (e) => {
-        const file = e.target.files[0]
+    const handleKleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+        const file = e.target.files?.[0]
         if (file){
             kleObj.name = file.name
-            kleObj.path = window.webUtils.getPathForFile(file)
-            setKleObj({...kleObj, kleObj })
+            kleObj.path = (window as unknown as {webUtils: {getPathForFile: (file: File) => string}}).webUtils.getPathForFile(file)
+            setKleObj({...kleObj})
 
             const json = await api.readJson(kleObj.path)
-            const obj = json.filter(v => !Array.isArray(v))[0]
-            if (obj.name) state.convert.kle.kb = obj.name
-            if (obj.author) state.convert.kle.user = obj.author
-            setState(state)
+            const obj = (json as unknown[]).filter((v): boolean => !Array.isArray(v))[0] as {name?: string; author?: string}
+            if (obj.name && state) state.convert.kle.kb = obj.name
+            if (obj.author && state) state.convert.kle.user = obj.author
+            if (state) void setState(state)
             validKleConvertButton()
         }
     }
 
-    const handleKleOptionChange = (i) => async (e) => {
+    const handleKleOptionChange = (i: number): ((e: React.ChangeEvent<HTMLInputElement>) => Promise<void>) => async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
         if(i === 1){
             KleOptions.vial = e.target.checked
             if(e.target.checked) KleOptions.via = false
@@ -166,6 +181,7 @@ const Convert: React.FC = () => {
         }
         setKleOptions(KleOptions)
 
+        if (!state) return
         if(KleOptions.vial) {
             state.convert.kle.option = 1
         } else if(KleOptions.via) {
@@ -173,31 +189,32 @@ const Convert: React.FC = () => {
         } else {
             state.convert.kle.option = 0
         }
-        setState(state)
+        void setState(state)
         validKleEmpty()
         validKleConvertButton()
     }
 
 
-    const handleVilFileSubmit = async () => {
+    const handleVilFileSubmit = async (): Promise<void> => {
+        if (!state) return
         state.logs = convertMsg
         state.tabDisabled = true
-        setState(state)
+        void setState(state)
         setDisabledVilCovertButton(true)
         const log = await api.convertVilJson(vilObj)
-        state.logs = log
+        state.logs = log as string
         state.tabDisabled = false
-        setState(state)
+        void setState(state)
         setDisabledVilCovertButton(false)
     }
 
 
-    const handleVilFileUpload = async (e) => {
-        const file = e.target.files[0]
+    const handleVilFileUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+        const file = e.target.files?.[0]
         if (file){
             vilObj.name = file.name
-            vilObj.path = window.webUtils.getPathForFile(file)
-            setVilObj({...vilObj, vilObj })
+            vilObj.path = (window as unknown as {webUtils: {getPathForFile: (file: File) => string}}).webUtils.getPathForFile(file)
+            setVilObj({...vilObj})
         }
         if (vilObj.name.length > 0) setDisabledVilCovertButton(false)
     }
@@ -233,7 +250,7 @@ const Convert: React.FC = () => {
                                 color="blue"
                                 className={`w-full ${disabledVilCovertButton ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                                 style={disabledVilCovertButton ? { opacity: 0.5 } : {}}
-                                onClick={disabledVilCovertButton ? () => {} : handleVilFileSubmit}
+                                onClick={disabledVilCovertButton ? (): void => {} : handleVilFileSubmit}
                                 disabled={false}
                             >
                                 Convert
@@ -274,7 +291,7 @@ const Convert: React.FC = () => {
                                 <Label className="mb-1 block" htmlFor="convert-kle-mcu-select">MCU</Label>
                                 <Select
                                     id="convert-kle-mcu-select"
-                                    value={state.convert.kle.mcu}
+                                    value={state?.convert.kle.mcu || 'RP2040'}
                                     onChange={handleSelectMCU}
                                     required
                                     sizing="sm"
@@ -289,7 +306,7 @@ const Convert: React.FC = () => {
                                     <div className="flex items-center">
                                         <Checkbox
                                             id="vial-settings"
-                                            checked={state.convert.kle.option === 1}
+                                            checked={state?.convert.kle.option === 1}
                                             onChange={handleKleOptionChange(1)}
                                             className="mr-2"
                                         />
@@ -300,7 +317,7 @@ const Convert: React.FC = () => {
                                     <div className="flex items-center">
                                         <Checkbox
                                             id="only-via"
-                                            checked={state.convert.kle.option === 2}
+                                            checked={state?.convert.kle.option === 2}
                                             onChange={handleKleOptionChange(2)}
                                             className="mr-2"
                                         />
@@ -331,7 +348,7 @@ const Convert: React.FC = () => {
                                     color={keyboardError ? "failure" : "gray"}
                                     disabled={disabledConvertText}
                                     onChange={handleTextChange("kb")}
-                                    value={state.convert.kle.kb}
+                                    value={state?.convert.kle.kb || ''}
                                     sizing="sm"
                                 />
                                 {keyboardStrError && (
@@ -354,7 +371,7 @@ const Convert: React.FC = () => {
                                     color={usernameEmptyError ? "failure" : "gray"}
                                     disabled={disabledConvertText}
                                     onChange={handleTextChange("user")}
-                                    value={state.convert.kle.user}
+                                    value={state?.convert.kle.user || ''}
                                     sizing="sm"
                                 />
                                 {usernameStrError && (
@@ -377,7 +394,7 @@ const Convert: React.FC = () => {
                                     color={vidEmptyError ? "failure" : "gray"}
                                     disabled={disabledConvertText}
                                     onChange={handleTextChange("vid")}
-                                    value={state.convert.kle.vid}
+                                    value={state?.convert.kle.vid || ''}
                                     sizing="sm"
                                 />
                                 {vidStrError && (
@@ -400,7 +417,7 @@ const Convert: React.FC = () => {
                                     color={pidEmptyError ? "failure" : "gray"}
                                     disabled={disabledConvertText}
                                     onChange={handleTextChange("pid")}
-                                    value={state.convert.kle.pid}
+                                    value={state?.convert.kle.pid || ''}
                                     sizing="sm"
                                 />
                                 {pidStrError && (
@@ -427,22 +444,22 @@ const Convert: React.FC = () => {
                             <MultiSelect
                                 id="convert-kle-rows"
                                 label="Matrix Pins - Rows"
-                                options={state.convert.kle.mcu === 'promicro' ? state.convert.pins.promicro : state.convert.pins.rp2040}
+                                options={state?.convert.kle.mcu === 'promicro' ? state?.convert.pins.promicro || [] : state?.convert.pins.rp2040 || []}
                                 value={pinRows}
-                                onChange={handleTextChange("rows")}
+                                onChange={handleMultiSelectChange("rows")}
                                 error={rowsEmptyError}
-                                disabled={state.convert.kle.option === 2 ? true : disabledConvertText}
+                                disabled={state?.convert.kle.option === 2 ? true : disabledConvertText}
                                 required
                                 className="w-full max-w-4xl"
                             />
                             <MultiSelect
                                 id="convert-kle-cols"
                                 label="Matrix Pins - Columns"
-                                options={state.convert.kle.mcu === 'promicro' ? state.convert.pins.promicro : state.convert.pins.rp2040}
+                                options={state?.convert.kle.mcu === 'promicro' ? state?.convert.pins.promicro || [] : state?.convert.pins.rp2040 || []}
                                 value={pinCols}
-                                onChange={handleTextChange("cols")}
+                                onChange={handleMultiSelectChange("cols")}
                                 error={colsEmptyError}
-                                disabled={state.convert.kle.option === 2 ? true : disabledConvertText}
+                                disabled={state?.convert.kle.option === 2 ? true : disabledConvertText}
                                 required
                                 className="w-full max-w-4xl"
                             />
@@ -454,7 +471,7 @@ const Convert: React.FC = () => {
                         color="blue"
                         className={`w-full ${disabledKleConvertButton ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         style={disabledKleConvertButton ? { opacity: 0.5 } : {}}
-                        onClick={disabledKleConvertButton ? () => {} : handleKleFileSubmit()}
+                        onClick={disabledKleConvertButton ? (): void => {} : handleKleFileSubmit()}
                         disabled={false}
                     >
                         Convert

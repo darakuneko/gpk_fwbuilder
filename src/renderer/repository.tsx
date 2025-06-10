@@ -1,10 +1,16 @@
-import React from "react"
-import {useStateContext} from "../context"
+import React from 'react'
 import { Button, TextInput, Select, Label } from 'flowbite-react'
+
+import {useStateContext} from "../context"
 
 const {api} = window
 
-const Repository = ({onShowLogModal, onOperationComplete}) => {
+interface RepositoryProps {
+    onShowLogModal?: () => void;
+    onOperationComplete?: () => void;
+}
+
+const Repository: React.FC<RepositoryProps> = ({onShowLogModal, onOperationComplete}): React.ReactElement => {
     const {state, setState, setPageLog} = useStateContext()
     
     // Guard against uninitialized state
@@ -12,46 +18,47 @@ const Repository = ({onShowLogModal, onOperationComplete}) => {
         return <div>Loading...</div>
     }
 
-    const isStaticFirmware = (firmware) => firmware === "QMK" || firmware === "Vial"
-    const handleSelectFW = (e) => {
-        if (!state.repository) return
+    const isStaticFirmware = (firmware: string): boolean => firmware === "QMK" || firmware === "Vial"
+    const handleSelectFW = (e: React.ChangeEvent<HTMLSelectElement>): void => {
+        if (!state || !state.repository) return
         state.repository.firmware = e.target.value
-        setState(state)
+        void setState(state)
     }
 
-    const handleTextChange = (e) => {
-        if (!state.repository?.firmwares) return
+    const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+        if (!state || !state.repository?.firmwares) return
         state.repository.firmwares = state.repository.firmwares
-            .map(v => v.id === state.repository.firmware ? { ...v, url: e.target.value } : v);
-        setState(state)
+            .map((v): typeof v => v.id === state.repository.firmware ? { ...v, url: e.target.value } : v);
+        void setState(state)
     }
 
-    const handleUpdate = (msg1, msg2) => async () => {
+    const handleUpdate = (msg1: string, msg2: string): (() => Promise<void>) => async (): Promise<void> => {
         // Show log modal when update starts
         if (onShowLogModal) {
             onShowLogModal()
         }
         
+        if (!state) return
         setPageLog('repository', msg1)
         state.tabDisabled = true
-        setState(state)
+        void setState(state)
         if(isStaticFirmware(state.repository?.firmware)) {
             await api.updateRepository(state.repository.firmware)
         } else {
-            const obj = state.repository?.firmwares?.find(v => v.id === state.repository?.firmware)
+            const obj = state.repository?.firmwares?.find((v): boolean => v.id === state.repository?.firmware)
             if (obj) await api.updateRepositoryCustom(obj)
         }
 
-        let id
-        const checkFn = async () => {
+        let id: ReturnType<typeof setInterval>
+        const checkFn = async (): Promise<void> => {
             const buildCompleted = await api.buildCompleted()
             const exist = await api.existSever()
             if (buildCompleted && exist) {
                 state.build.tags = await api.tags()
-                state.build.tag = state.build.tags[0]
+                state.build.tag = state.build.tags[0] || ''
                 setPageLog('repository', msg2)
                 state.tabDisabled = false
-                setState(state)
+                void setState(state)
                 clearInterval(id)
                 
                 // Operation complete
@@ -78,7 +85,7 @@ const Repository = ({onShowLogModal, onOperationComplete}) => {
                                 onChange={handleSelectFW}
                                 required
                             >
-                                {(state.repository?.firmwares || []).map((fw) =>
+                                {(state.repository?.firmwares || []).map((fw): React.ReactElement =>
                                     (<option
                                         key={`repository-fw-select${fw.id}`}
                                         value={fw.id}
@@ -96,7 +103,7 @@ const Repository = ({onShowLogModal, onOperationComplete}) => {
                                 id="repository-custom-url"
                                 placeholder="git clone url"
                                 onChange={handleTextChange}
-                                value={state.repository?.firmwares?.find(v => v.id === state.repository?.firmware)?.url || ''}
+                                value={state.repository?.firmwares?.find((v): boolean => v.id === state.repository?.firmware)?.url || ''}
                                 disabled={isStaticFirmware(state.repository?.firmware)}
                                 required
                             />
@@ -105,11 +112,11 @@ const Repository = ({onShowLogModal, onOperationComplete}) => {
                         <div className="text-center pt-4">
                             <Button
                                 color="blue"
-                                className={`w-full ${state.tabDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                                style={state.tabDisabled ? { opacity: 0.5 } : {}}
+                                className={`w-full ${state?.tabDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                                style={state?.tabDisabled ? { opacity: 0.5 } : {}}
                                 onClick={
-                                    state.tabDisabled 
-                                        ? () => {} 
+                                    state?.tabDisabled 
+                                        ? (): void => {} 
                                         : handleUpdate("Updating.....\n\nIt will take a few minutes.\n\n", "Updated!!")
                                 }
                                 disabled={false}

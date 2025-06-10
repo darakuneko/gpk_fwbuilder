@@ -1,6 +1,8 @@
-import React, {useState, useEffect} from "react"
-import {useStateContext} from "../context"
+import React, {useState, useEffect} from 'react'
 import { Button, Label, TextInput, Select, Checkbox, HelperText } from 'flowbite-react'
+
+import {useStateContext} from "../context"
+import type { AppState, Firmware } from "../context"
 
 const {api} = window
 
@@ -9,13 +11,8 @@ interface BuildProps {
     onOperationComplete?: () => void;
 }
 
-const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}) => {
+const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): React.ReactElement => {
     const {state, setState, setPageLog} = useStateContext()
-    
-    // Guard against uninitialized state
-    if (!state || !state.build || !state.repository) {
-        return <div>Loading...</div>
-    }
     const [keyboardEmptyError, setKeyboardEmptyError] = useState(false)
     const [keymapEmptyError, setKeymapEmptyError] = useState(false)
     const [keymapStrError, setKeymapStrError] = useState(false)
@@ -23,66 +20,76 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}) => {
     const [disabledBuildText, setDisabledBuildText] = useState(false)
     const [disabledUseRepoButtonButton, setDisabledUseRepoButtonButton] = useState(false)
     const [init, setInit] = useState(true)
-    const [keyboardList, setKeyboardList] = useState<string[]>([])
+    const [keyboardList, setKeyboardList] = useState<{kb: string; km: string[]}[]>([])
+    
+    // Initialize component with stored values
+    useEffect((): void => {
+        const initializeStoredValues = async (): Promise<void> => {
+            // Load keyboard list if keyboard is already selected
+            if (state?.build?.kb) {
+                const c = state.build.useRepo ? await api.listRemoteKeyboards(state.build.fw) : await api.listLocalKeyboards()
+                const keyboards = c as {kb: string; km: string[]}[]
+                state.keyboardList.kb = keyboards?.length > 0 ? keyboards.map((v): string => v.kb) : []
+                setKeyboardList(keyboards)
+                
+                // Load keymap list for selected keyboard
+                if (keyboards?.length > 0) {
+                    const obj = keyboards.find((v): boolean => v.kb === state.build.kb)
+                    state.keyboardList.km = obj ? obj.km : []
+                }
+                
+                if (state) {
+                    void setState(state)
+                }
+            }
+        }
+        
+        void initializeStoredValues()
+    }, [setState, state]) // Add dependencies
 
-    const findFirmware = (state: any) => state.repository.firmwares.find((r: any) => r.id === state.build.fw)
-    const getCommit = (state: any) => findFirmware(state)?.commit
-    const setCommit = (state: any, commit: string) => {
+    // Guard against uninitialized state
+    if (!state || !state.build || !state.repository) {
+        return <div>Loading...</div>
+    }
+
+    const findFirmware = (state: AppState): Firmware | undefined => state.repository.firmwares.find((r): boolean => r.id === state.build.fw)
+    const getCommit = (state: AppState): string | undefined => findFirmware(state)?.commit
+    const setCommit = (state: AppState, commit: string): void => {
         state.build.commit = commit
-        findFirmware(state).commit = commit
+        const firmware = findFirmware(state)
+        if (firmware) {
+            firmware.commit = commit
+        }
     }
-    const handleSelectFW = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const handleSelectFW = (e: React.ChangeEvent<HTMLSelectElement>): void => {
         state.build.fw = e.target.value
-        setCommit(state, getCommit(state))
-        setState(state)
+        const commit = getCommit(state)
+        if (commit) {
+            setCommit(state, commit)
+        }
+        void setState(state)
     }
 
-    const validBuildButton = () => {
-        const validKeymapStr = (/:|flash/).test(state.build.km)
+    const validBuildButton = (): void => {
+        const validKeymapStr = (/:|flash/).test(state.build.km || '')
         setKeymapStrError(validKeymapStr)
         const validDisableButton = state.build.kb && state.build.km && !validKeymapStr
         setDisabledBuildButton(!validDisableButton)
         setDisabledUseRepoButtonButton(validKeymapStr)
     }
 
-    const initDisabledBuildButton = () => {
+    const initDisabledBuildButton = (): boolean => {
         validBuildButton()
         setInit(false)
         return disabledBuildButton
     }
 
-    // Initialize component with stored values
-    useEffect(() => {
-        const initializeStoredValues = async () => {
-            // Load keyboard list if keyboard is already selected
-            if (state.build.kb) {
-                const c = state.build.useRepo ? await api.listRemoteKeyboards(state.build.fw) : await api.listLocalKeyboards()
-                state.keyboardList.kb = c?.length > 0 ? c.map(v => {
-                    return {label: v.kb}
-                }) : []
-                setKeyboardList(c)
-                
-                // Load keymap list for selected keyboard
-                if (c?.length > 0) {
-                    const obj = c.find(v => v.kb === state.build.kb)
-                    state.keyboardList.km = obj ? obj.km.map(v => {
-                        return {label: v}
-                    }) : []
-                }
-                
-                setState(state)
-            }
-        }
-        
-        initializeStoredValues()
-    }, []) // Empty dependency array ensures this runs only once on mount
-
-    const handleTextChange = (inputName) => (e) => {
+    const handleTextChange = (inputName: string): ((e: React.ChangeEvent<HTMLInputElement>) => void) => (e: React.ChangeEvent<HTMLInputElement>): void => {
         if (inputName === 'commit') setCommit(state, e.target.value)
-        setState(state)
+        void setState(state)
     }
 
-    const handleKbSelectChange = async (e) => {
+    const handleKbSelectChange = async (e: React.ChangeEvent<HTMLSelectElement>): Promise<void> => {
         const selectedKb = e.target.value
         state.build.kb = selectedKb
         
@@ -91,10 +98,8 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}) => {
         
         // Update keymap list based on selected keyboard
         if (selectedKb) {
-            const obj = keyboardList.find(v => v.kb === selectedKb)
-            state.keyboardList.km = obj ? obj.km.map(v => {
-                return {label: v}
-            }) : []
+            const obj = keyboardList.find((v): boolean => v.kb === selectedKb)
+            state.keyboardList.km = obj ? obj.km : []
         } else {
             state.keyboardList.km = []
         }
@@ -102,61 +107,58 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}) => {
         setKeyboardEmptyError(!state.build.kb)
         setKeymapEmptyError(!state.build.km)
         validBuildButton()
-        setState(state)
+        void setState(state)
     }
 
-    const handleKmSelectChange = (e) => {
+    const handleKmSelectChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
         state.build.km = e.target.value
         
         setKeymapEmptyError(!state.build.km)
         validBuildButton()
-        setState(state)
+        void setState(state)
     }
 
-    const handleKbFocus = async () => {
+    const handleKbFocus = async (): Promise<void> => {
         const c = state.build.useRepo ? await api.listRemoteKeyboards(state.build.fw) : await api.listLocalKeyboards()
-        state.keyboardList.kb = c?.length > 0 ? c.map(v => {
-            return {label: v.kb}
-        }) : []
-        setKeyboardList(c)
+        const keyboards = c as {kb: string; km: string[]}[]
+        state.keyboardList.kb = keyboards?.length > 0 ? keyboards.map((v): string => v.kb) : []
+        setKeyboardList(keyboards)
         
         // Update keymap list if keyboard is already selected
-        if (state.build.kb && c?.length > 0) {
-            const obj = c.find(v => v.kb === state.build.kb)
-            state.keyboardList.km = obj ? obj.km.map(v => {
-                return {label: v}
-            }) : []
+        if (state.build.kb && keyboards?.length > 0) {
+            const obj = keyboards.find((v): boolean => v.kb === state.build.kb)
+            state.keyboardList.km = obj ? obj.km : []
         }
         
-        setState(state)
+        void setState(state)
     }
 
 
-    const handleSelectTags = (e) => {
+    const handleSelectTags = (e: React.ChangeEvent<HTMLSelectElement>): void => {
         state.build.tag = e.target.value
-        setState(state)
+        void setState(state)
     }
 
-    const handleUseRepoChange = (e) => {
+    const handleUseRepoChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
         state.build.useRepo = e.target.checked
-        setState(state)
+        void setState(state)
     }
 
-    const waiting = async (start, end, log, onCompleteCallback) => {
+    const waiting = async (start: () => Promise<unknown>, end: () => Promise<unknown>, log: string, onCompleteCallback?: () => void): Promise<void> => {
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
         setPageLog('build', log)
         state.tabDisabled = true
-        setState(state)
+        void setState(state)
         await start()
-        let id
-        const checkFn = async () => {
+        let id: ReturnType<typeof setInterval>
+        const checkFn = async (): Promise<void> => {
             const buildCompleted = await end()
             if (buildCompleted) {
                 setDisabledBuildButton(false)
                 setDisabledBuildText(false)
                 state.tabDisabled = false
-                setState(state)
+                void setState(state)
                 clearInterval(id)
                 if (onCompleteCallback) {
                     onCompleteCallback()
@@ -166,18 +168,18 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}) => {
         id = setInterval(checkFn, 1000)
     }
 
-    const handleCheckout = async () => {
+    const handleCheckout = async (): Promise<void> => {
         // Show log modal when checkout starts
         if (onShowLogModal) {
             onShowLogModal()
         }
         
-        const start = async () => await api.checkout({
+        const start = async (): Promise<unknown> => await api.checkout({
             fw: state.build.fw.toLowerCase(),
             tag: state.build.tag,
-            commit: getCommit(state)
+            commit: getCommit(state) || ''
         })
-        const end = async () => await api.buildCompleted()
+        const end = async (): Promise<unknown> => await api.buildCompleted()
         await waiting(start, end, "Checkout....")
         
         if (onOperationComplete) {
@@ -185,21 +187,21 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}) => {
         }
     }
 
-    const handleCopyKeyboardFile = async () => {
+    const handleCopyKeyboardFile = async (): Promise<void> => {
         await api.copyKeyboardFile({
             fw: state.build.fw.toLowerCase(),
             kb: state.build.kb
         })
     }
 
-    const handleBuild = async () => {
+    const handleBuild = async (): Promise<void> => {
         // Show log modal when build starts
         if (onShowLogModal) {
             onShowLogModal()
         }
         
-        const start = async () => await api.build(state.build)
-        const end = async () => await api.buildCompleted()
+        const start = async (): Promise<unknown> => await api.build(state.build)
+        const end = async (): Promise<unknown> => await api.buildCompleted()
         await waiting(start, end,
             "Building....\n\nIt will take some time if the first build or tag has changed.\n\n")
         
@@ -221,7 +223,7 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}) => {
                             onChange={handleSelectFW}
                             required
                         >
-                            {state.repository.firmwares.map((fw) =>
+                            {state.repository.firmwares.map((fw): React.ReactElement =>
                                 (<option
                                     key={`fw-${fw.id}`}
                                     value={fw.id}
@@ -238,7 +240,7 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}) => {
                                 onChange={handleSelectTags}
                                 required
                             >
-                                {(state.build.tags || []).map((tag, i) => (
+                                {(state.build.tags || []).map((tag, i): React.ReactElement => (
                                     <option key={`tags-${i}`} value={tag}>{tag}</option>
                                 ))}
                             </Select>
@@ -251,7 +253,7 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}) => {
                                 id="build-commit"
                                 disabled={disabledBuildText}
                                 onChange={handleTextChange("commit")}
-                                value={getCommit(state)}
+                                value={getCommit(state) || ''}
                             />
                         </div>
                     )}
@@ -272,9 +274,9 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}) => {
                             required
                         >
                             <option value="">Select keyboard...</option>
-                            {(state.keyboardList.kb || []).map((kb) => (
-                                <option key={kb.label} value={kb.label}>
-                                    {kb.label}
+                            {(state.keyboardList.kb || []).map((kb): React.ReactElement => (
+                                <option key={kb} value={kb}>
+                                    {kb}
                                 </option>
                             ))}
                         </Select>
@@ -298,9 +300,9 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}) => {
                             required
                         >
                             <option value="">Select keymap...</option>
-                            {(state.keyboardList.km || []).map((km) => (
-                                <option key={km.label} value={km.label}>
-                                    {km.label}
+                            {(state.keyboardList.km || []).map((km): React.ReactElement => (
+                                <option key={km} value={km}>
+                                    {km}
                                 </option>
                             ))}
                         </Select>
@@ -330,7 +332,7 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}) => {
                                 color="light"
                                 className={disabledUseRepoButtonButton ? 'cursor-not-allowed' : 'cursor-pointer'}
                                 style={disabledUseRepoButtonButton ? { opacity: 0.5 } : {}}
-                                onClick={disabledUseRepoButtonButton ? () => {} : handleCheckout}
+                                onClick={disabledUseRepoButtonButton ? (): void => {} : handleCheckout}
                                 disabled={false}
                             >
                                 Refresh Keyboard List
@@ -339,7 +341,7 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}) => {
                                 color="light"
                                 className={disabledUseRepoButtonButton ? 'cursor-not-allowed' : 'cursor-pointer'}
                                 style={disabledUseRepoButtonButton ? { opacity: 0.5 } : {}}
-                                onClick={disabledUseRepoButtonButton ? () => {} : handleCopyKeyboardFile}
+                                onClick={disabledUseRepoButtonButton ? (): void => {} : handleCopyKeyboardFile}
                                 disabled={false}
                             >
                                 Copy Keyboard File
@@ -351,7 +353,7 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}) => {
                         color="blue"
                         className={`w-full ${(init ? initDisabledBuildButton() : disabledBuildButton) ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         style={(init ? initDisabledBuildButton() : disabledBuildButton) ? { opacity: 0.5 } : {}}
-                        onClick={(init ? initDisabledBuildButton() : disabledBuildButton) ? () => {} : handleBuild}
+                        onClick={(init ? initDisabledBuildButton() : disabledBuildButton) ? (): void => {} : handleBuild}
                         disabled={false}
                     >
                         Build

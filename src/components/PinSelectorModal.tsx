@@ -18,62 +18,72 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
     availablePins, 
     selectedPins, 
     onConfirm 
-}) => {
+}): React.ReactElement => {
     const [tempSelectedPins, setTempSelectedPins] = useState([...selectedPins])
     const [animatingIndex, setAnimatingIndex] = useState<number | null>(null)
 
-    const handlePinToggle = (pin: string) => {
+    const handlePinToggle = (pin: string): void => {
         if (tempSelectedPins.includes(pin)) {
-            setTempSelectedPins(tempSelectedPins.filter(p => p !== pin))
+            setTempSelectedPins(tempSelectedPins.filter((p): boolean => p !== pin))
         } else {
             setTempSelectedPins([...tempSelectedPins, pin])
         }
     }
 
-    const handleMoveUp = (index: number) => {
+    const handleMoveUp = (index: number): void => {
         if (index > 0) {
             setAnimatingIndex(index)
-            setTimeout(() => {
+            setTimeout((): void => {
                 const newPins = [...tempSelectedPins]
-                ;[newPins[index - 1], newPins[index]] = [newPins[index], newPins[index - 1]]
-                setTempSelectedPins(newPins)
+                const current = newPins[index]
+                const previous = newPins[index - 1]
+                if (current !== undefined && previous !== undefined) {
+                    newPins[index - 1] = current
+                    newPins[index] = previous
+                    setTempSelectedPins(newPins)
+                }
                 // Keep highlighting the moved item (now at index-1)
                 setAnimatingIndex(index - 1)
-                setTimeout(() => setAnimatingIndex(null), 200)
+                setTimeout((): void => setAnimatingIndex(null), 200)
             }, 300)
         }
     }
 
-    const handleMoveDown = (index: number) => {
+    const handleMoveDown = (index: number): void => {
         if (index < tempSelectedPins.length - 1) {
             setAnimatingIndex(index)
-            setTimeout(() => {
+            setTimeout((): void => {
                 const newPins = [...tempSelectedPins]
-                ;[newPins[index], newPins[index + 1]] = [newPins[index + 1], newPins[index]]
-                setTempSelectedPins(newPins)
+                const current = newPins[index]
+                const next = newPins[index + 1]
+                if (current !== undefined && next !== undefined) {
+                    newPins[index] = next
+                    newPins[index + 1] = current
+                    setTempSelectedPins(newPins)
+                }
                 // Keep highlighting the moved item (now at index+1)
                 setAnimatingIndex(index + 1)
-                setTimeout(() => setAnimatingIndex(null), 200)
+                setTimeout((): void => setAnimatingIndex(null), 200)
             }, 300)
         }
     }
 
-    const handleRemove = (pin) => {
-        setTempSelectedPins(tempSelectedPins.filter(p => p !== pin))
+    const handleRemove = (pin: string): void => {
+        setTempSelectedPins(tempSelectedPins.filter((p): boolean => p !== pin))
     }
 
-    const handleConfirm = () => {
+    const handleConfirm = (): void => {
         onConfirm(tempSelectedPins)
         onClose()
     }
 
-    const handleCancel = () => {
+    const handleCancel = (): void => {
         setTempSelectedPins([...selectedPins])
         onClose()
     }
 
     // Reset when modal opens
-    React.useEffect(() => {
+    React.useEffect((): void => {
         if (isOpen) {
             setTempSelectedPins([...selectedPins])
             setAnimatingIndex(null)
@@ -100,10 +110,10 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
                     <div className="flex-shrink-0">
                         {/* Pin Grid */}
                         <div className="grid grid-cols-5 gap-2 max-h-72 overflow-y-auto p-2 border border-gray-200 dark:border-gray-600 rounded-lg">
-                            {availablePins.map((pin) => (
+                            {availablePins.map((pin): React.ReactElement => (
                                 <button
                                     key={pin}
-                                    onClick={() => handlePinToggle(pin)}
+                                    onClick={(): void => handlePinToggle(pin)}
                                     className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors cursor-pointer ${
                                         tempSelectedPins.includes(pin)
                                             ? 'bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-800 dark:border-blue-600 dark:text-blue-100'
@@ -131,7 +141,7 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
                                         minHeight: '120px'
                                     }}
                                 >
-                                    {tempSelectedPins.map((pin, index) => (
+                                    {tempSelectedPins.map((pin, index): React.ReactElement => (
                                         <div 
                                             key={`${pin}-${index}`}
                                             className={`flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 transition-all duration-300 ${
@@ -151,7 +161,7 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
                                             
                                             <div className="flex items-center space-x-1">
                                                 <button
-                                                    onClick={() => handleMoveUp(index)}
+                                                    onClick={(): void => handleMoveUp(index)}
                                                     disabled={index === 0 || animatingIndex !== null}
                                                     className="p-1 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
                                                     style={{ cursor: index === 0 || animatingIndex !== null ? 'not-allowed' : 'pointer' }}
@@ -159,7 +169,7 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
                                                     <HiArrowUp className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleMoveDown(index)}
+                                                    onClick={(): void => handleMoveDown(index)}
                                                     disabled={index === tempSelectedPins.length - 1 || animatingIndex !== null}
                                                     className="p-1 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
                                                     style={{ cursor: index === tempSelectedPins.length - 1 || animatingIndex !== null ? 'not-allowed' : 'pointer' }}
@@ -167,7 +177,7 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
                                                     <HiArrowDown className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleRemove(pin)}
+                                                    onClick={(): void => handleRemove(pin)}
                                                     disabled={animatingIndex !== null}
                                                     className="p-1 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
                                                     style={{ cursor: animatingIndex !== null ? 'not-allowed' : 'pointer' }}

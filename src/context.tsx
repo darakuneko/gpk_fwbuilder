@@ -1,14 +1,82 @@
 import React, {createContext, useContext, useState, ReactNode} from 'react'
 
+export interface Firmware {
+    id: string;
+    url: string;
+    commit: string;
+}
+
+export interface AppState {
+    version: string;
+    storePath: string;
+    build: {
+        fw: string;
+        tag: string;
+        tags: string[];
+        kb: string;
+        km: string;
+        commit: string;
+        useRepo: boolean;
+    };
+    keyboardList: {
+        kb: string[];
+        km: string[];
+    };
+    generate: {
+        qmkFile: {
+            kb: string;
+            user: string;
+            layout: string;
+            mcu: string;
+        };
+    };
+    convert: {
+        kle: {
+            kb: string;
+            user: string;
+            vid: string;
+            pid: string;
+            mcu: string;
+            cols: string;
+            rows: string;
+            option: number;
+        };
+        pins: {
+            rp2040: string[];
+            promicro: string[];
+        };
+    };
+    repository: {
+        firmware: string;
+        firmwares: Firmware[];
+    };
+    setting: {
+        fwMakerUrl: string;
+        fwDir: string;
+    };
+    logs: string;
+    tabDisabled: boolean;
+    pageLogs: {
+        build: string;
+        generateKeyboardFile: string;
+        generateVialId: string;
+        convertVialToKeymap: string;
+        convertKleToKeyboard: string;
+        repository: string;
+        image: string;
+    };
+}
+
 interface StateContextType {
-    state: any;
-    setState: (state: any) => void;
+    state: AppState | null;
+    setState: (state: AppState) => Promise<void>;
     setPageLog: (page: string, log: string) => void;
     getPageLog: (page: string) => string;
 }
 
 const stateContext = createContext<StateContextType | undefined>(undefined)
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useStateContext(): StateContextType {
     const context = useContext(stateContext);
     if (!context) {
@@ -17,15 +85,15 @@ export function useStateContext(): StateContextType {
     return context;
 }
 
-let _state: any
+let _state: AppState | null = null
 
 interface StateProviderProps {
     children: ReactNode;
 }
 
-export function StateProvider({children}: StateProviderProps) {
+export function StateProvider({children}: StateProviderProps): React.ReactElement {
 
-    const [state, _setState] = useState({
+    const [state, _setState] = useState<AppState>({
         version: '',
         storePath: '',
         build: {
@@ -114,7 +182,7 @@ export function StateProvider({children}: StateProviderProps) {
         }
     })
 
-    const setState = async (obj: any) => {
+    const setState = async (obj: AppState): Promise<void> => {
         _state = obj
         _setState({
             build: {
@@ -178,20 +246,24 @@ export function StateProvider({children}: StateProviderProps) {
         })
     }
 
-    const setPageLog = (pageName: string, logContent: string) => {
-        if (!_state.pageLogs) {
-            _state.pageLogs = {
-                build: "",
-                generateKeyboardFile: "",
-                generateVialId: "",
-                convertVialToKeymap: "",
-                convertKleToKeyboard: "",
-                repository: "",
-                image: ""
+    const setPageLog = (pageName: string, logContent: string): void => {
+        if (!_state?.pageLogs) {
+            if (_state) {
+                _state.pageLogs = {
+                    build: "",
+                    generateKeyboardFile: "",
+                    generateVialId: "",
+                    convertVialToKeymap: "",
+                    convertKleToKeyboard: "",
+                    repository: "",
+                    image: ""
+                }
             }
         }
-        _state.pageLogs[pageName] = logContent
-        _setState(prevState => ({
+        if (_state?.pageLogs) {
+            (_state.pageLogs as Record<string, string>)[pageName] = logContent
+        }
+        _setState((prevState): AppState => ({
             ...prevState,
             pageLogs: {
                 ...prevState.pageLogs,
@@ -200,8 +272,8 @@ export function StateProvider({children}: StateProviderProps) {
         }))
     }
 
-    const getPageLog = (pageName: string) => {
-        return _state?.pageLogs?.[pageName] || ""
+    const getPageLog = (pageName: string): string => {
+        return (_state?.pageLogs as Record<string, string> | undefined)?.[pageName] || ""
     }
 
     const value = {
@@ -216,4 +288,5 @@ export function StateProvider({children}: StateProviderProps) {
     )
 }
 
-export const getState = () => _state
+// eslint-disable-next-line react-refresh/only-export-components
+export const getState = (): AppState | null => _state

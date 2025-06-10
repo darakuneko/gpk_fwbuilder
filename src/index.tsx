@@ -1,15 +1,22 @@
-import React, { useEffect } from "react"
+import React, { useEffect, ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
+
 import {StateProvider} from "./context"
 import Content from "./content"
 import { useTheme } from "./hooks/useTheme"
+
 import 'flowbite/dist/flowbite.min.css'
 import "./globals.css"
 
-const ThemeProvider = ({ children }) => {
+interface ThemeProviderProps {
+    children: ReactNode;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+const ThemeProvider = ({ children }: ThemeProviderProps): React.ReactElement => {
     const { theme } = useTheme();
     
-    useEffect(() => {
+    useEffect((): void => {
         // Flowbite theme handling - light/dark auto switch
         const root = document.documentElement;
         if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -19,10 +26,11 @@ const ThemeProvider = ({ children }) => {
         }
     }, [theme]);
     
-    return children;
+    return <>{children}</>;
 }
 
-const App = () => {
+// eslint-disable-next-line react-refresh/only-export-components
+const App = (): React.ReactElement => {
     return (
         <StateProvider>
             <ThemeProvider>
@@ -33,5 +41,8 @@ const App = () => {
 }
 
 const container = document.getElementById('root')
+if (!container) {
+    throw new Error('Root element not found')
+}
 const root = createRoot(container)
 root.render(<App />)

@@ -1,32 +1,37 @@
 import React, {useRef, useEffect, useState, useCallback} from 'react'
-import {useStateContext} from "../context"
 import { TextInput, Button } from 'flowbite-react'
+
+import {useStateContext} from "../context"
 import { cleanLogText, parseLogColors, isOperationComplete } from '../utils/logParser'
 
-const Logs = ({pageKey}) => {
+interface LogsProps {
+    pageKey?: string;
+}
+
+const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
     const {state, getPageLog} = useStateContext()
-    const textareaRef = useRef(null)
-    const divRef = useRef(null)
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
+    const divRef = useRef<HTMLDivElement>(null)
     const [isTextareaMode, setIsTextareaMode] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
     const [filteredLogs, setFilteredLogs] = useState('')
-    const [searchHistory, setSearchHistory] = useState([])
+    const [searchHistory, setSearchHistory] = useState<string[]>([])
     const [showSearchHistory, setShowSearchHistory] = useState(false)
     const [showSearchPanel, setShowSearchPanel] = useState(false)
     const [copySuccess, setCopySuccess] = useState(false)
-    const searchInputRef = useRef(null)
+    const searchInputRef = useRef<HTMLInputElement>(null)
 
     // Get the appropriate log data based on pageKey
-    const getCurrentLogs = useCallback(() => {
+    const getCurrentLogs = useCallback((): string => {
         if (pageKey && getPageLog) {
-            return getPageLog(pageKey) || state.logs || ''
+            return getPageLog(pageKey) || state?.logs || ''
         }
-        return state.logs || ''
-    }, [pageKey, getPageLog, state.logs])
+        return state?.logs || ''
+    }, [pageKey, getPageLog, state?.logs])
 
     // Initialize filteredLogs when component mounts or logs change
-    useEffect(() => {
+    useEffect((): void => {
         if (!searchQuery) {
             setFilteredLogs(cleanLogText(getCurrentLogs()) || '')
         }
@@ -34,25 +39,25 @@ const Logs = ({pageKey}) => {
 
 
     // Check if processing is complete
-    useEffect(() => {
+    useEffect((): void => {
         const currentLogs = getCurrentLogs()
         if (currentLogs) {
             const isFinished = isOperationComplete(currentLogs)
-            setIsProcessing(!isFinished && state.tabDisabled)
+            setIsProcessing(!isFinished && (state?.tabDisabled || false))
         }
-    }, [getCurrentLogs, state.tabDisabled])
+    }, [getCurrentLogs, state?.tabDisabled])
 
     // Auto-scroll to bottom when logs update
-    useEffect(() => {
+    useEffect((): void => {
         if (isTextareaMode && textareaRef.current) {
             textareaRef.current.scrollTop = textareaRef.current.scrollHeight
         } else if (!isTextareaMode && divRef.current) {
             divRef.current.scrollTop = divRef.current.scrollHeight
         }
-    }, [state.logs, isTextareaMode])
+    }, [state?.logs, isTextareaMode])
 
     // Load search history from localStorage on component mount
-    useEffect(() => {
+    useEffect((): void => {
         const savedHistory = localStorage.getItem('logSearchHistory')
         if (savedHistory) {
             try {
@@ -64,14 +69,14 @@ const Logs = ({pageKey}) => {
     }, [])
 
     // Save search history to localStorage whenever it changes
-    useEffect(() => {
+    useEffect((): void => {
         if (searchHistory.length > 0) {
             localStorage.setItem('logSearchHistory', JSON.stringify(searchHistory))
         }
     }, [searchHistory])
 
     // Filter logs based on search query
-    useEffect(() => {
+    useEffect((): void => {
         const logContent = cleanLogText(getCurrentLogs())
         
         if (!searchQuery) {
@@ -87,51 +92,51 @@ const Logs = ({pageKey}) => {
         try {
             const regex = new RegExp(searchQuery, 'gi')
             const lines = logContent.split('\n')
-            const filteredLines = lines.filter(line => line.trim() && regex.test(line))
+            const filteredLines = lines.filter((line): boolean => Boolean(line.trim() && regex.test(line)))
             setFilteredLogs(filteredLines.join('\n'))
-        } catch (e) {
+        } catch {
             // If regex is invalid, fall back to simple string search
             const lines = logContent.split('\n')
-            const filteredLines = lines.filter(line => 
-                line.trim() && line.toLowerCase().includes(searchQuery.toLowerCase())
+            const filteredLines = lines.filter((line): boolean => 
+                Boolean(line.trim() && line.toLowerCase().includes(searchQuery.toLowerCase()))
             )
             setFilteredLogs(filteredLines.join('\n'))
         }
     }, [searchQuery, getCurrentLogs])
 
     // Handle search query change
-    const handleSearchChange = (e) => {
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
         setSearchQuery(e.target.value)
     }
 
     // Handle search history selection
-    const handleHistorySelect = (query) => {
+    const handleHistorySelect = (query: string): void => {
         setSearchQuery(query)
         setShowSearchHistory(false)
         searchInputRef.current?.focus()
     }
 
     // Toggle search panel
-    const toggleSearchPanel = () => {
+    const toggleSearchPanel = (): void => {
         const currentLogs = getCurrentLogs()
-        const hasLogs = currentLogs && cleanLogText(currentLogs).trim()
+        const hasLogs = Boolean(currentLogs && cleanLogText(currentLogs).trim())
         if (!hasLogs) return
         
-        setShowSearchPanel(prev => !prev)
+        setShowSearchPanel((prev): boolean => !prev)
         if (!showSearchPanel) {
             // Focus search input when opening panel
-            setTimeout(() => searchInputRef.current?.focus(), 100)
+            setTimeout((): void => { searchInputRef.current?.focus() }, 100)
         }
     }
 
     // Check if search is available
-    const isSearchAvailable = () => {
+    const isSearchAvailable = (): boolean => {
         const currentLogs = getCurrentLogs()
-        return currentLogs && cleanLogText(currentLogs).trim()
+        return Boolean(currentLogs && cleanLogText(currentLogs).trim())
     }
 
     // Copy filtered logs to clipboard
-    const copyFilteredLogs = async () => {
+    const copyFilteredLogs = async (): Promise<void> => {
         const textToCopy = searchQuery ? filteredLogs : logContent
         if (!textToCopy) return
         
@@ -139,22 +144,22 @@ const Logs = ({pageKey}) => {
             await navigator.clipboard.writeText(textToCopy)
             setCopySuccess(true)
             // Hide success message after 1 seconds
-            setTimeout(() => setCopySuccess(false), 1000)
+            setTimeout((): void => { setCopySuccess(false) }, 1000)
         } catch (err) {
             console.error('Failed to copy logs:', err)
         }
     }
 
     // Add search query to history
-    const addToSearchHistory = (query) => {
+    const addToSearchHistory = (query: string): void => {
         if (!query.trim()) return
 
-        const newHistory = [query, ...searchHistory.filter(item => item !== query)].slice(0, 20)
+        const newHistory = [query, ...searchHistory.filter((item): boolean => item !== query)].slice(0, 20)
         setSearchHistory(newHistory)
     }
 
     // Handle Enter key in search input
-    const handleSearchKeyDown = (e) => {
+    const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
         if (e.key === 'Enter') {
             addToSearchHistory(searchQuery)
             setShowSearchHistory(false)
@@ -164,7 +169,7 @@ const Logs = ({pageKey}) => {
     }
 
     // Clear search
-    const clearSearch = () => {
+    const clearSearch = (): void => {
         setSearchQuery('')
         setShowSearchHistory(false)
         searchInputRef.current?.focus()
@@ -179,7 +184,7 @@ const Logs = ({pageKey}) => {
             {!isTextareaMode ? (
                 <div
                     ref={divRef}
-                    onClick={() => !isProcessing && setIsTextareaMode(true)}
+                    onClick={(): void => { if (!isProcessing) setIsTextareaMode(true) }}
                     className={`logs-div border-0 
                     w-full font-mono text-sm bg-gray-900 text-white 
                     transition-colors ${
@@ -221,7 +226,7 @@ const Logs = ({pageKey}) => {
                                 onClick={toggleSearchPanel}
                                 className={`cursor-pointer transition-opacity ${!isSearchAvailable() ? 'cursor-not-allowed' : ''}`}
                                 style={!isSearchAvailable() ? { opacity: 0.5 } : {}}
-                                disabled={!isSearchAvailable()}
+                                disabled={false}
                             >
                                 Search
                             </Button>
@@ -231,13 +236,13 @@ const Logs = ({pageKey}) => {
                                 onClick={copyFilteredLogs}
                                 className={`cursor-pointer transition-opacity ${!isSearchAvailable() ? 'cursor-not-allowed' : ''}`}
                                 style={!isSearchAvailable() ? { opacity: 0.5 } : {}}
-                                disabled={!isSearchAvailable()}
+                                disabled={false}
                             >
                                 {copySuccess ? 'Copied!' : 'Copy All'}
                             </Button>
                         </div>
                         <button
-                            onClick={() => setIsTextareaMode(false)}
+                            onClick={(): void => setIsTextareaMode(false)}
                             className="text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded transition-colors cursor-pointer"
                         >
                             Back to view mode
@@ -256,8 +261,8 @@ const Logs = ({pageKey}) => {
                                         value={searchQuery}
                                         onChange={handleSearchChange}
                                         onKeyDown={handleSearchKeyDown}
-                                        onFocus={() => setShowSearchHistory(true)}
-                                        onBlur={() => setTimeout(() => setShowSearchHistory(false), 150)}
+                                        onFocus={(): void => setShowSearchHistory(true)}
+                                        onBlur={(): void => { setTimeout((): void => { setShowSearchHistory(false) }, 150) }}
                                         className="w-full font-mono text-sm"
                                     />
                                     
@@ -269,10 +274,10 @@ const Logs = ({pageKey}) => {
                                             <div className="px-3 py-1 text-xs text-gray-500 border-b border-gray-600">
                                                 Recent searches
                                             </div>
-                                            {searchHistory.map((historyItem, index) => (
+                                            {searchHistory.map((historyItem, index): React.ReactElement => (
                                                 <button
                                                     key={index}
-                                                    onClick={() => handleHistorySelect(historyItem)}
+                                                    onClick={(): void => handleHistorySelect(historyItem)}
                                                     className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 font-mono cursor-pointer border-b border-gray-700 last:border-b-0"
                                                 >
                                                     {historyItem}
@@ -298,7 +303,7 @@ const Logs = ({pageKey}) => {
                             {searchQuery && (
                                 <div className="mt-2 text-xs text-gray-400">
                                     {filteredLogs && filteredLogs.trim() ? 
-                                        `Showing lines matching "${searchQuery}" (${filteredLogs.split('\n').filter(line => line.trim()).length} lines)` : 
+                                        `Showing lines matching "${searchQuery}" (${filteredLogs.split('\n').filter((line): boolean => Boolean(line.trim())).length} lines)` : 
                                         'No matches found'
                                     }
                                 </div>

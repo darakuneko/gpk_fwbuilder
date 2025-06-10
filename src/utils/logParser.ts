@@ -57,7 +57,7 @@ export const isBuildLog = (str: string): boolean => {
         /QMK/
     ]
     
-    return buildPatterns.some(pattern => pattern.test(str))
+    return buildPatterns.some((pattern): boolean => pattern.test(str))
 }
 
 export const parseLogColors = (str: string): { __html: string } => {        
@@ -94,26 +94,30 @@ const alignStatusIndicators = (text: string): string => {
     const lines = text.split('\n')
     
     let maxContentLength = 0
-    lines.forEach(line => {
+    lines.forEach((line): void => {
         const statusPattern = /^(.+?)(\s*)(\[[A-Z][A-Z0-9\s]*\])\s*$/
         const match = line.match(statusPattern)
         if (match) {
             const [, content] = match
-            maxContentLength = Math.max(maxContentLength, content.length)
+            if (content) {
+                maxContentLength = Math.max(maxContentLength, content.length)
+            }
         }
     })
     
     const targetColumn = Math.min(Math.max(maxContentLength + 2, 85), 100)
     
-    const alignedLines = lines.map(line => {
+    const alignedLines = lines.map((line): string => {
         const statusPattern = /^(.+?)(\s*)(\[[A-Z][A-Z0-9\s]*\])\s*$/
         const match = line.match(statusPattern)
         
         if (match) {
             const [, content, , status] = match
-            const contentLength = content.length
-            const paddingNeeded = Math.max(1, targetColumn - contentLength - status.length)
-            return content + ' '.repeat(paddingNeeded) + status
+            if (content && status) {
+                const contentLength = content.length
+                const paddingNeeded = Math.max(1, targetColumn - contentLength - status.length)
+                return content + ' '.repeat(paddingNeeded) + status
+            }
         }
         
         return line

@@ -1,10 +1,16 @@
-import React from "react"
-import {useStateContext} from "../context"
+import React from 'react'
 import { Button } from 'flowbite-react'
+
+import {useStateContext} from "../context"
 
 const {api} = window
 
-const Image = ({onShowLogModal, onOperationComplete}) => {
+interface ImageProps {
+    onShowLogModal?: () => void;
+    onOperationComplete?: () => void;
+}
+
+const Image: React.FC<ImageProps> = ({onShowLogModal, onOperationComplete}): React.ReactElement => {
     const {state, setState, setPageLog} = useStateContext()
     
     // Guard against uninitialized state
@@ -12,26 +18,27 @@ const Image = ({onShowLogModal, onOperationComplete}) => {
         return <div>Loading...</div>
     }
 
-    const handleUpdate = (msg1, msg2, fn) => async () => {
+    const handleUpdate = (msg1: string, msg2: string, fn: () => Promise<unknown>): (() => Promise<void>) => async (): Promise<void> => {
         // Show log modal when rebuild starts
         if (onShowLogModal) {
             onShowLogModal()
         }
         
+        if (!state) return
         setPageLog('image', msg1)
         state.tabDisabled = true
-        setState(state)
+        void setState(state)
         await fn()
-        let id
-        const checkFn = async () => {
+        let id: ReturnType<typeof setInterval>
+        const checkFn = async (): Promise<void> => {
             const buildCompleted = await api.buildCompleted()
             const exist = await api.existSever()
             if (buildCompleted && exist) {
                 state.build.tags = await api.tags()
-                state.build.tag = state.build.tags[0]
+                state.build.tag = state.build.tags[0] || ''
                 setPageLog('image', msg2)
                 state.tabDisabled = false
-                setState(state)
+                void setState(state)
                 clearInterval(id)
                 
                 // Operation complete
@@ -50,10 +57,10 @@ const Image = ({onShowLogModal, onOperationComplete}) => {
                     <div className="text-center">
                         <Button 
                             color="red"
-                            className={`w-full ${state.tabDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                            style={state.tabDisabled ? { opacity: 0.5 } : {}}
+                            className={`w-full ${state?.tabDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                            style={state?.tabDisabled ? { opacity: 0.5 } : {}}
                             disabled={false}
-                            onClick={state.tabDisabled ? () => {} : handleUpdate("Building.....\n\n", "Rebuild!!", async () => await api.rebuildImage())}
+                            onClick={state?.tabDisabled ? (): void => {} : handleUpdate("Building.....\n\n", "Rebuild!!", async (): Promise<unknown> => await api.rebuildImage({}))}
                         >
                             Rebuild Docker Image
                         </Button>

@@ -1,20 +1,26 @@
-import React, {useState} from "react"
-import {useStateContext} from "../context"
+import React, {useState} from 'react'
 import { Button, Label, TextInput, Select, Checkbox, HelperText } from 'flowbite-react'
+
+import {useStateContext} from "../context"
 import PinSelectorModal from "../components/PinSelectorModal"
 import FileUpload from "../components/FileUpload"
 
 const {api} = window
 
-const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
+interface ConvertKleToKeyboardProps {
+    onShowLogModal?: () => void;
+    onOperationComplete?: () => void;
+}
+
+const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogModal, onOperationComplete}): React.ReactElement => {
     const {state, setState, setPageLog} = useStateContext()
     
     const [kleObj, setKleObj] = useState({
         name : "",
         path : "",
     })
-    const [pinCols, setPinCols] = React.useState([]);
-    const [pinRows, setPinRows] = React.useState([]);
+    const [pinCols, setPinCols] = React.useState<string[]>([]);
+    const [pinRows, setPinRows] = React.useState<string[]>([]);
     const [showRowsModal, setShowRowsModal] = useState(false);
     const [showColsModal, setShowColsModal] = useState(false);
 
@@ -46,7 +52,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
         return <div>Loading...</div>
     }
 
-    const validKleConvertButton = () => {
+    const validKleConvertButton = (): void => {
         const kle = state.convert.kle
         const reg1 = /^[A-Za-z0-9 _/-]+$/
         const reg2 = /^[A-Z0-9x]+$/
@@ -77,16 +83,16 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
         }
         const uploadedKleFile = kleObj.name.length > 0
 
-        const validDisableButton = (m2) => {
-            const m1 = kle.kb && kle.user && kle.vid && kle.pid && validKeyboardStrError && validUsernameStrError && validVidStrError
-                && validPidStrError && validPidSameError && uploadedKleFile
+        const validDisableButton = (m2: boolean): boolean => {
+            const m1 = Boolean(kle.kb && kle.user && kle.vid && kle.pid && validKeyboardStrError && validUsernameStrError && validVidStrError
+                && validPidStrError && validPidSameError && uploadedKleFile)
             return m1 && m2
         }
 
-        setDisabledKleConvertButton(isViaObj ? !validDisableButton(true) : !validDisableButton(kle.rows && kle.cols))
+        setDisabledKleConvertButton(isViaObj ? !validDisableButton(true) : !validDisableButton(Boolean(kle.rows && kle.cols)))
     }
 
-    const validKleEmpty = () => {
+    const validKleEmpty = (): void => {
         setKeyboardError(!state.convert.kle.kb)
         setUsernameEmptyError(!state.convert.kle.user)
         setVidEmptyError(!state.convert.kle.vid)
@@ -95,38 +101,43 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
         setColsEmptyError(state.convert.kle.option === 2 ? false : !state.convert.kle.cols)
     }
 
-    const handleTextChange = (inputName) => (e) => {
-        const v = e.target.value
-        if(inputName === 'kb') state.convert.kle.kb = v
-        if(inputName === 'user') state.convert.kle.user = v
-        if(inputName === 'vid') state.convert.kle.vid = v
-        if(inputName === 'pid') state.convert.kle.pid = v
+    const handleTextChange = (inputName: string): ((e: React.ChangeEvent<HTMLInputElement> | string[]) => void) => (e: React.ChangeEvent<HTMLInputElement> | string[]): void => {
+        let v: string | string[]
+        if (Array.isArray(e)) {
+            v = e
+        } else {
+            v = e.target.value
+        }
+        if(inputName === 'kb') state.convert.kle.kb = v as string
+        if(inputName === 'user') state.convert.kle.user = v as string
+        if(inputName === 'vid') state.convert.kle.vid = v as string
+        if(inputName === 'pid') state.convert.kle.pid = v as string
         if(inputName === 'rows') {
-            state.convert.kle.rows = v.length > 0 ? v.join(',') : undefined
-            setPinRows(v)
+            state.convert.kle.rows = Array.isArray(v) && v.length > 0 ? v.join(',') : ''
+            setPinRows(Array.isArray(v) ? v : [])
         }
         if(inputName === 'cols') {
-            state.convert.kle.cols = v.length > 0 ? v.join(',') : undefined
-            setPinCols(v)
+            state.convert.kle.cols = Array.isArray(v) && v.length > 0 ? v.join(',') : ''
+            setPinCols(Array.isArray(v) ? v : [])
         }
 
         validKleEmpty()
         validKleConvertButton()
-        setState(state)
+        void setState(state)
     }
 
-    const handleSelectMCU = (e) => {
+    const handleSelectMCU = (e: React.ChangeEvent<HTMLSelectElement>): void => {
         state.convert.kle.mcu = e.target.value
-        state.convert.kle.rows = undefined
-        state.convert.kle.cols = undefined
-        setState(state)
+        state.convert.kle.rows = ''
+        state.convert.kle.cols = ''
+        void setState(state)
         setPinRows([])
         setPinCols([])
         validKleConvertButton()
     }
 
     const convertMsg =  "Convert...."
-    const handleKleFileSubmit =  () => async () => {
+    const handleKleFileSubmit = (): (() => Promise<void>) => async (): Promise<void> => {
         // Show log modal when conversion starts
         if (onShowLogModal) {
             onShowLogModal()
@@ -134,24 +145,25 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
         
         setDisabledKleConvertButton(true)
         setDisabledConvertText(true)
+        if (!state) return
         setPageLog('convertKleToKeyboard', convertMsg)
         state.tabDisabled = true
-        setState(state)
+        void setState(state)
         const logs = await api.convertKleJson({params: state.convert.kle, file: kleObj})
 
         setDisabledKleConvertButton(false)
         setDisabledConvertText(false)
-        setPageLog('convertKleToKeyboard', logs)
+        setPageLog('convertKleToKeyboard', logs as string)
         state.tabDisabled = false
-        setState(state)
+        void setState(state)
         
         if (onOperationComplete) {
             onOperationComplete()
         }
     }
 
-    const handleKleFileUpload = async (e) => {
-        const file = e.target.files[0]
+    const handleKleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+        const file = e.target.files?.[0]
         setKleFileError(false)
         setKleFileErrorMessage("")
         
@@ -173,7 +185,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
             }
             
             kleObj.name = file.name
-            kleObj.path = window.webUtils.getPathForFile(file)
+            kleObj.path = (window as unknown as {webUtils: {getPathForFile: (file: File) => string}}).webUtils.getPathForFile(file)
             setKleObj({...kleObj})
 
             try {
@@ -187,13 +199,13 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                 }
                 
                 // Extract metadata from KLE JSON
-                const obj = json.filter(v => !Array.isArray(v))[0]
+                const obj = json.filter((v): v is Record<string, unknown> => !Array.isArray(v))[0]
                 if (obj) {
-                    if (obj.name) state.convert.kle.kb = obj.name
-                    if (obj.author) state.convert.kle.user = obj.author
+                    if (obj.name && typeof obj.name === 'string') state.convert.kle.kb = obj.name
+                    if (obj.author && typeof obj.author === 'string') state.convert.kle.user = obj.author
                 }
                 
-                setState(state)
+                void setState(state)
                 validKleConvertButton()
             } catch (jsonError) {
                 console.error("JSON parsing error:", jsonError)
@@ -213,7 +225,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
         }
     }
 
-    const handleKleOptionChange = (i) => async (e) => {
+    const handleKleOptionChange = (i: number): ((e: React.ChangeEvent<HTMLInputElement>) => Promise<void>) => async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
         if(i === 1){
             KleOptions.vial = e.target.checked
             if(e.target.checked) KleOptions.via = false
@@ -231,7 +243,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
         } else {
             state.convert.kle.option = 0
         }
-        setState(state)
+        void setState(state)
         validKleEmpty()
         validKleConvertButton()
     }
@@ -271,7 +283,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                             <Label className="mb-1 block" htmlFor="convert-kle-mcu-select">MCU</Label>
                             <Select
                                 id="convert-kle-mcu-select"
-                                value={state.convert.kle.mcu}
+                                value={state?.convert.kle.mcu || 'RP2040'}
                                 onChange={handleSelectMCU}
                                 required
                                 sizing="sm"
@@ -295,7 +307,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                                 color={keyboardError ? "failure" : "gray"}
                                 disabled={disabledConvertText}
                                 onChange={handleTextChange("kb")}
-                                value={state.convert.kle.kb}
+                                value={state?.convert.kle.kb || ''}
                                 sizing="sm"
                             />
                             {keyboardStrError && (
@@ -319,7 +331,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                                 color={usernameEmptyError ? "failure" : "gray"}
                                 disabled={disabledConvertText}
                                 onChange={handleTextChange("user")}
-                                value={state.convert.kle.user}
+                                value={state?.convert.kle.user || ''}
                                 sizing="sm"
                             />
                             {usernameStrError && (
@@ -343,7 +355,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                                 color={vidEmptyError ? "failure" : "gray"}
                                 disabled={disabledConvertText}
                                 onChange={handleTextChange("vid")}
-                                value={state.convert.kle.vid}
+                                value={state?.convert.kle.vid || ''}
                                 sizing="sm"
                             />
                             {vidStrError && (
@@ -367,7 +379,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                                 color={pidEmptyError ? "failure" : "gray"}
                                 disabled={disabledConvertText}
                                 onChange={handleTextChange("pid")}
-                                value={state.convert.kle.pid}
+                                value={state?.convert.kle.pid || ''}
                                 sizing="sm"
                             />
                             {pidStrError && (
@@ -389,7 +401,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                                 <div className="flex items-center">
                                     <Checkbox
                                         id="vial-settings"
-                                        checked={state.convert.kle.option === 1}
+                                        checked={state?.convert.kle.option === 1}
                                         onChange={handleKleOptionChange(1)}
                                         className="mr-2"
                                     />
@@ -400,7 +412,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                                 <div className="flex items-center">
                                     <Checkbox
                                         id="only-via"
-                                        checked={state.convert.kle.option === 2}
+                                        checked={state?.convert.kle.option === 2}
                                         onChange={handleKleOptionChange(2)}
                                         className="mr-2"
                                     />
@@ -423,7 +435,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                                     </Label>
                                     <Button
                                         color="light"
-                                        onClick={disabledConvertText ? () => {} : () => setShowRowsModal(true)}
+                                        onClick={disabledConvertText ? (): void => {} : (): void => setShowRowsModal(true)}
                                         disabled={false}
                                         className={disabledConvertText ? 'cursor-not-allowed w-full' : 'cursor-pointer w-full'}
                                         style={disabledConvertText ? { opacity: 0.5 } : {}}
@@ -456,7 +468,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                                     </Label>
                                     <Button
                                         color="light"
-                                        onClick={disabledConvertText ? () => {} : () => setShowColsModal(true)}
+                                        onClick={disabledConvertText ? (): void => {} : (): void => setShowColsModal(true)}
                                         disabled={false}
                                         className={disabledConvertText ? 'cursor-not-allowed w-full' : 'cursor-pointer w-full'}
                                         style={disabledConvertText ? { opacity: 0.5 } : {}}
@@ -490,7 +502,7 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
                         color="blue"
                         className={`w-full ${disabledKleConvertButton ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         style={disabledKleConvertButton ? { opacity: 0.5 } : {}}
-                        onClick={disabledKleConvertButton ? () => {} : handleKleFileSubmit()}
+                        onClick={disabledKleConvertButton ? (): void => {} : handleKleFileSubmit()}
                         disabled={false}
                     >
                         Convert
@@ -501,14 +513,14 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
             {/* Pin Selector Modals */}
             <PinSelectorModal
                 isOpen={showRowsModal}
-                onClose={() => setShowRowsModal(false)}
+                onClose={(): void => setShowRowsModal(false)}
                 title="Matrix Pins - Rows Selection"
-                availablePins={state.convert.kle.mcu === 'promicro' ? state.convert.pins.promicro : state.convert.pins.rp2040}
+                availablePins={state?.convert.kle.mcu === 'promicro' ? state?.convert.pins.promicro || [] : state?.convert.pins.rp2040 || []}
                 selectedPins={pinRows}
-                onConfirm={(pins) => {
+                onConfirm={(pins): void => {
                     setPinRows(pins)
-                    state.convert.kle.rows = pins.length > 0 ? pins.join(',') : undefined
-                    setState(state)
+                    if (state) state.convert.kle.rows = pins.length > 0 ? pins.join(',') : ''
+                    void setState(state)
                     setRowsEmptyError(pins.length === 0)
                     validKleConvertButton()
                 }}
@@ -516,14 +528,14 @@ const ConvertKleToKeyboard = ({onShowLogModal, onOperationComplete}) => {
 
             <PinSelectorModal
                 isOpen={showColsModal}
-                onClose={() => setShowColsModal(false)}
+                onClose={(): void => setShowColsModal(false)}
                 title="Matrix Pins - Columns Selection"
-                availablePins={state.convert.kle.mcu === 'promicro' ? state.convert.pins.promicro : state.convert.pins.rp2040}
+                availablePins={state?.convert.kle.mcu === 'promicro' ? state?.convert.pins.promicro || [] : state?.convert.pins.rp2040 || []}
                 selectedPins={pinCols}
-                onConfirm={(pins) => {
+                onConfirm={(pins): void => {
                     setPinCols(pins)
-                    state.convert.kle.cols = pins.length > 0 ? pins.join(',') : undefined
-                    setState(state)
+                    if (state) state.convert.kle.cols = pins.length > 0 ? pins.join(',') : ''
+                    void setState(state)
                     setColsEmptyError(pins.length === 0)
                     validKleConvertButton()
                 }}

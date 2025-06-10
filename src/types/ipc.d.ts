@@ -1,12 +1,49 @@
 // Electron IPC / ContextBridge の型定義
 // メインプロセスとレンダラープロセス間の通信で使用される型
 
+interface BuildConfig {
+  fw: string;
+  tag?: string;
+  kb: string;
+  km: string;
+  commit?: string;
+  useRepo?: boolean;
+}
+
+interface BuildResult {
+  success: boolean;
+  output?: string;
+  error?: string;
+}
+
+interface VialKeymap {
+  layout: unknown;
+  layers: unknown[][];
+}
+
+interface Repository {
+  id: string;
+  url: string;
+  commit?: string;
+}
+
+interface LogEntry {
+  timestamp: string;
+  message: string;
+  level: 'info' | 'warn' | 'error';
+}
+
+interface Config {
+  theme: 'light' | 'dark' | 'auto';
+  language: string;
+}
+
 export interface IpcChannels {
   'docker:start': () => Promise<boolean>;
   'docker:stop': () => Promise<boolean>;
   'docker:status': () => Promise<boolean>;
   'build:firmware': (config: BuildConfig) => Promise<BuildResult>;
-  'convert:kle': (data: any) => Promise<any>;
+  'convert:kle': (data: unknown) => Promise<unknown>;
   'convert:vial': (data: VialKeymap) => Promise<string>;
   'file:read': (path: string) => Promise<string>;
   'file:write': (path: string, data: string) => Promise<boolean>;
@@ -29,33 +66,68 @@ export interface IpcAPI {
   getDockerStatus: () => Promise<boolean>;
   
   // ファームウェアビルド
-  buildFirmware: (config: BuildConfig) => Promise<BuildResult>;
+  buildFirmware: (config: unknown) => Promise<unknown>;
   
   // コンバーター機能
-  convertKle: (data: any) => Promise<any>;
-  convertVial: (data: VialKeymap) => Promise<string>;
+  convertKle: (data: unknown) => Promise<unknown>;
+  convertKleJson: (data: unknown) => Promise<unknown>;
+  convertVial: (data: unknown) => Promise<string>;
+  convertVilJson: (data: unknown) => Promise<string>;
   
   // ファイル操作
   readFile: (path: string) => Promise<string>;
+  readJson: (path: string) => Promise<unknown>;
   writeFile: (path: string, data: string) => Promise<boolean>;
   fileExists: (path: string) => Promise<boolean>;
   createDirectory: (path: string) => Promise<boolean>;
   
   // リポジトリ操作
-  cloneRepository: (repo: Repository) => Promise<boolean>;
-  updateRepository: (repo: Repository) => Promise<boolean>;
+  cloneRepository: (repo: unknown) => Promise<boolean>;
+  updateRepository: (repo: unknown) => Promise<boolean>;
+  updateRepositoryCustom: (data: unknown) => Promise<unknown>;
   
   // ログ機能
-  getLogs: (source?: string) => Promise<LogEntry[]>;
+  getLogs: (source?: string) => Promise<unknown[]>;
   clearLogs: () => Promise<void>;
   
   // 設定
-  getSettings: () => Promise<Config>;
-  setSettings: (config: Partial<Config>) => Promise<boolean>;
+  getSettings: () => Promise<unknown>;
+  setSettings: (config: unknown) => Promise<boolean>;
   
-  // アプリケーション
+  // アプリケーション情報
   getAppVersion: () => Promise<string>;
+  appVersion: () => Promise<string>;
+  getState: () => Promise<unknown>;
+  getStorePath: () => Promise<string>;
+  setState: (state: unknown) => Promise<void>;
   quitApp: () => void;
+  
+  // サーバー操作
+  existSever: () => Promise<number>;
+  setSkipCheckDocker: (skip: boolean) => Promise<void>;
+  
+  // タグ・リスト取得
+  tags: () => Promise<string[]>;
+  listLocalKeyboards: () => Promise<unknown>;
+  listRemoteKeyboards: (repo: string) => Promise<unknown>;
+  getLocalFWdir: () => Promise<string>;
+  
+  // ビルド関連
+  buildCompleted: () => Promise<boolean>;
+  rebuildImage: (params: unknown) => Promise<unknown>;
+  checkout: (params: unknown) => Promise<unknown>;
+  copyKeyboardFile: (params: unknown) => Promise<unknown>;
+  build: (buildConfig: unknown) => Promise<unknown>;
+  
+  // 生成機能
+  generateVialId: () => Promise<string>;
+  generateQMKFile: (config: unknown) => Promise<string>;
+  
+  // イベントリスナー
+  on(channel: 'close', callback: () => void): void;
+  on(channel: 'streamLog', callback: (log: string, init: boolean) => void): void;
+  on(channel: 'streamBuildLog', callback: (log: string) => void): void;
+  on(channel: string, callback: (...args: unknown[]) => void): void;
 }
 
 // Window オブジェクトの拡張

@@ -33,61 +33,61 @@ const Autocomplete: React.FC<AutocompleteProps> = ({
     id = '',
     className = '',
     inputClassName = ''
-}) => {
+}): React.ReactElement => {
     const [isOpen, setIsOpen] = useState(false)
     const [inputValue, setInputValue] = useState(value || '')
     const [filteredOptions, setFilteredOptions] = useState<AutocompleteOption[]>(options)
     const wrapperRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
 
-    useEffect(() => {
+    useEffect((): void => {
         setInputValue(value || '')
     }, [value])
 
-    useEffect(() => {
+    useEffect((): void => {
         setFilteredOptions(options)
     }, [options])
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
+    useEffect((): (() => void) => {
+        const handleClickOutside = (event: MouseEvent): void => {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
                 setIsOpen(false)
             }
         }
 
         document.addEventListener('mousedown', handleClickOutside)
-        return () => {
+        return (): void => {
             document.removeEventListener('mousedown', handleClickOutside)
         }
     }, [])
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
         const value = e.target.value
         setInputValue(value)
         
-        const filtered = options.filter(option => 
+        const filtered = options.filter((option): boolean => 
             option.label.toLowerCase().includes(value.toLowerCase())
         )
         setFilteredOptions(filtered)
         setIsOpen(true)
     }
 
-    const handleInputFocus = async () => {
+    const handleInputFocus = async (): Promise<void> => {
         if (onFocus) {
             await onFocus()
         }
         setIsOpen(true)
     }
 
-    const handleOptionClick = (option: AutocompleteOption) => {
+    const handleOptionClick = (option: AutocompleteOption): void => {
         setInputValue(option.label)
         onChange(null, option)
         setIsOpen(false)
     }
 
-    const handleInputBlur = () => {
+    const handleInputBlur = (): void => {
         // If input value doesn't match any option, clear it
-        const matchingOption = options.find(opt => opt.label === inputValue)
+        const matchingOption = options.find((opt): boolean => opt.label === inputValue)
         if (!matchingOption && inputValue) {
             setInputValue('')
             onChange(null, null)
@@ -120,11 +120,11 @@ const Autocomplete: React.FC<AutocompleteProps> = ({
             />
             {isOpen && filteredOptions.length > 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-600 rounded shadow-lg max-h-60 overflow-auto">
-                    {filteredOptions.map((option, index) => (
+                    {filteredOptions.map((option, index): React.ReactElement => (
                         <div
                             key={index}
                             className="px-3 py-2.5 text-base cursor-pointer hover:bg-gray-700 text-gray-100"
-                            onMouseDown={() => handleOptionClick(option)}
+                            onMouseDown={(): void => handleOptionClick(option)}
                         >
                             {option.label}
                         </div>

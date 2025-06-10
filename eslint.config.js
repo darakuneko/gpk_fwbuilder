@@ -9,7 +9,7 @@ import importPlugin from 'eslint-plugin-import'
 import unusedImports from 'eslint-plugin-unused-imports'
 
 export default [
-  { ignores: ['dist', 'dist-electron', 'node_modules'] },
+  { ignores: ['dist', 'dist-electron', 'node_modules', 'gpk_fwmaker', 'types', '*.config.js', '*.config.ts', 'index.ts', 'preload.ts', 'command.ts', 'vite.config.ts', 'tailwind.config.js'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
@@ -60,7 +60,7 @@ export default [
   },
   },
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}'],
     languageOptions: {
       parser: tsparser,
       ecmaVersion: 2020,

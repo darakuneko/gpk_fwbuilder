@@ -1,23 +1,26 @@
-import React from "react"
-import {useStateContext} from "../context"
+import React from 'react'
 import { Label, TextInput } from 'flowbite-react'
+
+import {useStateContext} from "../context"
 
 const {api} = window
 
-const ExternalServer = () => {
+const ExternalServer = (): React.ReactElement => {
     const {state, setState} = useStateContext()
 
-    const handleDockeUrlChange = async (e) => {
+    const handleDockeUrlChange = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+        if (!state) return
         state.setting.fwMakerUrl = e.target.value
         if(state.setting.fwMakerUrl.length === 0) {
             state.setting.fwDir = await api.getLocalFWdir()
         }
-        setState(state)
+        void setState(state)
     }
 
-    const handleFwDirChange = (e) => {
+    const handleFwDirChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+        if (!state) return
         state.setting.fwDir =e.target.value
-        setState(state)
+        void setState(state)
     }
 
     return (
@@ -31,7 +34,7 @@ const ExternalServer = () => {
                                 type="text"
                                 id="fwMakerUrl"
                                 onChange={handleDockeUrlChange}
-                                value={state.setting.fwMakerUrl ? state.setting.fwMakerUrl : ""}
+                                value={state?.setting.fwMakerUrl || ""}
                                 placeholder="Leave empty to use local docker"
                             />
                         </div>
@@ -42,7 +45,7 @@ const ExternalServer = () => {
                                 type="text"
                                 id="fwDir"
                                 onChange={handleFwDirChange}
-                                value={state.setting.fwDir ? state.setting.fwDir : ""}
+                                value={state?.setting.fwDir || ""}
                             />
                         </div>
                         

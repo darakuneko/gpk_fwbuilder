@@ -24,40 +24,40 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
     id = '',
     className = '',
     placement = 'bottom'
-}) => {
+}): React.ReactElement => {
     const [isOpen, setIsOpen] = useState(false)
     const wrapperRef = useRef<HTMLDivElement>(null)
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
+    useEffect((): (() => void) => {
+        const handleClickOutside = (event: MouseEvent): void => {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
                 setIsOpen(false)
             }
         }
 
         document.addEventListener('mousedown', handleClickOutside)
-        return () => {
+        return (): void => {
             document.removeEventListener('mousedown', handleClickOutside)
         }
     }, [])
 
-    const handleToggle = () => {
+    const handleToggle = (): void => {
         if (!disabled) {
             setIsOpen(!isOpen)
         }
     }
 
-    const handleOptionClick = (option: string) => {
+    const handleOptionClick = (option: string): void => {
         const newValue = value.includes(option) 
-            ? value.filter(v => v !== option)
+            ? value.filter((v): boolean => v !== option)
             : [...value, option]
         
         const event = { target: { value: newValue } }
         onChange(event)
     }
 
-    const removeTag = (option: string) => {
-        const newValue = value.filter(v => v !== option)
+    const removeTag = (option: string): void => {
+        const newValue = value.filter((v): boolean => v !== option)
         const event = { target: { value: newValue } }
         onChange(event)
     }
@@ -82,7 +82,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
                     <span className="text-gray-500 dark:text-gray-400">Select options...</span>
                 ) : (
                     <div className="flex flex-wrap gap-1">
-                        {value.map((item, index) => (
+                        {value.map((item, index): React.ReactElement => (
                             <span
                                 key={index}
                                 className="inline-flex items-center px-2 py-1 text-sm bg-blue-600 text-white rounded"
@@ -92,7 +92,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
                                     <button
                                         type="button"
                                         className="ml-1 text-white hover:text-gray-300 cursor-pointer"
-                                        onClick={(e) => {
+                                        onClick={(e): void => {
                                             e.stopPropagation()
                                             removeTag(item)
                                         }}
@@ -109,13 +109,13 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
                 <div className={`absolute z-50 w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto ${
                     placement === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'
                 }`}>
-                    {options.map((option, index) => (
+                    {options.map((option, index): React.ReactElement => (
                         <div
                             key={index}
                             className={`px-3 py-2.5 text-base cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 ${
                                 value.includes(option) ? 'bg-blue-600 text-white hover:bg-blue-700' : ''
                             }`}
-                            onClick={() => handleOptionClick(option)}
+                            onClick={(): void => handleOptionClick(option)}
                         >
                             <span className="flex items-center">
                                 <span className={`mr-2 ${value.includes(option) ? 'text-white' : 'text-gray-400'}`}>
