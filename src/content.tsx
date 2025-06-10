@@ -89,18 +89,22 @@ const Content = (): React.JSX.Element => {
     }, [setState, state])
 
     useEffect((): (() => void) => {
-        api.on("close", async (): Promise<void> => {
+        const closeHandler = async (): Promise<void> => {
             setCloseServer(true)
             const currentState = await getState()
             if (currentState) {
                 await api.setState(currentState)
             }
-        })
-        return (): void => {}
+        }
+        
+        const listener = api.on("close", closeHandler)
+        return (): void => {
+            api.off("close", listener)
+        }
     }, [])
 
     useEffect((): (() => void) => {
-        api.on("streamLog", async (log: string, init: boolean): Promise<void> => {
+        const streamLogHandler = async (log: string, init: boolean): Promise<void> => {
             const s = init ? state : await getState()
             if (s) {
                 s.logs = log
@@ -110,13 +114,16 @@ const Content = (): React.JSX.Element => {
                 const isFinished = isOperationComplete(log)
                 setOperationInProgress(s.tabDisabled && !isFinished)
             }
-        })
+        }
+        
+        const listener = api.on("streamLog", streamLogHandler)
         return (): void => {
+            api.off("streamLog", listener)
         }
     }, [setState, state])
 
     useEffect((): (() => void) => {
-        api.on("streamBuildLog", async (log: string): Promise<void> => {
+        const streamBuildLogHandler = async (log: string): Promise<void> => {
             const currentState = await getState()
             if (currentState) {
                 const processedLog = log.match(/@@@@init@@@@/m) ? '' : currentState.logs + log
@@ -127,8 +134,12 @@ const Content = (): React.JSX.Element => {
                 const isFinished = isOperationComplete(log)
                 setOperationInProgress(currentState.tabDisabled && !isFinished)
             }
-        })
-        return (): void => {}
+        }
+        
+        const listener = api.on("streamBuildLog", streamBuildLogHandler)
+        return (): void => {
+            api.off("streamBuildLog", listener)
+        }
     }, [setState])
 
     // Monitor tabDisabled state changes

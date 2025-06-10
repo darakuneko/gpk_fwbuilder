@@ -124,10 +124,12 @@ export interface IpcAPI {
   generateQMKFile: (config: unknown) => Promise<string>;
   
   // イベントリスナー
-  on(channel: 'close', callback: () => void): void;
-  on(channel: 'streamLog', callback: (log: string, init: boolean) => void): void;
-  on(channel: 'streamBuildLog', callback: (log: string) => void): void;
-  on(channel: string, callback: (...args: unknown[]) => void): void;
+  on(channel: 'close', callback: () => void): unknown;
+  on(channel: 'streamLog', callback: (log: string, init: boolean) => void): unknown;
+  on(channel: 'streamBuildLog', callback: (log: string) => void): unknown;
+  on(channel: string, callback: (...args: unknown[]) => void): unknown;
+  off(channel: string, listener: unknown): void;
+  removeAllListeners(channel: string): void;
 }
 
 // Window オブジェクトの拡張

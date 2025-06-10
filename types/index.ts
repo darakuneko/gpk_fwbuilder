@@ -89,7 +89,9 @@ export interface ElectronAPI {
     getRemoteFWdir: () => Promise<string>;
     getLocalFWdir: () => Promise<string>;
     getStorePath: () => Promise<string>;
-    on: (channel: string, func: (...args: any[]) => void) => void;
+    on: (channel: string, func: (...args: unknown[]) => void) => unknown;
+    off: (channel: string, listener: unknown) => void;
+    removeAllListeners: (channel: string) => void;
 }
 
 declare global {
