@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useMemo, useCallback} from 'react'
-import { Sidebar, SidebarItems, SidebarItemGroup, SidebarItem, Spinner, Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'flowbite-react'
-import { HiCube, HiCollection, HiRefresh, HiCog, HiChevronRight } from 'react-icons/hi'
+import { Sidebar, SidebarItems, SidebarItemGroup, SidebarItem, Spinner, Button } from 'flowbite-react'
+import { HiCube, HiCollection, HiRefresh, HiCog, HiChevronRight, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi'
 import type { IconType } from 'react-icons'
 import parse from 'html-react-parser'
 
@@ -21,7 +21,6 @@ interface SubMenuItem {
     label: string;
     component: () => React.ReactNode;
     title: string;
-    hideShowLogsButton?: boolean;
     pageKey: string;
 }
 
@@ -32,7 +31,6 @@ interface MenuItem {
     hasSubmenu: boolean;
     title?: string;
     pageKey?: string;
-    hideShowLogsButton?: boolean;
     subItems?: SubMenuItem[];
 }
 
@@ -46,9 +44,22 @@ const Content = (): React.JSX.Element => {
     const [currentContent, setCurrentContent] = useState<React.ReactNode>(null)
     const [currentTitle, setCurrentTitle] = useState('')
     const [currentPageKey, setCurrentPageKey] = useState('')
-    const [currentHideShowLogsButton, setCurrentHideShowLogsButton] = useState(false)
-    const [showLogModal, setShowLogModal] = useState(false)
+    const [showLogSidePeek, setShowLogSidePeek] = useState(false)
     const [operationInProgress, setOperationInProgress] = useState(false)
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+    const SIDEBAR_WIDTH = 240
+
+    // ウィンドウサイズ変更の監視
+    useEffect((): (() => void) => {
+        const handleResize = (): void => {
+            setWindowWidth(window.innerWidth)
+        }
+
+        window.addEventListener('resize', handleResize)
+        return (): void => {
+            window.removeEventListener('resize', handleResize)
+        }
+    }, [])
 
     useEffect((): void => {
         const fn = async (): Promise<void> => {
@@ -57,24 +68,37 @@ const Content = (): React.JSX.Element => {
                 const exist = await api.existSever()
                 if (exist === 200 || exist === 503) {
                     if (!state) return
-                    const reStoreState = await api.getState() as unknown
-                    state.version = await api.appVersion()
-                    state.storePath = await api.getStorePath()
-                    if (reStoreState && typeof reStoreState === 'object') {
-                        const typedState = reStoreState as Partial<AppState>
-                        if (typedState.build) state.build = typedState.build
-                        if (typedState.generate) state.generate = typedState.generate
-                        if (typedState.convert) state.convert = typedState.convert
-                        if (typedState.repository) state.repository = typedState.repository
-                        if (typedState.setting) state.setting = typedState.setting
+                    
+                    // Only restore state during initial setup
+                    if (initServer) {
+                        const reStoreState = await api.getState() as unknown
+                        state.version = await api.appVersion()
+                        state.storePath = await api.getStorePath()
+                        if (reStoreState && typeof reStoreState === 'object') {
+                            const typedState = reStoreState as Partial<AppState>
+                            if (typedState.build) state.build = typedState.build
+                            if (typedState.generate) state.generate = typedState.generate
+                            if (typedState.convert) state.convert = typedState.convert
+                            if (typedState.repository) state.repository = typedState.repository
+                            if (typedState.setting) state.setting = typedState.setting
+                        }
+                        const fwDir = await api.getLocalFWdir()
+                        state.setting.fwDir = state.setting.fwDir || fwDir
+                        
+                        // Only load tags if QMK firmware is selected
+                        if (state.build.fw === "QMK") {
+                            const tags = await api.tags()
+                            state.build.tags = tags
+                            state.build.tag = state.build.tag || (tags.length > 0 ? tags[0]! : '')
+                        } else {
+                            // For non-QMK firmwares, ensure tags are empty
+                            state.build.tags = []
+                            state.build.tag = ''
+                        }
+                        state.logs = exist === 503 ? `Skipped docker check` : ""
+                        void setState(state)
                     }
-                    const fwDir = await api.getLocalFWdir()
-                    state.setting.fwDir = state.setting.fwDir || fwDir
-                    const tags = await api.tags()
-                    state.build.tags = tags
-                    state.build.tag = state.build.tag || (tags.length > 0 ? tags[0]! : '')
-                    state.logs = exist === 503 ? `Skipped docker check` : ""
-                    void setState(state)
+                    
                     if (id) clearInterval(id)
                     setInitServer(false)
                 } else if (exist === 404) {
@@ -86,7 +110,7 @@ const Content = (): React.JSX.Element => {
             id = setInterval(checkFn, 1000)
         }
         void fn()
-    }, [setState, state])
+    }, [setState, state, initServer])
 
     useEffect((): (() => void) => {
         const closeHandler = async (): Promise<void> => {
@@ -105,6 +129,7 @@ const Content = (): React.JSX.Element => {
 
     useEffect((): (() => void) => {
         const streamLogHandler = async (log: string, init: boolean): Promise<void> => {
+            console.log('[DEBUG] streamLogHandler called with log:', log.substring(0, 100))
             const s = init ? state : await getState()
             if (s) {
                 s.logs = log
@@ -113,6 +138,7 @@ const Content = (): React.JSX.Element => {
                 // Check if operation is in progress
                 const isFinished = isOperationComplete(log)
                 setOperationInProgress(s.tabDisabled && !isFinished)
+                console.log('[DEBUG] streamLogHandler: isFinished=', isFinished, 'tabDisabled=', s.tabDisabled)
             }
         }
         
@@ -124,6 +150,7 @@ const Content = (): React.JSX.Element => {
 
     useEffect((): (() => void) => {
         const streamBuildLogHandler = async (log: string): Promise<void> => {
+            console.log('[DEBUG] streamBuildLogHandler called with log:', log.substring(0, 100))
             const currentState = await getState()
             if (currentState) {
                 const processedLog = log.match(/@@@@init@@@@/m) ? '' : currentState.logs + log
@@ -133,6 +160,7 @@ const Content = (): React.JSX.Element => {
                 // Check if operation is in progress
                 const isFinished = isOperationComplete(log)
                 setOperationInProgress(currentState.tabDisabled && !isFinished)
+                console.log('[DEBUG] streamBuildLogHandler: isFinished=', isFinished, 'tabDisabled=', currentState.tabDisabled)
             }
         }
         
@@ -156,16 +184,10 @@ const Content = (): React.JSX.Element => {
         await api.setSkipCheckDocker(true)
     }
 
-    const handleShowLogModal = useCallback((): void => {
-        setShowLogModal(true)
+    const handleShowLogSidePeek = useCallback((): void => {
+        setShowLogSidePeek(true)
         setOperationInProgress(true)
     }, [])
-
-    const handleCloseLogModal = (): void => {
-        if (!operationInProgress) {
-            setShowLogModal(false)
-        }
-    }
 
     const handleOperationComplete = useCallback((): void => {
         setOperationInProgress(false)
@@ -177,7 +199,7 @@ const Content = (): React.JSX.Element => {
         { 
             label: "Build", 
             icon: HiCube,
-            component: (): React.ReactElement => <Build onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
+            component: (): React.ReactElement => <Build onShowLogModal={handleShowLogSidePeek} onOperationComplete={handleOperationComplete}/>,
             hasSubmenu: false,
             title: "Build Firmware",
             pageKey: "build"
@@ -189,16 +211,14 @@ const Content = (): React.JSX.Element => {
             subItems: [
                 { 
                     label: "Keyboard File", 
-                    component: (): React.ReactElement => <GenerateKeyboardFile onOperationComplete={handleOperationComplete}/>,
+                    component: (): React.ReactElement => <GenerateKeyboardFile onShowLogModal={handleShowLogSidePeek} onOperationComplete={handleOperationComplete}/>,
                     title: "QMK Keyboard File Generation",
-                    hideShowLogsButton: true,
                     pageKey: "generateKeyboardFile"
                 },
                 { 
                     label: "Vial Unique ID", 
-                    component: (): React.ReactElement => <GenerateVialId onOperationComplete={handleOperationComplete}/>,
+                    component: (): React.ReactElement => <GenerateVialId onShowLogModal={handleShowLogSidePeek} onOperationComplete={handleOperationComplete}/>,
                     title: "Vial Unique ID Generation",
-                    hideShowLogsButton: true,
                     pageKey: "generateVialId"
                 }
             ]
@@ -210,14 +230,13 @@ const Content = (): React.JSX.Element => {
             subItems: [
                 { 
                     label: "Vial to Keymap.c", 
-                    component: (): React.ReactElement => <ConvertVialToKeymap onOperationComplete={handleOperationComplete}/>,
+                    component: (): React.ReactElement => <ConvertVialToKeymap onShowLogModal={handleShowLogSidePeek} onOperationComplete={handleOperationComplete}/>,
                     title: "Convert Vial File to Keymap.c",
-                    hideShowLogsButton: true,
                     pageKey: "convertVialToKeymap"
                 },
                 { 
                     label: "KLE to Keyboard File", 
-                    component: (): React.ReactElement => <ConvertKleToKeyboard onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
+                    component: (): React.ReactElement => <ConvertKleToKeyboard onShowLogModal={handleShowLogSidePeek} onOperationComplete={handleOperationComplete}/>,
                     title: "Convert KLE Json to QMK/Vial Files",
                     pageKey: "convertKleToKeyboard"
                 }
@@ -230,13 +249,13 @@ const Content = (): React.JSX.Element => {
             subItems: [
                 { 
                     label: "Repository", 
-                    component: (): React.ReactElement => <Repository onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
+                    component: (): React.ReactElement => <Repository onShowLogModal={handleShowLogSidePeek} onOperationComplete={handleOperationComplete}/>,
                     title: "Repository Management",
                     pageKey: "repository"
                 },
                 { 
                     label: "Image", 
-                    component: (): React.ReactElement => <Image onShowLogModal={handleShowLogModal} onOperationComplete={handleOperationComplete}/>,
+                    component: (): React.ReactElement => <Image onShowLogModal={handleShowLogSidePeek} onOperationComplete={handleOperationComplete}/>,
                     title: "Docker Image Management",
                     pageKey: "image"
                 },
@@ -244,28 +263,29 @@ const Content = (): React.JSX.Element => {
                     label: "External Server", 
                     component: (): React.ReactElement => <ExternalServer/>,
                     title: "External Server Settings",
-                    hideShowLogsButton: true,
                     pageKey: "externalServer"
                 }
             ]
         }
-    ], [handleShowLogModal, handleOperationComplete])
+    ], [handleShowLogSidePeek, handleOperationComplete])
 
-    const showContent = (title: string, component: React.ReactNode, hideShowLogsButton = false, pageKey = ''): void => {
+    const showContent = (title: string, component: React.ReactNode, pageKey = ''): void => {
         setCurrentTitle(title)
         setCurrentContent(component)
-        setCurrentHideShowLogsButton(hideShowLogsButton)
         setCurrentPageKey(pageKey)
+        
+        // Close logs when switching pages
+        setShowLogSidePeek(false)
     }
 
     const handleMenuClick = (menuItem: MenuItem, index: number): void => {
-        if (!state?.tabDisabled && state) {
+        if (!state?.tabDisabled && !operationInProgress && state) {
             if (menuItem.hasSubmenu && menuItem.subItems) {
                 if (menuItem.subItems.length === 1) {
                     // Single submenu - show content directly
                     const subItem = menuItem.subItems[0]
                     if (subItem) {
-                        showContent(subItem.title, subItem.component(), subItem.hideShowLogsButton, subItem.pageKey)
+                        showContent(subItem.title, subItem.component(), subItem.pageKey)
                     }
                 } else {
                     // Multiple submenus - expand/collapse
@@ -277,14 +297,14 @@ const Content = (): React.JSX.Element => {
                 }
             } else {
                 // No submenu - show content directly
-                showContent(menuItem.title || '', menuItem.component?.() || null, menuItem.hideShowLogsButton, menuItem.pageKey || '')
+                showContent(menuItem.title || '', menuItem.component?.() || null, menuItem.pageKey || '')
             }
         }
     }
 
     const handleSubMenuClick = (_: number, subItem: SubMenuItem): void => {
-        if (!state?.tabDisabled && state) {
-            showContent(subItem.title, subItem.component(), subItem.hideShowLogsButton, subItem.pageKey)
+        if (!state?.tabDisabled && !operationInProgress && state) {
+            showContent(subItem.title, subItem.component(), subItem.pageKey)
         }
     }
 
@@ -338,7 +358,7 @@ const Content = (): React.JSX.Element => {
                     return (
                         <div className="flex h-screen">
                             {/* Sidebar Navigation */}
-                            <Sidebar className="w-64 h-screen bg-gray-50 dark:bg-gray-800">
+                            <Sidebar className="h-screen bg-gray-50 dark:bg-gray-800" style={{ width: '240px' }}>
                                 <SidebarItems>
                                     <SidebarItemGroup>
                                         {menuStructure.map((menu, index): React.ReactElement => (
@@ -348,7 +368,7 @@ const Content = (): React.JSX.Element => {
                                                         icon={menu.icon as React.FC<React.SVGProps<SVGSVGElement>>}
                                                         active={false}
                                                         onClick={(): void => handleMenuClick(menu, index)}
-                                                        className={`${state?.tabDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} !h-12 !flex !items-center`}
+                                                        className={`${state?.tabDisabled || operationInProgress ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} !h-12 !flex !items-center`}
                                                     >
                                                         <span className="flex-1">{menu.label}</span>
                                                     </SidebarItem>
@@ -365,7 +385,7 @@ const Content = (): React.JSX.Element => {
                                                                 key={subItem.label}
                                                                 active={false}
                                                                 onClick={(): void => handleSubMenuClick(index, subItem)}
-                                                                className={`${state?.tabDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} text-sm flex items-center h-10`}
+                                                                className={`${state?.tabDisabled || operationInProgress ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} text-sm flex items-center h-10`}
                                                             >
                                                                 <span className="ml-3">{subItem.label}</span>
                                                             </SidebarItem>
@@ -379,22 +399,24 @@ const Content = (): React.JSX.Element => {
                             </Sidebar>
                             
                             {/* Main Content Area */}
-                            <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900">
+                            <div 
+                                className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 transition-all duration-300"
+                                style={showLogSidePeek ? { width: `${(windowWidth - SIDEBAR_WIDTH)}px` } : {}}
+                            >
                                 {currentContent ? (
                                     <div className="p-4">
                                         <div className="flex items-center justify-between mb-4">
                                             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                                                 {currentTitle}
                                             </h2>
-                                            {!currentHideShowLogsButton && (
-                                                <Button
-                                                    color="light"
-                                                    className="cursor-pointer"
-                                                    onClick={(): void => setShowLogModal(true)}
-                                                >
-                                                    Show Logs
-                                                </Button>
-                                            )}
+                                            <Button
+                                                color="light"
+                                                className="cursor-pointer p-2"
+                                                onClick={(): void => setShowLogSidePeek(!showLogSidePeek)}
+                                                title={showLogSidePeek ? 'Hide Logs' : 'Show Logs'}
+                                            >
+                                                {showLogSidePeek ? <HiChevronDoubleRight className="w-4 h-4" /> : <HiChevronDoubleLeft className="w-4 h-4" />}
+                                            </Button>
                                         </div>
                                         {currentContent}
                                     </div>
@@ -407,38 +429,33 @@ const Content = (): React.JSX.Element => {
                                 )}
                             </div>
                             
-                            {/* Log Modal for Operations */}
-                            <Modal
-                                show={showLogModal}
-                                size="7xl"
-                                onClose={operationInProgress ? (): void => {} : handleCloseLogModal}
-                                dismissible={!operationInProgress}
-                                className={operationInProgress ? 'modal-disabled-close' : ''}
-                            >
-                                <ModalHeader>
-                                    <div className="flex items-center justify-between w-full">
-                                        <span>Operation Log</span>
+                            {/* Log Side Peek Panel */}
+                            {showLogSidePeek && (
+                                <div 
+                                    className="fixed right-0 top-0 h-full bg-white dark:bg-gray-800 shadow-xl border-l border-gray-200 dark:border-gray-700 overflow-hidden z-40"
+                                    style={{ width: `${(windowWidth - SIDEBAR_WIDTH - 10)}px` }}
+                                >
+                                    <div className="h-full flex flex-col">
+                                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Logs</h3>
+                                            <Button
+                                                color="light"
+                                                size="sm"
+                                                className={operationInProgress ? 'cursor-not-allowed p-2' : 'cursor-pointer p-2'}
+                                                style={operationInProgress ? { opacity: 0.5 } : {}}
+                                                onClick={operationInProgress ? (): void => {} : (): void => setShowLogSidePeek(false)}
+                                                disabled={false}
+                                                title={operationInProgress ? "Cannot close during operation" : "Close Logs"}
+                                            >
+                                                <HiChevronDoubleRight className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                        <div className="flex-1 overflow-hidden">
+                                            <Logs pageKey={currentPageKey}/>
+                                        </div>
                                     </div>
-                                </ModalHeader>
-                                <ModalBody className="p-1">
-                                    <div className="h-[75vh] overflow-hidden p-1">
-                                        <Logs pageKey={currentPageKey}/>
-                                    </div>
-                                </ModalBody>
-                                
-                                    <ModalFooter>
-                                        <Button 
-                                            color="light" 
-                                            onClick={operationInProgress ? (): void => {} : handleCloseLogModal}
-                                            disabled={false}
-                                            className={operationInProgress ? 'cursor-not-allowed' : 'cursor-pointer'}
-                                            style={operationInProgress ? { opacity: 0.5 } : {}}
-                                        >
-                                            Close
-                                        </Button>
-                                    </ModalFooter>
-                                
-                            </Modal>
+                                </div>
+                            )}
                         </div>
                     )
                 }

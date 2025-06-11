@@ -1,17 +1,17 @@
 import React from 'react'
-import { Button, Label } from 'flowbite-react'
+import { Button } from 'flowbite-react'
 
 import {useStateContext} from "../context"
-import { cleanLogText, isOperationComplete } from '../utils/logParser'
 
 const {api} = window
 
 interface GenerateVialIdProps {
+    onShowLogModal?: () => void;
     onOperationComplete?: () => void;
 }
 
-const GenerateVialId: React.FC<GenerateVialIdProps> = ({onOperationComplete}): React.ReactElement => {
-    const {state, setState, setPageLog, getPageLog} = useStateContext()
+const GenerateVialId: React.FC<GenerateVialIdProps> = ({onShowLogModal, onOperationComplete}): React.ReactElement => {
+    const {state, setState, setPageLog} = useStateContext()
     
     // Guard against uninitialized state
     if (!state) {
@@ -21,6 +21,12 @@ const GenerateVialId: React.FC<GenerateVialIdProps> = ({onOperationComplete}): R
     const generateMsg: string = "Generating...."
     const handleVailIdSubmit = (): (() => Promise<void>) => async (): Promise<void> => {
         if (!state) return
+        
+        // Show log modal when generate starts
+        if (onShowLogModal) {
+            onShowLogModal()
+        }
+        
         setPageLog('generateVialId', generateMsg)
         state.tabDisabled = true
         void setState(state)
@@ -49,36 +55,6 @@ const GenerateVialId: React.FC<GenerateVialIdProps> = ({onOperationComplete}): R
                     </Button>
                 </div>
                 
-                {/* Inline Log Display */}
-                {getPageLog('generateVialId') && (
-                    <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
-                        <div className="mb-3">
-                            <Label className="block text-sm font-medium text-gray-900 dark:text-white">
-                                Generation Log
-                            </Label>
-                        </div>
-                        <textarea
-                            value={cleanLogText(getPageLog('generateVialId')) || ''}
-                            readOnly
-                            className="w-full font-mono text-sm bg-gray-900 text-white rounded p-4 resize-none border-0 focus:outline-none focus:ring-0"
-                            style={{ 
-                                minHeight: '200px',
-                                maxHeight: '400px',
-                                whiteSpace: 'pre',
-                                overflowWrap: 'normal',
-                                wordBreak: 'normal'
-                            }}
-                            placeholder="Logs will appear here..."
-                        />
-                        {getPageLog('generateVialId') && isOperationComplete(getPageLog('generateVialId')) && (
-                            <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
-                                <p className="text-sm text-green-700 dark:text-green-400">
-                                    ✓ Generation completed successfully!
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                )}
             </div>
         </div>
     )

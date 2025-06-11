@@ -2,16 +2,16 @@ import React, {useState} from 'react'
 import { Button, Label, TextInput, Select, HelperText } from 'flowbite-react'
 
 import {useStateContext} from "../context"
-import { cleanLogText } from '../utils/logParser'
 
 const {api} = window
 
 interface GenerateKeyboardFileProps {
+    onShowLogModal?: () => void;
     onOperationComplete?: () => void;
 }
 
-const GenerateKeyboardFile: React.FC<GenerateKeyboardFileProps> = ({onOperationComplete}): React.ReactElement => {
-    const {state, setState, setPageLog, getPageLog} = useStateContext()
+const GenerateKeyboardFile: React.FC<GenerateKeyboardFileProps> = ({onShowLogModal, onOperationComplete}): React.ReactElement => {
+    const {state, setState, setPageLog} = useStateContext()
     
     const [keyboardError, setKeyboardError] = useState(false)
     const [usernameEmptyError, setUsernameEmptyError] = useState(false)
@@ -77,6 +77,12 @@ const GenerateKeyboardFile: React.FC<GenerateKeyboardFileProps> = ({onOperationC
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
         if (!state) return
+        
+        // Show log modal when generate starts
+        if (onShowLogModal) {
+            onShowLogModal()
+        }
+        
         setPageLog('generateKeyboardFile', generateMsg)
         state.tabDisabled = true
         void setState(state)
@@ -172,29 +178,6 @@ const GenerateKeyboardFile: React.FC<GenerateKeyboardFileProps> = ({onOperationC
                     </Button>
                 </div>
                 
-                {/* Inline Log Display */}
-                {getPageLog('generateKeyboardFile') && (
-                    <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
-                        <div className="mb-3">
-                            <Label className="block text-sm font-medium text-gray-900 dark:text-white">
-                                Generation Log
-                            </Label>
-                        </div>
-                        <textarea
-                            value={cleanLogText(getPageLog('generateKeyboardFile')) || ''}
-                            readOnly
-                            className="w-full font-mono text-sm bg-gray-900 text-white rounded p-4 resize-none border-0 focus:outline-none focus:ring-0"
-                            style={{ 
-                                minHeight: '200px',
-                                maxHeight: '400px',
-                                whiteSpace: 'pre',
-                                overflowWrap: 'normal',
-                                wordBreak: 'normal'
-                            }}
-                            placeholder="Logs will appear here..."
-                        />
-                    </div>
-                )}
             </div>
         </div>
     )

@@ -25,8 +25,18 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
     // Get the appropriate log data based on pageKey
     const getCurrentLogs = useCallback((): string => {
         if (pageKey && getPageLog) {
-            return getPageLog(pageKey) || state?.logs || ''
+            const pageLog = getPageLog(pageKey)
+            const globalLog = state?.logs
+            console.log('[DEBUG] getCurrentLogs - pageKey:', pageKey, 'pageLog length:', pageLog?.length || 0, 'globalLog length:', globalLog?.length || 0)
+            
+            // For build page, prioritize globalLog (real-time build logs) over pageLog (initial message)
+            if (pageKey === 'build') {
+                return globalLog || pageLog || ''
+            }
+            
+            return pageLog || globalLog || ''
         }
+        console.log('[DEBUG] getCurrentLogs - no pageKey, using global logs length:', state?.logs?.length || 0)
         return state?.logs || ''
     }, [pageKey, getPageLog, state?.logs])
 
@@ -50,11 +60,25 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
     // Auto-scroll to bottom when logs update
     useEffect((): void => {
         if (isTextareaMode && textareaRef.current) {
-            textareaRef.current.scrollTop = textareaRef.current.scrollHeight
+            const textarea = textareaRef.current
+            // Only auto-scroll if user is already at or near the bottom
+            const isAtBottom = textarea.scrollHeight - textarea.scrollTop <= textarea.clientHeight + 50
+            if (isAtBottom) {
+                setTimeout((): void => {
+                    textarea.scrollTop = textarea.scrollHeight
+                }, 0)
+            }
         } else if (!isTextareaMode && divRef.current) {
-            divRef.current.scrollTop = divRef.current.scrollHeight
+            const div = divRef.current
+            // Only auto-scroll if user is already at or near the bottom
+            const isAtBottom = div.scrollHeight - div.scrollTop <= div.clientHeight + 50
+            if (isAtBottom) {
+                setTimeout((): void => {
+                    div.scrollTop = div.scrollHeight
+                }, 0)
+            }
         }
-    }, [state?.logs, isTextareaMode])
+    }, [state?.logs, isTextareaMode, getCurrentLogs])
 
     // Load search history from localStorage on component mount
     useEffect((): void => {
@@ -185,22 +209,19 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                 <div
                     ref={divRef}
                     onClick={(): void => { if (!isProcessing) setIsTextareaMode(true) }}
-                    className={`logs-div border-0 
+                    className={`logs-div border-0 flex-1
                     w-full font-mono text-sm bg-gray-900 text-white 
-                    transition-colors ${
+                    transition-colors overflow-y-auto overflow-x-hidden ${
                         isProcessing 
                             ? 'cursor-not-allowed opacity-75' 
                             : 'cursor-pointer hover:bg-gray-800'
                     }`}
                     style={{ 
-                        height: 'calc(90dvh - 200px)',
-                        minHeight: 'calc(90dvh - 200px)',
-                        maxHeight: 'calc(90dvh - 200px)',
-                        overflow: 'auto',
                         padding: '16px',
                         whiteSpace: 'pre',
-                        overflowWrap: 'normal',
-                        wordBreak: 'normal'
+                        overflowWrap: 'break-word',
+                        wordBreak: 'break-word',
+                        maxHeight: '100%'
                     }}
                     title={isProcessing ? "Processing... Text selection will be available when complete" : "Click to enable text selection"}
                 >
@@ -316,18 +337,14 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                         value={searchQuery ? filteredLogs : logContent}
                         readOnly
                         className="logs-textarea border-0 focus:outline-none focus:ring-0 
-                        w-full font-mono text-sm bg-gray-900 resize-none p-4 text-white"
+                        w-full font-mono text-sm bg-gray-900 resize-none text-white flex-1"
                         style={{ 
-                            height: showSearchPanel ? 'calc(90dvh - 380px)' : 'calc(90dvh - 244px)',
-                            minHeight: showSearchPanel ? 'calc(90dvh - 380px)' : 'calc(90dvh - 244px)',
-                            maxHeight: showSearchPanel ? 'calc(90dvh - 380px)' : 'calc(90dvh - 244px)',
                             whiteSpace: 'pre',
                             overflowWrap: 'normal',
                             wordBreak: 'normal',
                             fontFamily: 'ui-monospace, monospace',
                             padding: '16px',
-                            letterSpacing: '0',
-                            transition: 'height 0.2s ease-in-out'
+                            letterSpacing: '0'
                         }}
                         placeholder="Logs will appear here..."
                     />

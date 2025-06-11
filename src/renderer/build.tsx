@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useRef} from 'react'
 import { Button, Label, TextInput, Select, Checkbox, HelperText } from 'flowbite-react'
 
 import {useStateContext} from "../context"
@@ -20,32 +20,35 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
     const [disabledBuildText, setDisabledBuildText] = useState(false)
     const [disabledUseRepoButtonButton, setDisabledUseRepoButtonButton] = useState(false)
     const [init, setInit] = useState(true)
-    const [keyboardList, setKeyboardList] = useState<{kb: string; km: string[]}[]>([])
+    const keyboardDataRef = useRef<{kb: string; km: string[]}[]>([])
     
     // Initialize component with stored values
     useEffect((): void => {
         const initializeStoredValues = async (): Promise<void> => {
-            // Load keyboard list if keyboard is already selected
-            if (state?.build?.kb) {
+            // Only initialize if we have state and keyboard is selected but keyboardList is empty
+            if (state?.build?.kb && (!state.keyboardList.kb || state.keyboardList.kb.length === 0)) {
                 const c = state.build.useRepo ? await api.listRemoteKeyboards(state.build.fw) : await api.listLocalKeyboards()
                 const keyboards = c as {kb: string; km: string[]}[]
-                state.keyboardList.kb = keyboards?.length > 0 ? keyboards.map((v): string => v.kb) : []
-                setKeyboardList(keyboards)
+                keyboardDataRef.current = keyboards
+                
+                // Create a new state object to avoid mutation
+                const newState = { ...state }
+                newState.keyboardList = { ...state.keyboardList }
+                newState.keyboardList.kb = keyboards?.length > 0 ? keyboards.map((v): string => v.kb) : []
                 
                 // Load keymap list for selected keyboard
                 if (keyboards?.length > 0) {
                     const obj = keyboards.find((v): boolean => v.kb === state.build.kb)
-                    state.keyboardList.km = obj ? obj.km : []
+                    newState.keyboardList.km = obj ? obj.km : []
                 }
                 
-                if (state) {
-                    void setState(state)
-                }
+                void setState(newState)
             }
         }
         
         void initializeStoredValues()
-    }, [setState, state]) // Add dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []) // Dependencies intentionally omitted to prevent infinite loop
 
     // Guard against uninitialized state
     if (!state || !state.build || !state.repository) {
@@ -61,19 +64,45 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
             firmware.commit = commit
         }
     }
-    const handleSelectFW = (e: React.ChangeEvent<HTMLSelectElement>): void => {
-        state.build.fw = e.target.value
-        const commit = getCommit(state)
-        if (commit) {
-            setCommit(state, commit)
+    const handleSelectFW = async (e: React.ChangeEvent<HTMLSelectElement>): Promise<void> => {
+        const selectedFw = e.target.value
+        
+        // Create a new state object to avoid mutation
+        const newState = { ...state }
+        newState.build = { ...state.build }
+        newState.build.fw = selectedFw
+        
+        // Handle tags based on firmware type
+        if (selectedFw === "QMK") {
+            // Load tags for QMK
+            try {
+                const tags = await api.tags()
+                newState.build.tags = tags
+                newState.build.tag = newState.build.tag || (tags.length > 0 ? tags[0]! : '')
+            } catch {
+                // If tags fail to load, fallback to empty
+                newState.build.tags = []
+                newState.build.tag = ''
+            }
+        } else {
+            // For non-QMK firmwares, clear tags and use commit
+            newState.build.tags = []
+            newState.build.tag = ''
+            
+            const commit = getCommit(newState)
+            if (commit) {
+                setCommit(newState, commit)
+            }
         }
-        void setState(state)
+        
+        void setState(newState)
     }
 
-    const validBuildButton = (): void => {
-        const validKeymapStr = (/:|flash/).test(state.build.km || '')
+    const validBuildButton = (buildState?: typeof state.build): void => {
+        const currentBuild = buildState || state.build
+        const validKeymapStr = (/:|flash/).test(currentBuild.km || '')
         setKeymapStrError(validKeymapStr)
-        const validDisableButton = state.build.kb && state.build.km && !validKeymapStr
+        const validDisableButton = currentBuild.kb && currentBuild.km && !validKeymapStr
         setDisabledBuildButton(!validDisableButton)
         setDisabledUseRepoButtonButton(validKeymapStr)
     }
@@ -85,86 +114,133 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
     }
 
     const handleTextChange = (inputName: string): ((e: React.ChangeEvent<HTMLInputElement>) => void) => (e: React.ChangeEvent<HTMLInputElement>): void => {
-        if (inputName === 'commit') setCommit(state, e.target.value)
-        void setState(state)
+        const newState = { ...state }
+        if (inputName === 'commit') {
+            setCommit(newState, e.target.value)
+        }
+        void setState(newState)
     }
 
-    const handleKbSelectChange = async (e: React.ChangeEvent<HTMLSelectElement>): Promise<void> => {
+    const handleKbSelectChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
         const selectedKb = e.target.value
-        state.build.kb = selectedKb
         
-        // Reset keymap when keyboard changes
-        state.build.km = ''
+        // Create new state object to ensure React detects changes
+        const newState = { ...state }
+        newState.build = { ...state.build }
+        newState.keyboardList = { ...state.keyboardList }
+        
+        newState.build.kb = selectedKb
+        newState.build.km = '' // Reset keymap when keyboard changes
         
         // Update keymap list based on selected keyboard
-        if (selectedKb) {
-            const obj = keyboardList.find((v): boolean => v.kb === selectedKb)
-            state.keyboardList.km = obj ? obj.km : []
+        if (selectedKb && keyboardDataRef.current.length > 0) {
+            const obj = keyboardDataRef.current.find((v): boolean => v.kb === selectedKb)
+            newState.keyboardList.km = obj ? obj.km : []
         } else {
-            state.keyboardList.km = []
+            newState.keyboardList.km = []
         }
         
-        setKeyboardEmptyError(!state.build.kb)
-        setKeymapEmptyError(!state.build.km)
-        validBuildButton()
-        void setState(state)
+        setKeyboardEmptyError(!selectedKb)
+        setKeymapEmptyError(true) // Always true when keymap is reset
+        
+        void setState(newState)
+        validBuildButton(newState.build)
     }
 
     const handleKmSelectChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
-        state.build.km = e.target.value
+        const selectedKm = e.target.value
         
-        setKeymapEmptyError(!state.build.km)
-        validBuildButton()
-        void setState(state)
+        // Create new state object to ensure React detects changes
+        const newState = { ...state }
+        newState.build = { ...state.build }
+        newState.build.km = selectedKm
+        
+        setKeymapEmptyError(!selectedKm)
+        
+        void setState(newState)
+        validBuildButton(newState.build)
     }
 
     const handleKbFocus = async (): Promise<void> => {
-        const c = state.build.useRepo ? await api.listRemoteKeyboards(state.build.fw) : await api.listLocalKeyboards()
-        const keyboards = c as {kb: string; km: string[]}[]
-        state.keyboardList.kb = keyboards?.length > 0 ? keyboards.map((v): string => v.kb) : []
-        setKeyboardList(keyboards)
-        
-        // Update keymap list if keyboard is already selected
-        if (state.build.kb && keyboards?.length > 0) {
-            const obj = keyboards.find((v): boolean => v.kb === state.build.kb)
-            state.keyboardList.km = obj ? obj.km : []
+        try {
+            const c = state.build.useRepo ? await api.listRemoteKeyboards(state.build.fw) : await api.listLocalKeyboards()
+            const keyboards = c as {kb: string; km: string[]}[]
+            
+            // Update ref for keyboard selection handler
+            keyboardDataRef.current = keyboards
+            
+            // Create new state object to ensure React detects changes
+            const newState = { ...state }
+            newState.keyboardList = { ...state.keyboardList }
+            newState.keyboardList.kb = keyboards?.length > 0 ? keyboards.map((v): string => v.kb) : []
+            
+            // Update keymap list if keyboard is already selected
+            if (state.build.kb && keyboards?.length > 0) {
+                const obj = keyboards.find((v): boolean => v.kb === state.build.kb)
+                newState.keyboardList.km = obj ? obj.km : []
+            }
+            
+            void setState(newState)
+        } catch (error) {
+            console.error('Failed to load keyboard list:', error)
         }
-        
-        void setState(state)
     }
 
 
     const handleSelectTags = (e: React.ChangeEvent<HTMLSelectElement>): void => {
-        state.build.tag = e.target.value
-        void setState(state)
+        const selectedTag = e.target.value
+        
+        // Create a new state object to avoid mutation
+        const newState = { ...state }
+        newState.build = { ...state.build }
+        newState.build.tag = selectedTag
+        
+        void setState(newState)
     }
 
     const handleUseRepoChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-        state.build.useRepo = e.target.checked
-        void setState(state)
+        const newState = { ...state }
+        newState.build = { ...state.build }
+        newState.build.useRepo = e.target.checked
+        
+        void setState(newState)
     }
 
     const waiting = async (start: () => Promise<unknown>, end: () => Promise<unknown>, log: string, onCompleteCallback?: () => void): Promise<void> => {
+        console.log('[DEBUG] waiting function called with log:', log)
+        console.log('[DEBUG] Setting disabled states and page log')
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
+        console.log('[DEBUG] Calling setPageLog with:', log)
         setPageLog('build', log)
+        console.log('[DEBUG] setPageLog completed, setting state.tabDisabled')
         state.tabDisabled = true
         void setState(state)
+        console.log('[DEBUG] setState completed')
+        
+        console.log('[DEBUG] Calling start() function')
         await start()
+        console.log('[DEBUG] start() function completed')
+        
         let id: ReturnType<typeof setInterval>
         const checkFn = async (): Promise<void> => {
+            console.log('[DEBUG] checkFn called, checking if build completed')
             const buildCompleted = await end()
+            console.log('[DEBUG] buildCompleted result:', buildCompleted)
             if (buildCompleted) {
+                console.log('[DEBUG] Build completed, resetting states')
                 setDisabledBuildButton(false)
                 setDisabledBuildText(false)
                 state.tabDisabled = false
                 void setState(state)
                 clearInterval(id)
                 if (onCompleteCallback) {
+                    console.log('[DEBUG] Calling onCompleteCallback')
                     onCompleteCallback()
                 }
             }
         }
+        console.log('[DEBUG] Setting up interval to check build completion')
         id = setInterval(checkFn, 1000)
     }
 
@@ -195,17 +271,39 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
     }
 
     const handleBuild = async (): Promise<void> => {
+        console.log('[DEBUG] handleBuild called')
+        console.log('[DEBUG] Current state.build:', state.build)
+        console.log('[DEBUG] onShowLogModal function:', onShowLogModal)
+        
         // Show log modal when build starts
         if (onShowLogModal) {
+            console.log('[DEBUG] Calling onShowLogModal()')
             onShowLogModal()
+        } else {
+            console.log('[DEBUG] onShowLogModal is not available')
         }
         
-        const start = async (): Promise<unknown> => await api.build(state.build)
-        const end = async (): Promise<unknown> => await api.buildCompleted()
+        console.log('[DEBUG] Preparing build functions')
+        const start = async (): Promise<unknown> => {
+            console.log('[DEBUG] start() function called, calling api.build with:', state.build)
+            const result = await api.build(state.build)
+            console.log('[DEBUG] api.build result:', result)
+            return result
+        }
+        const end = async (): Promise<unknown> => {
+            console.log('[DEBUG] end() function called, calling api.buildCompleted()')
+            const result = await api.buildCompleted()
+            console.log('[DEBUG] api.buildCompleted result:', result)
+            return result
+        }
+        
+        console.log('[DEBUG] Calling waiting function')
         await waiting(start, end,
             "Building....\n\nIt will take some time if the first build or tag has changed.\n\n")
         
+        console.log('[DEBUG] Build process completed')
         if (onOperationComplete) {
+            console.log('[DEBUG] Calling onOperationComplete()')
             onOperationComplete()
         }
     }
@@ -332,7 +430,7 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
                                 color="light"
                                 className={disabledUseRepoButtonButton ? 'cursor-not-allowed' : 'cursor-pointer'}
                                 style={disabledUseRepoButtonButton ? { opacity: 0.5 } : {}}
-                                onClick={disabledUseRepoButtonButton ? (): void => {} : handleCheckout}
+                                onClick={disabledUseRepoButtonButton ? (): void => {} : (): void => { void handleCheckout() }}
                                 disabled={false}
                             >
                                 Refresh Keyboard List
@@ -341,7 +439,7 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
                                 color="light"
                                 className={disabledUseRepoButtonButton ? 'cursor-not-allowed' : 'cursor-pointer'}
                                 style={disabledUseRepoButtonButton ? { opacity: 0.5 } : {}}
-                                onClick={disabledUseRepoButtonButton ? (): void => {} : handleCopyKeyboardFile}
+                                onClick={disabledUseRepoButtonButton ? (): void => {} : (): void => { void handleCopyKeyboardFile() }}
                                 disabled={false}
                             >
                                 Copy Keyboard File
@@ -353,7 +451,12 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
                         color="blue"
                         className={`w-full ${(init ? initDisabledBuildButton() : disabledBuildButton) ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         style={(init ? initDisabledBuildButton() : disabledBuildButton) ? { opacity: 0.5 } : {}}
-                        onClick={(init ? initDisabledBuildButton() : disabledBuildButton) ? (): void => {} : handleBuild}
+                        onClick={(init ? initDisabledBuildButton() : disabledBuildButton) ? (): void => {
+                            console.log('[DEBUG] Build button clicked but disabled')
+                        } : (): void => { 
+                            console.log('[DEBUG] Build button clicked, calling handleBuild')
+                            void handleBuild() 
+                        }}
                         disabled={false}
                     >
                         Build

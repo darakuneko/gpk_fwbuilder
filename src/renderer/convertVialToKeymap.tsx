@@ -3,16 +3,16 @@ import { Button, Label } from 'flowbite-react'
 
 import {useStateContext} from "../context"
 import FileUpload from "../components/FileUpload"
-import { cleanLogText } from '../utils/logParser'
 
 const {api} = window
 
 interface ConvertVialToKeymapProps {
+    onShowLogModal?: () => void;
     onOperationComplete?: () => void;
 }
 
-const ConvertVialToKeymap: React.FC<ConvertVialToKeymapProps> = ({onOperationComplete}): React.ReactElement => {
-    const {state, setState, setPageLog, getPageLog} = useStateContext()
+const ConvertVialToKeymap: React.FC<ConvertVialToKeymapProps> = ({onShowLogModal, onOperationComplete}): React.ReactElement => {
+    const {state, setState, setPageLog} = useStateContext()
     const [vilObj, setVilObj] = useState({
         name : "",
         path : "",
@@ -27,7 +27,13 @@ const ConvertVialToKeymap: React.FC<ConvertVialToKeymapProps> = ({onOperationCom
     const convertMsg =  "Convert...."
 
     const handleVilFileSubmit = async (): Promise<void> => {
-        if (!state) return
+        if (!state || !vilObj.path || !vilObj.name) return
+        
+        // Show log modal when convert starts
+        if (onShowLogModal) {
+            onShowLogModal()
+        }
+        
         setPageLog('convertVialToKeymap', convertMsg)
         state.tabDisabled = true
         void setState(state)
@@ -47,11 +53,20 @@ const ConvertVialToKeymap: React.FC<ConvertVialToKeymapProps> = ({onOperationCom
     const handleVilFileUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
         const file = e.target.files?.[0]
         if (file){
-            vilObj.name = file.name
-            vilObj.path = (window as unknown as {webUtils: {getPathForFile: (file: File) => string}}).webUtils.getPathForFile(file)
-            setVilObj({...vilObj})
+            try {
+                const newVilObj = {
+                    name: file.name,
+                    path: (window as unknown as {webUtils: {getPathForFile: (file: File) => string}}).webUtils.getPathForFile(file)
+                }
+                setVilObj(newVilObj)
+                if (newVilObj.name.length > 0 && newVilObj.path && newVilObj.path.length > 0) {
+                    setDisabledVilCovertButton(false)
+                }
+            } catch (error) {
+                console.error('Failed to get file path:', error)
+                setDisabledVilCovertButton(true)
+            }
         }
-        if (vilObj.name.length > 0) setDisabledVilCovertButton(false)
     }
 
     return (
@@ -87,29 +102,6 @@ const ConvertVialToKeymap: React.FC<ConvertVialToKeymapProps> = ({onOperationCom
                     </div>
                 </div>
                 
-                {/* Inline Log Display */}
-                {getPageLog('convertVialToKeymap') && (
-                    <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
-                        <div className="mb-3">
-                            <Label className="block text-sm font-medium text-gray-900 dark:text-white">
-                                Conversion Log
-                            </Label>
-                        </div>
-                        <textarea
-                            value={cleanLogText(getPageLog('convertVialToKeymap')) || ''}
-                            readOnly
-                            className="w-full font-mono text-sm bg-gray-900 text-white rounded p-4 resize-none border-0 focus:outline-none focus:ring-0"
-                            style={{ 
-                                minHeight: '200px',
-                                maxHeight: '400px',
-                                whiteSpace: 'pre',
-                                overflowWrap: 'normal',
-                                wordBreak: 'normal'
-                            }}
-                            placeholder="Logs will appear here..."
-                        />
-                    </div>
-                )}
             </div>
         </div>
     )
