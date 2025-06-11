@@ -270,8 +270,10 @@ const Content = (): React.JSX.Element => {
         setCurrentContent(component)
         setCurrentPageKey(pageKey)
         
-        // Close logs when switching pages
-        setShowLogSidePeek(false)
+        // Close logs when switching pages (only if operation is complete)
+        if (!operationInProgress) {
+            setShowLogSidePeek(false)
+        }
     }
 
     const handleMenuClick = (menuItem: MenuItem, index: number): void => {
@@ -289,6 +291,10 @@ const Content = (): React.JSX.Element => {
                         setExpandedMenu(null)
                     } else {
                         setExpandedMenu(index.toString())
+                    }
+                    // Close logs when clicking menu items (only if operation is complete)
+                    if (!operationInProgress) {
+                        setShowLogSidePeek(false)
                     }
                 }
             } else {
@@ -354,7 +360,16 @@ const Content = (): React.JSX.Element => {
                     return (
                         <div className="flex h-screen">
                             {/* Sidebar Navigation */}
-                            <Sidebar className="h-screen bg-gray-50 dark:bg-gray-800" style={{ width: '240px' }}>
+                            <Sidebar 
+                                className="h-screen bg-gray-50 dark:bg-gray-800" 
+                                style={{ width: '240px' }}
+                                onClick={(): void => {
+                                    // Close logs when clicking anywhere in sidebar (only if operation is complete)
+                                    if (!operationInProgress) {
+                                        setShowLogSidePeek(false)
+                                    }
+                                }}
+                            >
                                 <SidebarItems>
                                     <SidebarItemGroup>
                                         {menuStructure.map((menu, index): React.ReactElement => (
@@ -405,14 +420,16 @@ const Content = (): React.JSX.Element => {
                                             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                                                 {currentTitle}
                                             </h2>
-                                            <Button
-                                                color="light"
-                                                className="cursor-pointer p-2"
-                                                onClick={(): void => setShowLogSidePeek(!showLogSidePeek)}
-                                                title={showLogSidePeek ? 'Hide Logs' : 'Show Logs'}
-                                            >
-                                                {showLogSidePeek ? <HiChevronDoubleRight className="w-4 h-4" /> : <HiChevronDoubleLeft className="w-4 h-4" />}
-                                            </Button>
+                                            {currentPageKey !== 'externalServer' && (
+                                                <Button
+                                                    color="light"
+                                                    className="cursor-pointer p-2"
+                                                    onClick={(): void => setShowLogSidePeek(!showLogSidePeek)}
+                                                    title={showLogSidePeek ? 'Hide Logs' : 'Show Logs'}
+                                                >
+                                                    {showLogSidePeek ? <HiChevronDoubleRight className="w-4 h-4" /> : <HiChevronDoubleLeft className="w-4 h-4" />}
+                                                </Button>
+                                            )}
                                         </div>
                                         {currentContent}
                                     </div>

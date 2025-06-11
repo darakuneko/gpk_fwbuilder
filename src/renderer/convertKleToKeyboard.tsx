@@ -130,9 +130,9 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
         state.convert.kle.mcu = e.target.value
         state.convert.kle.rows = ''
         state.convert.kle.cols = ''
-        void setState(state)
         setPinRows([])
         setPinCols([])
+        void setState(state)
         validKleConvertButton()
     }
 

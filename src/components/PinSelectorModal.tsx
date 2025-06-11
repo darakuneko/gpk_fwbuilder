@@ -135,7 +135,7 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
                         {tempSelectedPins.length > 0 ? (
                             <div className="flex-1 min-h-0 flex flex-col">
                                 <div 
-                                    className="flex-1 overflow-y-auto space-y-2 pr-2"
+                                    className="flex-1 overflow-y-auto space-y-1 px-1 py-2"
                                     style={{
                                         maxHeight: '300px',
                                         minHeight: '120px'
@@ -144,7 +144,7 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
                                     {tempSelectedPins.map((pin, index): React.ReactElement => (
                                         <div 
                                             key={`${pin}-${index}`}
-                                            className={`flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 transition-all duration-300 ${
+                                            className={`flex items-center justify-between p-3 mx-1 my-1 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 transition-all duration-300 ${
                                                 animatingIndex === index 
                                                     ? 'transform scale-105 bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900 dark:to-cyan-900 border-blue-400 dark:border-blue-500 shadow-xl ring-2 ring-blue-300 dark:ring-blue-600 ring-opacity-50' 
                                                     : 'hover:bg-gray-100 dark:hover:bg-gray-600'
