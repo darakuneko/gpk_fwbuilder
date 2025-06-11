@@ -27,7 +27,6 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
         if (pageKey && getPageLog) {
             const pageLog = getPageLog(pageKey)
             const globalLog = state?.logs
-            console.log('[DEBUG] getCurrentLogs - pageKey:', pageKey, 'pageLog length:', pageLog?.length || 0, 'globalLog length:', globalLog?.length || 0)
             
             // For build page, prioritize globalLog (real-time build logs) over pageLog (initial message)
             if (pageKey === 'build') {
@@ -36,7 +35,6 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
             
             return pageLog || globalLog || ''
         }
-        console.log('[DEBUG] getCurrentLogs - no pageKey, using global logs length:', state?.logs?.length || 0)
         return state?.logs || ''
     }, [pageKey, getPageLog, state?.logs])
 

@@ -129,7 +129,6 @@ const Content = (): React.JSX.Element => {
 
     useEffect((): (() => void) => {
         const streamLogHandler = async (log: string, init: boolean): Promise<void> => {
-            console.log('[DEBUG] streamLogHandler called with log:', log.substring(0, 100))
             const s = init ? state : await getState()
             if (s) {
                 s.logs = log
@@ -138,7 +137,6 @@ const Content = (): React.JSX.Element => {
                 // Check if operation is in progress
                 const isFinished = isOperationComplete(log)
                 setOperationInProgress(s.tabDisabled && !isFinished)
-                console.log('[DEBUG] streamLogHandler: isFinished=', isFinished, 'tabDisabled=', s.tabDisabled)
             }
         }
         
@@ -150,7 +148,6 @@ const Content = (): React.JSX.Element => {
 
     useEffect((): (() => void) => {
         const streamBuildLogHandler = async (log: string): Promise<void> => {
-            console.log('[DEBUG] streamBuildLogHandler called with log:', log.substring(0, 100))
             const currentState = await getState()
             if (currentState) {
                 const processedLog = log.match(/@@@@init@@@@/m) ? '' : currentState.logs + log
@@ -160,7 +157,6 @@ const Content = (): React.JSX.Element => {
                 // Check if operation is in progress
                 const isFinished = isOperationComplete(log)
                 setOperationInProgress(currentState.tabDisabled && !isFinished)
-                console.log('[DEBUG] streamBuildLogHandler: isFinished=', isFinished, 'tabDisabled=', currentState.tabDisabled)
             }
         }
         

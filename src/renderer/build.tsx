@@ -207,40 +207,28 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
     }
 
     const waiting = async (start: () => Promise<unknown>, end: () => Promise<unknown>, log: string, onCompleteCallback?: () => void): Promise<void> => {
-        console.log('[DEBUG] waiting function called with log:', log)
-        console.log('[DEBUG] Setting disabled states and page log')
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
-        console.log('[DEBUG] Calling setPageLog with:', log)
         setPageLog('build', log)
-        console.log('[DEBUG] setPageLog completed, setting state.tabDisabled')
         state.tabDisabled = true
         void setState(state)
-        console.log('[DEBUG] setState completed')
         
-        console.log('[DEBUG] Calling start() function')
         await start()
-        console.log('[DEBUG] start() function completed')
         
         let id: ReturnType<typeof setInterval>
         const checkFn = async (): Promise<void> => {
-            console.log('[DEBUG] checkFn called, checking if build completed')
             const buildCompleted = await end()
-            console.log('[DEBUG] buildCompleted result:', buildCompleted)
             if (buildCompleted) {
-                console.log('[DEBUG] Build completed, resetting states')
                 setDisabledBuildButton(false)
                 setDisabledBuildText(false)
                 state.tabDisabled = false
                 void setState(state)
                 clearInterval(id)
                 if (onCompleteCallback) {
-                    console.log('[DEBUG] Calling onCompleteCallback')
                     onCompleteCallback()
                 }
             }
         }
-        console.log('[DEBUG] Setting up interval to check build completion')
         id = setInterval(checkFn, 1000)
     }
 
@@ -271,39 +259,17 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
     }
 
     const handleBuild = async (): Promise<void> => {
-        console.log('[DEBUG] handleBuild called')
-        console.log('[DEBUG] Current state.build:', state.build)
-        console.log('[DEBUG] onShowLogModal function:', onShowLogModal)
-        
         // Show log modal when build starts
         if (onShowLogModal) {
-            console.log('[DEBUG] Calling onShowLogModal()')
             onShowLogModal()
-        } else {
-            console.log('[DEBUG] onShowLogModal is not available')
         }
         
-        console.log('[DEBUG] Preparing build functions')
-        const start = async (): Promise<unknown> => {
-            console.log('[DEBUG] start() function called, calling api.build with:', state.build)
-            const result = await api.build(state.build)
-            console.log('[DEBUG] api.build result:', result)
-            return result
-        }
-        const end = async (): Promise<unknown> => {
-            console.log('[DEBUG] end() function called, calling api.buildCompleted()')
-            const result = await api.buildCompleted()
-            console.log('[DEBUG] api.buildCompleted result:', result)
-            return result
-        }
-        
-        console.log('[DEBUG] Calling waiting function')
+        const start = async (): Promise<unknown> => await api.build(state.build)
+        const end = async (): Promise<unknown> => await api.buildCompleted()
         await waiting(start, end,
             "Building....\n\nIt will take some time if the first build or tag has changed.\n\n")
         
-        console.log('[DEBUG] Build process completed')
         if (onOperationComplete) {
-            console.log('[DEBUG] Calling onOperationComplete()')
             onOperationComplete()
         }
     }
@@ -451,12 +417,7 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
                         color="blue"
                         className={`w-full ${(init ? initDisabledBuildButton() : disabledBuildButton) ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         style={(init ? initDisabledBuildButton() : disabledBuildButton) ? { opacity: 0.5 } : {}}
-                        onClick={(init ? initDisabledBuildButton() : disabledBuildButton) ? (): void => {
-                            console.log('[DEBUG] Build button clicked but disabled')
-                        } : (): void => { 
-                            console.log('[DEBUG] Build button clicked, calling handleBuild')
-                            void handleBuild() 
-                        }}
+                        onClick={(init ? initDisabledBuildButton() : disabledBuildButton) ? (): void => {} : (): void => { void handleBuild() }}
                         disabled={false}
                     >
                         Build
