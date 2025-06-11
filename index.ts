@@ -48,26 +48,35 @@ app.on('ready', async () => {
             mainWindow.webContents.openDevTools()
         }
         
-        // Setup context menu for logs textarea
+        // Setup context menu for logs textarea only
         mainWindow.webContents.on('context-menu', (_e, params) => {
-            // Show context menu for any right-click, not just when text is selected
-            const menuTemplate = [
-                {
-                    label: 'Copy',
-                    enabled: !!(params.selectionText && params.selectionText.trim().length > 0),
-                    click: () => {
-                        if (params.selectionText) {
-                            clipboard.writeText(params.selectionText)
+            // Only show context menu if right-clicking in logs textarea
+            mainWindow.webContents.executeJavaScript(`
+                (function() {
+                    const element = document.elementFromPoint(${params.x}, ${params.y});
+                    return element && element.classList.contains('logs-textarea');
+                })()
+            `).then((isLogsTextarea) => {
+                if (isLogsTextarea) {
+                    const menuTemplate = [
+                        {
+                            label: 'Copy',
+                            enabled: !!(params.selectionText && params.selectionText.trim().length > 0),
+                            click: () => {
+                                if (params.selectionText) {
+                                    clipboard.writeText(params.selectionText)
+                                }
+                            }
                         }
-                    }
+                    ]
+                    const contextMenu = Menu.buildFromTemplate(menuTemplate)
+                    contextMenu.popup({
+                        window: mainWindow!,
+                        x: params.x,
+                        y: params.y
+                    })
                 }
-            ]
-            const contextMenu = Menu.buildFromTemplate(menuTemplate)
-            contextMenu.popup({
-                window: mainWindow!,
-                x: params.x,
-                y: params.y
-            })
+            }).catch(console.error)
         })
     }
 })
