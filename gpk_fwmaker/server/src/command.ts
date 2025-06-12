@@ -155,21 +155,28 @@ const cmd: CommandModule = {
     buildVialFirmware: async (res: Response, kb: string, km: string): Promise<void> => await buildCustomFW(res, dirVial, "vial", kb, km),
     buildCustomFirmware: async (res: Response, obj: GitCheckoutResult, kb: string, km: string): Promise<void> => await buildCustomFW(res, obj.dir, obj.branch, kb, km),
     updateRepositoryQmk: async (res: Response): Promise<void> => {
-        await exec(rmL(dirQMK))
-        const line = "cd /root && qmk setup -y"
-        streamLog(line, res)
+        // Break down complex command into individual streaming steps
+        await streamWriteLine('/root', `rm -rf ${dirQMK}`, res)
+        await streamWriteLine('/root', `qmk setup -y`, res)
     },
     updateRepositoryVial: async (res: Response): Promise<void> => {
-        await exec(rmL(dirVial))
-        const line = `cd /root && git clone https://github.com/vial-kb/vial-qmk.git && cd ${dirVial} && /usr/bin/python3 -m pip install --break-system-packages -r /root/vial-qmk/requirements.txt && make git-submodule`
-        streamLog(line, res)
+        // Break down complex command into individual streaming steps
+        await streamWriteLine('/root', `rm -rf ${dirVial}`, res)
+        await streamWriteLine('/root', `git clone https://github.com/vial-kb/vial-qmk.git`, res)
+        await streamWriteLine(dirVial, `/usr/bin/python3 -m pip install --break-system-packages -r ${dirVial}/requirements.txt`, res)
+        await streamWriteLine(dirVial, `make git-submodule`, res)
     },
     updateRepositoryCustom: async (res: Response, customDir: string, url: string): Promise<void> => {
         const dir = `${dirCustomRepo}/${customDir}`
         const match = url.match(/\/([^/]+)\.git$/)
         const cloneDir = `${dir}/${match ? match[1] : 'repository'}`
-        const line = `rm -rf ${dir} && mkdir ${dir} && cd ${dir} && git clone ${url} && cd ${cloneDir} && /usr/bin/python3 -m pip install --break-system-packages -r ${cloneDir}/requirements.txt && make git-submodule`
-        streamLog(line, res)
+        
+        // Break down complex command into individual streaming steps
+        await streamWriteLine('/root', `rm -rf ${dir}`, res)
+        await streamWriteLine('/root', `mkdir ${dir}`, res)
+        await streamWriteLine(dir, `git clone ${url}`, res)
+        await streamWriteLine(cloneDir, `/usr/bin/python3 -m pip install --break-system-packages -r ${cloneDir}/requirements.txt`, res)
+        await streamWriteLine(cloneDir, `make git-submodule`, res)
     },
     deleteRepositoryCustom: async (res: Response, customDir: string): Promise<void> => {
         const dir = `${dirCustomRepo}/${customDir}`
@@ -188,11 +195,11 @@ const cmd: CommandModule = {
     generateFirmFiles: async (jsonPath: string): Promise<void> => {
         await execFirmFiles(`python3 ./run.py ${jsonPath}`)
     },
-    readFirmFiles: async (filePath: string): Promise<Buffer> => (await fs.readFileSync(`${dirFirmFiles}${filePath}`)),
-    readQmkFile: async (kb: string, filePath: string): Promise<Buffer> => (await fs.readFileSync(`${dirQMK}/keyboards/${kb}/${filePath}`)),
-    write: async (filePath: string, obj: string): Promise<void> => await fs.writeFileSync(filePath, obj),
-    writeFirmFiles: async (filePath: string, obj: string): Promise<void> => await fs.writeFileSync(`${dirFirmFiles}${filePath}`, obj),
-    writeQmkFile: async (kb: string, filePath: string, obj: string): Promise<void> => await fs.writeFileSync(`${dirQMK}/keyboards/${kb}/${filePath}`, obj),
+    readFirmFiles: async (filePath: string): Promise<Buffer> => fs.readFileSync(`${dirFirmFiles}${filePath}`),
+    readQmkFile: async (kb: string, filePath: string): Promise<Buffer> => fs.readFileSync(`${dirQMK}/keyboards/${kb}/${filePath}`),
+    write: async (filePath: string, obj: string): Promise<void> => { fs.writeFileSync(filePath, obj) },
+    writeFirmFiles: async (filePath: string, obj: string): Promise<void> => { fs.writeFileSync(`${dirFirmFiles}${filePath}`, obj) },
+    writeQmkFile: async (kb: string, filePath: string, obj: string): Promise<void> => { fs.writeFileSync(`${dirQMK}/keyboards/${kb}/${filePath}`, obj) },
     cpConfigsToQmk: async (kbDir: string): Promise<void> => {
         await exec(rmKeyboardsL(dirQMK, kbDir))
         await exec(`cp -rf ${dirClient}/${kbDir} ${dirQMK}/keyboards`)
