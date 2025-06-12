@@ -2,6 +2,7 @@ import React from 'react'
 import { Button } from 'flowbite-react'
 
 import {useStateContext} from "../context"
+import { useI18n } from '../hooks/useI18n'
 
 const {api} = window
 
@@ -12,6 +13,7 @@ interface GenerateVialIdProps {
 
 const GenerateVialId: React.FC<GenerateVialIdProps> = ({onShowLogModal, onOperationComplete}): React.ReactElement => {
     const {state, setState, setPageLog} = useStateContext()
+    const { t } = useI18n()
     
     // Guard against uninitialized state
     if (!state) {
@@ -51,7 +53,7 @@ const GenerateVialId: React.FC<GenerateVialIdProps> = ({onShowLogModal, onOperat
                         onClick={state?.tabDisabled ? (): void => {} : handleVailIdSubmit()}
                         disabled={false}
                     >
-                        Generate Unique ID
+{t('generate.generateUniqueId')}
                     </Button>
                 </div>
                 

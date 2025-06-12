@@ -1,5 +1,7 @@
 import React from 'react'
 
+import { useI18n } from '../hooks/useI18n'
+
 interface FileUploadProps {
     label: string;
     accept?: string;
@@ -19,6 +21,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     className = "",
     variant = "outlined"
 }): React.ReactElement => {
+    const { t } = useI18n()
     const baseClasses = "px-4 py-2 rounded transition-colors duration-200 font-medium cursor-pointer text-center w-full"
     const variantClasses = variant === "contained" 
         ? "bg-blue-400 text-gray-900 hover:bg-blue-300"
@@ -41,7 +44,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
             </label>
             {filename && (
                 <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 truncate">
-                    Selected: {filename}
+                    {t('common.selectedFile', { filename })}
                 </div>
             )}
         </div>

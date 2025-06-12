@@ -322,7 +322,7 @@ const Convert: React.FC = (): React.ReactElement => {
                                             className="mr-2"
                                         />
                                         <Label htmlFor="only-via" className="text-sm">
-                                            Only viaon
+                                            Only via
                                         </Label>
                                     </div>
                                 </div>
@@ -438,7 +438,7 @@ const Convert: React.FC = (): React.ReactElement => {
                     <div className="border border-gray-200 dark:border-gray-700 rounded p-4 mb-4">
                         <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">Matrix Pin Configuration</h5>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                            Configure the GPIO pins for your keyboard matrix. Not required for "Only viaon" option.
+                            Configure the GPIO pins for your keyboard matrix. Not required for "Only via" option.
                         </p>
                         <div className="space-y-4">
                             <MultiSelect

@@ -18,6 +18,8 @@ contextBridge.exposeInMainWorld(
         generateVialId: async () => await ipcRenderer.invoke('generateVialId'),
         getState: async () => await ipcRenderer.invoke('getState'),
         setState: async (obj: unknown) => await ipcRenderer.invoke('setState', obj),
+        getSettings: async () => await ipcRenderer.invoke('getSettings'),
+        setSettings: async (settings: unknown) => await ipcRenderer.invoke('setSettings', settings),
         rebuildImage: async () => await ipcRenderer.invoke('rebuildImage'),
         convertVilJson: async (file: unknown) => await ipcRenderer.invoke('convertVilJson', file),
         convertViaJson: async (file: unknown) => await ipcRenderer.invoke('convertViaJson', file),

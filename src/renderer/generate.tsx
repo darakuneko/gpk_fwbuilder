@@ -2,11 +2,13 @@ import React, {useState} from 'react'
 import { Button, Label, TextInput, Select, HelperText } from 'flowbite-react'
 
 import {useStateContext} from "../context"
+import { useI18n } from '../hooks/useI18n'
 
 const {api} = window
 
 const Generate = (): React.ReactElement => {
     const {state, setState} = useStateContext()
+    const { t } = useI18n()
     const [keyboardError, setKeyboardError] = useState(false)
     const [usernameEmptyError, setUsernameEmptyError] = useState(false)
     const [keyboardStrError, setKeyboardStrError] = useState(false)
@@ -102,15 +104,15 @@ const Generate = (): React.ReactElement => {
                 {/* QMK Keyboard File Generation */}
                 <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        Generate template QMK keyboard configuration files for your custom keyboard project.
+{t('generate.description')}
                     </p>
                     
                     {/* Configuration Parameters */}
                     <div className="border border-gray-200 dark:border-gray-700 rounded p-4 mb-4">
-                        <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">Configuration Parameters</h5>
+                        <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">{t('generate.configurationParameters')}</h5>
                         <div className="grid grid-cols-1 gap-4">
                         <div>
-                            <Label className="mb-1 block" htmlFor="generate-qmkFile-mcu-select">MCU</Label>
+                            <Label className="mb-1 block" htmlFor="generate-qmkFile-mcu-select">{t('common.mcu')}</Label>
                             <Select
                                 id="generate-qmkFile-mcu-select"
                                 value={state?.generate.qmkFile.mcu || 'RP2040'}
@@ -127,7 +129,7 @@ const Generate = (): React.ReactElement => {
                                 className={`mb-1 block ${keyboardError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
                                 htmlFor="generate-qmkFile-kb"
                             >
-                                Keyboard Name *
+{t('common.keyboardName')} *
                             </Label>
                             <TextInput
                                 type="text"
@@ -141,7 +143,7 @@ const Generate = (): React.ReactElement => {
                             />
                             {keyboardStrError && (
                                 <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                    A-Za-z0-9_/- can be used
+                                    {t('validation.alphanumericOnly')}
                                 </HelperText>
                             )}
                         </div>
@@ -150,7 +152,7 @@ const Generate = (): React.ReactElement => {
                                 className={`mb-1 block ${usernameEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
                                 htmlFor="km"
                             >
-                                Username *
+{t('common.username')} *
                             </Label>
                             <TextInput
                                 type="text"
@@ -164,7 +166,7 @@ const Generate = (): React.ReactElement => {
                             />
                             {usernameStrError && (
                                 <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                    A-Za-z0-9_/- can be used
+                                    {t('validation.alphanumericOnly')}
                                 </HelperText>
                             )}
                         </div>
@@ -173,7 +175,7 @@ const Generate = (): React.ReactElement => {
                     
                     {/* Generate Action */}
                     <div className="border border-gray-200 dark:border-gray-700 rounded p-4">
-                        <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">Generate Files</h5>
+                        <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">{t('generate.generateFiles')}</h5>
                         <Button
                             color="blue"
                             className={`w-full ${(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? 'cursor-not-allowed' : 'cursor-pointer'}`}
@@ -181,7 +183,7 @@ const Generate = (): React.ReactElement => {
                             onClick={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? (): void => {} : handleQmkFileSubmit()}
                             disabled={false}
                         >
-                            Generate
+                            {t('generate.generateButton')}
                         </Button>
                     </div>
                 </div>
@@ -189,12 +191,12 @@ const Generate = (): React.ReactElement => {
                 {/* Vial Unique ID Generation */}
                 <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        Generate a unique identifier for Vial keyboard configuration. Each keyboard needs a unique ID.
+{t('generate.vialIdDescription')}
                     </p>
                     
                     {/* ID Generation Action */}
                     <div className="border border-gray-200 dark:border-gray-700 rounded p-4">
-                        <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">Generate ID</h5>
+                        <h5 className="font-medium mb-3 text-gray-800 dark:text-gray-200">{t('generate.generateId')}</h5>
                         <Button
                             color="blue"
                             className={`w-full ${disabledVialID ? 'cursor-not-allowed' : 'cursor-pointer'}`}
@@ -202,7 +204,7 @@ const Generate = (): React.ReactElement => {
                             onClick={disabledVialID ? (): void => {} : handleVailIdSubmit()}
                             disabled={false}
                         >
-                            Generate Unique ID
+{t('generate.generateUniqueId')}
                         </Button>
                     </div>
                 </div>

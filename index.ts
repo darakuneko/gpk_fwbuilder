@@ -108,6 +108,13 @@ ipcMain.handle('getState', async () => store.get('state'))
 ipcMain.handle('setState', async (_e, obj: AppState) => {
     store.set('state', obj)
 })
+ipcMain.handle('getSettings', async () => store.get('settings') || {})
+ipcMain.handle('setSettings', async (_e, settings: any) => {
+    const currentSettings = store.get('settings') || {}
+    const newSettings = { ...currentSettings, ...settings }
+    store.set('settings', newSettings)
+    return true
+})
 ipcMain.handle('rebuildImage', async () => await command.rebuildImage(mainWindow!))
 ipcMain.handle('convertVilJson', async (_e, file: any) => await command.convertVilJson(file))
 ipcMain.handle('convertViaJson', async (_e, file: any) => await command.convertViaJson(file))

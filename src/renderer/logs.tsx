@@ -3,6 +3,7 @@ import { TextInput, Button } from 'flowbite-react'
 
 import {useStateContext} from "../context"
 import { cleanLogText, parseLogColors, isOperationComplete } from '../utils/logParser'
+import { useI18n } from '../hooks/useI18n'
 
 interface LogsProps {
     pageKey?: string;
@@ -10,6 +11,7 @@ interface LogsProps {
 
 const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
     const {state, getPageLog} = useStateContext()
+    const { t } = useI18n()
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const divRef = useRef<HTMLDivElement>(null)
     const [isTextareaMode, setIsTextareaMode] = useState(false)
@@ -221,16 +223,16 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                         wordBreak: 'break-word',
                         maxHeight: '100%'
                     }}
-                    title={isProcessing ? "Processing... Text selection will be available when complete" : "Click to enable text selection"}
+                    title={isProcessing ? t('logs.processingCannotSelect') : t('logs.clickToEnableSelection')}
                 >
                     {getCurrentLogs() ? (
                         <div dangerouslySetInnerHTML={coloredLogContent} />
                     ) : (
-                        <div className="text-gray-400">Logs will appear here...</div>
+                        <div className="text-gray-400">{t('logs.logsWillAppear')}</div>
                     )}
                     {getCurrentLogs() && !isProcessing && (
                         <div className="text-xs text-gray-500 mt-4 text-center">
-                            Click anywhere to enable text selection
+{t('logs.clickToEnableSelection')}
                         </div>
                     )}
                 </div>
@@ -238,7 +240,7 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                 <div className="flex-1 flex flex-col">
                     <div className="flex justify-between items-center p-2 bg-gray-800 text-gray-300">
                         <div className="flex items-center gap-3">
-                            <span className="text-sm">Text selection mode</span>
+                            <span className="text-sm">{t('logs.textSelectionMode')}</span>
                             <Button
                                 color="light"
                                 size="sm"
@@ -247,7 +249,7 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                                 style={!isSearchAvailable() ? { opacity: 0.5 } : {}}
                                 disabled={false}
                             >
-                                Search
+{t('logs.search')}
                             </Button>
                             <Button
                                 color="light"
@@ -257,14 +259,14 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                                 style={!isSearchAvailable() ? { opacity: 0.5 } : {}}
                                 disabled={false}
                             >
-                                {copySuccess ? 'Copied!' : 'Copy All'}
+{copySuccess ? t('logs.copied') : t('logs.copyAll')}
                             </Button>
                         </div>
                         <button
                             onClick={(): void => setIsTextareaMode(false)}
                             className="text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded transition-colors cursor-pointer"
                         >
-                            Back to view mode
+{t('logs.backToViewMode')}
                         </button>
                     </div>
                     
@@ -276,7 +278,7 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                                     <TextInput
                                         ref={searchInputRef}
                                         type="text"
-                                        placeholder="Search logs... (supports regex)"
+                                        placeholder={t('logs.searchPlaceholder')}
                                         value={searchQuery}
                                         onChange={handleSearchChange}
                                         onKeyDown={handleSearchKeyDown}
@@ -291,7 +293,7 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                                             className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto"
                                         >
                                             <div className="px-3 py-1 text-xs text-gray-500 border-b border-gray-600">
-                                                Recent searches
+{t('logs.recentSearches')}
                                             </div>
                                             {searchHistory.map((historyItem, index): React.ReactElement => (
                                                 <button
@@ -313,7 +315,7 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                                         onClick={clearSearch}
                                         className="cursor-pointer"
                                     >
-                                        Clear
+{t('logs.clear')}
                                     </Button>
                                 )}
                             </div>
@@ -321,9 +323,12 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                             {/* Search results info */}
                             {searchQuery && (
                                 <div className="mt-2 text-xs text-gray-400">
-                                    {filteredLogs && filteredLogs.trim() ? 
-                                        `Showing lines matching "${searchQuery}" (${filteredLogs.split('\n').filter((line): boolean => Boolean(line.trim())).length} lines)` : 
-                                        'No matches found'
+{filteredLogs && filteredLogs.trim() ? 
+                                        t('logs.showingMatches', { 
+                                            query: searchQuery, 
+                                            count: filteredLogs.split('\n').filter((line): boolean => Boolean(line.trim())).length.toString() 
+                                        }) : 
+                                        t('logs.noMatches')
                                     }
                                 </div>
                             )}
@@ -344,7 +349,7 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                             padding: '16px',
                             letterSpacing: '0'
                         }}
-                        placeholder="Logs will appear here..."
+                        placeholder={t('logs.logsWillAppear')}
                     />
                 </div>
             )}

@@ -2,6 +2,7 @@ import React, {useState} from 'react'
 import { Button, Label, TextInput, Select, HelperText } from 'flowbite-react'
 
 import {useStateContext} from "../context"
+import { useI18n } from '../hooks/useI18n'
 
 const {api} = window
 
@@ -12,6 +13,7 @@ interface GenerateKeyboardFileProps {
 
 const GenerateKeyboardFile: React.FC<GenerateKeyboardFileProps> = ({onShowLogModal, onOperationComplete}): React.ReactElement => {
     const {state, setState, setPageLog} = useStateContext()
+    const { t } = useI18n()
     
     const [keyboardError, setKeyboardError] = useState(false)
     const [usernameEmptyError, setUsernameEmptyError] = useState(false)
@@ -108,7 +110,7 @@ const GenerateKeyboardFile: React.FC<GenerateKeyboardFileProps> = ({onShowLogMod
                     
                     <div className="grid grid-cols-1 gap-4 mb-6">
                         <div>
-                            <Label className="mb-2 block" htmlFor="generate-qmkFile-mcu-select">MCU</Label>
+                            <Label className="mb-2 block" htmlFor="generate-qmkFile-mcu-select">{t('common.mcu')}</Label>
                             <Select
                                 id="generate-qmkFile-mcu-select"
                                 value={state.generate?.qmkFile?.mcu || 'RP2040'}
@@ -125,7 +127,7 @@ const GenerateKeyboardFile: React.FC<GenerateKeyboardFileProps> = ({onShowLogMod
                                 className={`mb-2 block ${keyboardError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
                                 htmlFor="generate-qmkFile-kb"
                             >
-                                Keyboard *
+{t('common.keyboardName')} *
                             </Label>
                             <TextInput
                                 type="text"
@@ -138,7 +140,7 @@ const GenerateKeyboardFile: React.FC<GenerateKeyboardFileProps> = ({onShowLogMod
                             />
                             {keyboardStrError && (
                                 <HelperText className="mt-2 text-sm text-red-600 dark:text-red-500">
-                                    A-Za-z0-9_/- can be used
+                                    {t('validation.alphanumericOnly')}
                                 </HelperText>
                             )}
                         </div>
@@ -148,7 +150,7 @@ const GenerateKeyboardFile: React.FC<GenerateKeyboardFileProps> = ({onShowLogMod
                                 className={`mb-2 block ${usernameEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
                                 htmlFor="km"
                             >
-                                Username *
+{t('common.username')} *
                             </Label>
                             <TextInput
                                 type="text"
@@ -161,7 +163,7 @@ const GenerateKeyboardFile: React.FC<GenerateKeyboardFileProps> = ({onShowLogMod
                             />
                             {usernameStrError && (
                                 <HelperText className="mt-2 text-sm text-red-600 dark:text-red-500">
-                                    A-Za-z0-9_/- can be used
+                                    {t('validation.alphanumericOnly')}
                                 </HelperText>
                             )}
                         </div>
@@ -174,7 +176,7 @@ const GenerateKeyboardFile: React.FC<GenerateKeyboardFileProps> = ({onShowLogMod
                         onClick={(qmkFile ? qmkFileDisabledBuildButton() : disabledBuildButton) ? (): void => {} : handleQmkFileSubmit()}
                         disabled={false}
                     >
-                        Generate
+{t('generate.generateButton')}
                     </Button>
                 </div>
                 

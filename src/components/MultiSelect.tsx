@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 
+import { useI18n } from '../hooks/useI18n'
+
 interface MultiSelectProps {
     options?: string[];
     value?: string[];
@@ -25,6 +27,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
     className = '',
     placement = 'bottom'
 }): React.ReactElement => {
+    const { t } = useI18n()
     const [isOpen, setIsOpen] = useState(false)
     const wrapperRef = useRef<HTMLDivElement>(null)
 
@@ -79,7 +82,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
                 onClick={handleToggle}
             >
                 {value.length === 0 ? (
-                    <span className="text-gray-500 dark:text-gray-400">Select options...</span>
+                    <span className="text-gray-500 dark:text-gray-400">{t('common.selectOptions')}</span>
                 ) : (
                     <div className="flex flex-wrap gap-1">
                         {value.map((item, index): React.ReactElement => (

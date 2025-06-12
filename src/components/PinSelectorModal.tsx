@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from 'flowbite-react'
 import { HiArrowUp, HiArrowDown, HiX } from 'react-icons/hi'
 
+import { useI18n } from '../hooks/useI18n'
+
 interface PinSelectorModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -19,6 +21,7 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
     selectedPins, 
     onConfirm 
 }): React.ReactElement => {
+    const { t } = useI18n()
     const [tempSelectedPins, setTempSelectedPins] = useState([...selectedPins])
     const [animatingIndex, setAnimatingIndex] = useState<number | null>(null)
 
@@ -129,7 +132,7 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
                     {/* Selected Pins Section */}
                     <div className="flex-1 min-h-0 flex flex-col">
                         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3 flex-shrink-0">
-                            Selected Pins ({tempSelectedPins.length})
+{t('pinSelector.selectedPins', { count: tempSelectedPins.length.toString() })}
                         </h3>
                         
                         {tempSelectedPins.length > 0 ? (
@@ -193,7 +196,7 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
                                 <div className="mt-4 bg-gray-100 dark:bg-gray-800 rounded-lg flex-shrink-0">
                                     <div className="p-3 pb-2">
                                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Array Output:
+{t('pinSelector.arrayOutput')}
                                         </p>
                                     </div>
                                     <div 
@@ -212,7 +215,7 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
                             </div>
                         ) : (
                             <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                                No pins selected
+{t('pinSelector.noPinsSelected')}
                             </div>
                         )}
                     </div>
@@ -220,10 +223,10 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
             </ModalBody>
             <ModalFooter>
                 <Button color="blue" className="cursor-pointer" onClick={handleConfirm}>
-                    OK
+{t('common.ok')}
                 </Button>
                 <Button color="light" className="cursor-pointer" onClick={handleCancel}>
-                    Cancel
+{t('common.cancel')}
                 </Button>
             </ModalFooter>
         </Modal>

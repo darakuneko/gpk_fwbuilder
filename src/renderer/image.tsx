@@ -2,6 +2,7 @@ import React from 'react'
 import { Button } from 'flowbite-react'
 
 import {useStateContext} from "../context"
+import {useI18n} from "../hooks/useI18n"
 
 const {api} = window
 
@@ -12,6 +13,7 @@ interface ImageProps {
 
 const Image: React.FC<ImageProps> = ({onShowLogModal, onOperationComplete}): React.ReactElement => {
     const {state, setState, setPageLog} = useStateContext()
+    const {t} = useI18n()
     
     // Guard against uninitialized state
     if (!state) {
@@ -62,11 +64,11 @@ const Image: React.FC<ImageProps> = ({onShowLogModal, onOperationComplete}): Rea
                             disabled={false}
                             onClick={state?.tabDisabled ? (): void => {} : handleUpdate("Building.....\n\n", "Rebuild!!", async (): Promise<unknown> => await api.rebuildImage({}))}
                         >
-                            Rebuild Docker Image
+{t('settings.rebuildDockerImage')}
                         </Button>
                         <div className="text-center space-y-2 pt-4">
                             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                If it stops due to a network error or other problem, please press the button again.
+                                {t('common.networkErrorRetry')}
                             </p>
                         </div>
                     </div>

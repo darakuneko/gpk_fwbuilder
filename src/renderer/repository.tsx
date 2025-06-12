@@ -2,6 +2,7 @@ import React from 'react'
 import { Button, TextInput, Select, Label } from 'flowbite-react'
 
 import {useStateContext} from "../context"
+import {useI18n} from "../hooks/useI18n"
 
 const {api} = window
 
@@ -12,6 +13,7 @@ interface RepositoryProps {
 
 const Repository: React.FC<RepositoryProps> = ({onShowLogModal, onOperationComplete}): React.ReactElement => {
     const {state, setState, setPageLog} = useStateContext()
+    const {t} = useI18n()
     
     // Guard against uninitialized state
     if (!state || !state.repository) {
@@ -77,7 +79,7 @@ const Repository: React.FC<RepositoryProps> = ({onShowLogModal, onOperationCompl
                     <div className="space-y-4">
                         <div>
                             <Label className="mb-2 block" htmlFor="repository-fw-select">
-                                Firmware
+{t('build.firmware')}
                             </Label>
                             <Select
                                 id="repository-fw-select"
@@ -96,12 +98,12 @@ const Repository: React.FC<RepositoryProps> = ({onShowLogModal, onOperationCompl
                         
                         <div>
                             <Label className="mb-2 block" htmlFor="repository-custom-url">
-                                Repository URL
+{t('settings.repositoryUrl')}
                             </Label>
                             <TextInput
                                 type="text"
                                 id="repository-custom-url"
-                                placeholder="git clone url"
+                                placeholder={t('settings.gitCloneUrlPlaceholder')}
                                 onChange={handleTextChange}
                                 value={state.repository?.firmwares?.find((v): boolean => v.id === state.repository?.firmware)?.url || ''}
                                 disabled={isStaticFirmware(state.repository?.firmware)}
@@ -121,11 +123,11 @@ const Repository: React.FC<RepositoryProps> = ({onShowLogModal, onOperationCompl
                                 }
                                 disabled={false}
                             >
-                                Update Repository
+{t('settings.updateRepository')}
                             </Button>
                             <div className="text-center space-y-2 pt-4">
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                    If it stops due to a network error or other problem, please press the button again.
+                                    {t('common.networkErrorRetry')}
                                 </p>
                             </div>
                         </div>

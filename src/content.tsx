@@ -6,6 +6,7 @@ import parse from 'html-react-parser'
 
 import {getState, useStateContext} from "./context"
 import type { AppState } from "./context"
+import { useI18n } from './hooks/useI18n'
 import Build from "./renderer/build"
 import Logs from "./renderer/logs"
 import Repository from "./renderer/repository"
@@ -15,6 +16,7 @@ import GenerateVialId from "./renderer/generateVialId"
 import ConvertVialToKeymap from "./renderer/convertVialToKeymap"
 import ConvertKleToKeyboard from "./renderer/convertKleToKeyboard"
 import ExternalServer from "./renderer/externalServer"
+import LanguageSettings from "./renderer/languageSettings"
 import { isOperationComplete } from './utils/logParser'
 
 interface SubMenuItem {
@@ -38,6 +40,7 @@ const {api} = window
 
 const Content = (): React.JSX.Element => {
     const {state, setState} = useStateContext()
+    const { t } = useI18n()
     const [initServer, setInitServer] = useState(true)
     const [closeServer, setCloseServer] = useState(false)
     const [expandedMenu, setExpandedMenu] = useState<string | null>(null)
@@ -103,14 +106,14 @@ const Content = (): React.JSX.Element => {
                     setInitServer(false)
                 } else if (exist === 404) {
                     if (!state) return
-                    state.logs = 'If the connection does not work for a long time, please start up again or delete the docker image once.'
+                    state.logs = t('common.connectionError')
                     void setState(state)
                 }
             }
             id = setInterval(checkFn, 1000)
         }
         void fn()
-    }, [setState, state, initServer])
+    }, [setState, state, initServer, t])
 
     useEffect((): (() => void) => {
         const closeHandler = async (): Promise<void> => {
@@ -193,77 +196,83 @@ const Content = (): React.JSX.Element => {
 
     const menuStructure = useMemo<MenuItem[]>((): MenuItem[] => [
         { 
-            label: "Build", 
+            label: t('nav.build'), 
             icon: HiCube,
             component: (): React.ReactElement => <Build onShowLogModal={handleShowLogSidePeek} onOperationComplete={handleOperationComplete}/>,
             hasSubmenu: false,
-            title: "Build Firmware",
+            title: t('build.title'),
             pageKey: "build"
         },
         { 
-            label: "Generate", 
+            label: t('nav.generate'), 
             icon: HiCollection,
             hasSubmenu: true,
             subItems: [
                 { 
-                    label: "Keyboard File", 
+                    label: t('generate.keyboardFile'), 
                     component: (): React.ReactElement => <GenerateKeyboardFile onShowLogModal={handleShowLogSidePeek} onOperationComplete={handleOperationComplete}/>,
-                    title: "QMK Keyboard File Generation",
+                    title: t('generate.keyboardFileTitle'),
                     pageKey: "generateKeyboardFile"
                 },
                 { 
-                    label: "Vial Unique ID", 
+                    label: t('generate.vialId'), 
                     component: (): React.ReactElement => <GenerateVialId onShowLogModal={handleShowLogSidePeek} onOperationComplete={handleOperationComplete}/>,
-                    title: "Vial Unique ID Generation",
+                    title: t('generate.vialIdTitle'),
                     pageKey: "generateVialId"
                 }
             ]
         },
         { 
-            label: "Convert", 
+            label: t('nav.convert'), 
             icon: HiRefresh,
             hasSubmenu: true,
             subItems: [
                 { 
-                    label: "Vial to Keymap.c", 
+                    label: t('convert.vialToKeymap'), 
                     component: (): React.ReactElement => <ConvertVialToKeymap onShowLogModal={handleShowLogSidePeek} onOperationComplete={handleOperationComplete}/>,
-                    title: "Convert Vial File to Keymap.c",
+                    title: t('convert.vialToKeymapTitle'),
                     pageKey: "convertVialToKeymap"
                 },
                 { 
-                    label: "KLE to Keyboard File", 
+                    label: t('convert.kleToKeyboard'), 
                     component: (): React.ReactElement => <ConvertKleToKeyboard onShowLogModal={handleShowLogSidePeek} onOperationComplete={handleOperationComplete}/>,
-                    title: "Convert KLE Json to QMK/Vial Files",
+                    title: t('convert.kleToKeyboardTitle'),
                     pageKey: "convertKleToKeyboard"
                 }
             ]
         },
         { 
-            label: "Setting",
+            label: t('nav.setting'),
             icon: HiCog,
             hasSubmenu: true,
             subItems: [
                 { 
-                    label: "Repository", 
+                    label: t('settings.repository'), 
                     component: (): React.ReactElement => <Repository onShowLogModal={handleShowLogSidePeek} onOperationComplete={handleOperationComplete}/>,
-                    title: "Repository Management",
+                    title: t('settings.repositoryTitle'),
                     pageKey: "repository"
                 },
                 { 
-                    label: "Image", 
+                    label: t('settings.image'), 
                     component: (): React.ReactElement => <Image onShowLogModal={handleShowLogSidePeek} onOperationComplete={handleOperationComplete}/>,
-                    title: "Docker Image Management",
+                    title: t('settings.imageTitle'),
                     pageKey: "image"
                 },
                 { 
-                    label: "External Server", 
+                    label: t('settings.languageSettings'), 
+                    component: (): React.ReactElement => <LanguageSettings/>,
+                    title: t('settings.languageSettingsTitle'),
+                    pageKey: "languageSettings"
+                },
+                { 
+                    label: t('settings.externalServer'), 
                     component: (): React.ReactElement => <ExternalServer/>,
-                    title: "External Server Settings",
+                    title: t('settings.externalServerTitle'),
                     pageKey: "externalServer"
                 }
             ]
         }
-    ], [handleShowLogSidePeek, handleOperationComplete])
+    ], [handleShowLogSidePeek, handleOperationComplete, t])
 
     const showContent = (title: string, component: React.ReactNode, pageKey = ''): void => {
         setCurrentTitle(title)
@@ -330,7 +339,7 @@ const Content = (): React.JSX.Element => {
                     return (
                         <div className="flex justify-center items-center h-screen">
                             <div className="text-center">
-                                <div className="text-blue-400 animate-pulse text-lg font-medium">Terminating.....</div>
+                                <div className="text-blue-400 animate-pulse text-lg font-medium">{t('common.terminating')}</div>
                             </div>
                         </div>
                     )
@@ -340,8 +349,8 @@ const Content = (): React.JSX.Element => {
                             <div className="text-center max-w-md w-full px-4">
                                 <div className="mb-6">
                                     <Spinner size="lg" className="mb-4" />
-                                    <div className="text-blue-400 animate-pulse text-lg font-medium mb-2">Initializing.....</div>
-                                    <div className="text-blue-400 animate-pulse text-sm mb-4">May take more than 10 minutes</div>
+                                    <div className="text-blue-400 animate-pulse text-lg font-medium mb-2">{t('common.initializing')}</div>
+                                    <div className="text-blue-400 animate-pulse text-sm mb-4">{t('common.mayTakeTime')}</div>
                                 </div>
                                 <div className="flex justify-center mb-6">
                                     <Button 
@@ -349,7 +358,7 @@ const Content = (): React.JSX.Element => {
                                         className="cursor-pointer"
                                         onClick={handleSkipDockerCheck}
                                     >
-                                        Skip Docker Check
+                                        {t('common.skipDockerCheck')}
                                     </Button>
                                 </div>
                                 <div className="text-left text-sm max-h-40 overflow-y-auto">{parse((state?.logs || '').replace(/\n/g, "<br>"))}</div>
@@ -420,12 +429,12 @@ const Content = (): React.JSX.Element => {
                                             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                                                 {currentTitle}
                                             </h2>
-                                            {currentPageKey !== 'externalServer' && (
+                                            {currentPageKey !== 'externalServer' && currentPageKey !== 'languageSettings' && (
                                                 <Button
                                                     color="light"
                                                     className="cursor-pointer p-2"
                                                     onClick={(): void => setShowLogSidePeek(!showLogSidePeek)}
-                                                    title={showLogSidePeek ? 'Hide Logs' : 'Show Logs'}
+                                                    title={showLogSidePeek ? t('logs.hideLogs') : t('logs.showLogs')}
                                                 >
                                                     {showLogSidePeek ? <HiChevronDoubleRight className="w-4 h-4" /> : <HiChevronDoubleLeft className="w-4 h-4" />}
                                                 </Button>
@@ -436,7 +445,7 @@ const Content = (): React.JSX.Element => {
                                 ) : (
                                     <div className="flex items-center justify-center h-full">
                                         <p className="text-gray-500 dark:text-gray-400">
-                                            Select a menu item to get started
+                                            {t('common.selectMenuItem')}
                                         </p>
                                     </div>
                                 )}
@@ -450,7 +459,7 @@ const Content = (): React.JSX.Element => {
                                 >
                                     <div className="h-full flex flex-col">
                                         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Logs</h3>
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('logs.title')}</h3>
                                             <Button
                                                 color="light"
                                                 size="sm"
@@ -458,7 +467,7 @@ const Content = (): React.JSX.Element => {
                                                 style={operationInProgress ? { opacity: 0.5 } : {}}
                                                 onClick={operationInProgress ? (): void => {} : (): void => setShowLogSidePeek(false)}
                                                 disabled={false}
-                                                title={operationInProgress ? "Cannot close during operation" : "Close Logs"}
+                                                title={operationInProgress ? t('logs.cannotCloseDuringOperation') : t('logs.closeLogs')}
                                             >
                                                 <HiChevronDoubleRight className="w-4 h-4" />
                                             </Button>

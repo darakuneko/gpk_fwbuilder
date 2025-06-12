@@ -2,11 +2,13 @@ import React from 'react'
 import { Label, TextInput } from 'flowbite-react'
 
 import {useStateContext} from "../context"
+import { useI18n } from '../hooks/useI18n'
 
 const {api} = window
 
 const ExternalServer = (): React.ReactElement => {
     const {state, setState} = useStateContext()
+    const { t } = useI18n()
 
     const handleDockeUrlChange = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
         if (!state) return
@@ -23,24 +25,25 @@ const ExternalServer = (): React.ReactElement => {
         void setState(state)
     }
 
+
     return (
         <div className="p-4">
             <div className="max-w-4xl mx-auto space-y-6">
                 <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
                     <div className="space-y-4">
                         <div>
-                            <Label className="mb-2 block" htmlFor="fwMakerUrl">GPK FWMaker's URL</Label>
+                            <Label className="mb-2 block" htmlFor="fwMakerUrl">{t('settings.fwMakerUrl')}</Label>
                             <TextInput
                                 type="text"
                                 id="fwMakerUrl"
                                 onChange={handleDockeUrlChange}
                                 value={state?.setting.fwMakerUrl || ""}
-                                placeholder="Leave empty to use local docker"
+                                placeholder={t('settings.urlPlaceholder')}
                             />
                         </div>
                         
                         <div>
-                            <Label className="mb-2 block" htmlFor="fwDir">GPK FWMaker's GPKFW Path</Label>
+                            <Label className="mb-2 block" htmlFor="fwDir">{t('settings.fwDir')}</Label>
                             <TextInput
                                 type="text"
                                 id="fwDir"
@@ -51,10 +54,10 @@ const ExternalServer = (): React.ReactElement => {
                         
                         <div className="text-center space-y-2 pt-4">
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Use local docker if URL is empty
+                                {t('settings.useLocalDocker')}
                             </p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Settings are saved when you exit, so you will need to restart the application.
+                                {t('settings.restartRequired')}
                             </p>
                         </div>
                     </div>

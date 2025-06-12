@@ -4,6 +4,7 @@ import { Button, Label, TextInput, Select, Checkbox, HelperText } from 'flowbite
 import {useStateContext} from "../context"
 import PinSelectorModal from "../components/PinSelectorModal"
 import FileUpload from "../components/FileUpload"
+import { useI18n } from '../hooks/useI18n'
 
 const {api} = window
 
@@ -14,6 +15,7 @@ interface ConvertKleToKeyboardProps {
 
 const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogModal, onOperationComplete}): React.ReactElement => {
     const {state, setState, setPageLog} = useStateContext()
+    const { t } = useI18n()
     
     const [kleObj, setKleObj] = useState({
         name : "",
@@ -173,14 +175,14 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
             // Validate file type
             if (!file.name.toLowerCase().endsWith('on')) {
                 setKleFileError(true)
-                setKleFileErrorMessage("Please select a valid JSON file.")
+                setKleFileErrorMessage(t('validation.selectValidJsonFile'))
                 return
             }
             
             // Validate file size (max 10MB)
             if (file.size > 10 * 1024 * 1024) {
                 setKleFileError(true)
-                setKleFileErrorMessage("File size must be less than 10MB.")
+                setKleFileErrorMessage(t('validation.fileSizeLimit', { size: '10MB' }))
                 return
             }
             
@@ -194,7 +196,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                 // Validate JSON structure
                 if (!Array.isArray(json)) {
                     setKleFileError(true)
-                    setKleFileErrorMessage("Invalid KLE JSON format. Expected an array.")
+                    setKleFileErrorMessage(t('validation.invalidKleFormat'))
                     return
                 }
                 
@@ -210,7 +212,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
             } catch (jsonError) {
                 console.error("JSON parsing error:", jsonError)
                 setKleFileError(true)
-                setKleFileErrorMessage("Invalid JSON file. Please check the file format.")
+                setKleFileErrorMessage(t('validation.invalidJsonFormat'))
                 kleObj.name = ""
                 kleObj.path = ""
                 setKleObj({...kleObj})
@@ -218,7 +220,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
         } catch (error) {
             console.error("File upload error:", error)
             setKleFileError(true)
-            setKleFileErrorMessage("Failed to read file. Please try again.")
+            setKleFileErrorMessage(t('validation.fileReadError'))
             kleObj.name = ""
             kleObj.path = ""
             setKleObj({...kleObj})
@@ -256,10 +258,10 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                 <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
                     <div className="space-y-4">
                         <div>
-                            <Label className="mb-2 block" htmlFor="kle-file">KLE JSON File *</Label>
+                            <Label className="mb-2 block" htmlFor="kle-file">{t('convert.kleJsonFile')} *</Label>
                             <FileUpload
                                 id="kle-file"
-                                label="Choose KLE JSON File"
+                                label={t('convert.chooseFile')}
                                 accept="on"
                                 onChange={handleKleFileUpload}
                                 filename={kleObj.name}
@@ -280,7 +282,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                 <div className="border border-gray-300 dark:border-gray-600 rounded p-4">
                     <div className="grid grid-cols-1 gap-4">
                         <div>
-                            <Label className="mb-1 block" htmlFor="convert-kle-mcu-select">MCU</Label>
+                            <Label className="mb-1 block" htmlFor="convert-kle-mcu-select">{t('common.mcu')}</Label>
                             <Select
                                 id="convert-kle-mcu-select"
                                 value={state?.convert.kle.mcu || 'RP2040'}
@@ -298,7 +300,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                                 className={`mb-1 block ${keyboardError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
                                 htmlFor="convert-kle-kb"
                             >
-                                Keyboard Name *
+{t('common.keyboardName')} *
                             </Label>
                             <TextInput
                                 type="text"
@@ -312,7 +314,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                             />
                             {keyboardStrError && (
                                 <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                    A-Za-z0-9 _/- can be used
+                                    {t('validation.alphanumericOnly')}
                                 </HelperText>
                             )}
                         </div>
@@ -322,7 +324,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                                 className={`mb-1 block ${usernameEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
                                 htmlFor="km"
                             >
-                                Username *
+{t('common.username')} *
                             </Label>
                             <TextInput
                                 type="text"
@@ -336,7 +338,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                             />
                             {usernameStrError && (
                                 <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                    A-Za-z0-9 _/- can be used
+                                    {t('validation.alphanumericOnly')}
                                 </HelperText>
                             )}
                         </div>
@@ -346,7 +348,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                                 className={`mb-1 block ${vidEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
                                 htmlFor="vid"
                             >
-                                Vendor ID *
+{t('common.vendorId')} *
                             </Label>
                             <TextInput
                                 type="text"
@@ -360,7 +362,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                             />
                             {vidStrError && (
                                 <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                    A-Z0-9x can be used
+                                    {t('validation.hexOnly')}
                                 </HelperText>
                             )}
                         </div>
@@ -370,7 +372,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                                 className={`mb-1 block ${pidEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
                                 htmlFor="pid"
                             >
-                                Product ID *
+{t('common.productId')} *
                             </Label>
                             <TextInput
                                 type="text"
@@ -384,19 +386,19 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                             />
                             {pidStrError && (
                                 <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                    A-Z0-9x can be used
+                                    {t('validation.hexOnly')}
                                 </HelperText>
                             )}
                             {pidSameError && (
                                 <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                    Must be other than 0x0000
+{t('validation.notZero')}
                                 </HelperText>
                             )}
                         </div>
 
-                        {/* Output Options - horizontal layout */}
+                        {/* {t('convert.outputOptions')} - horizontal layout */}
                         <div>
-                            <Label className="mb-3 block">Output Options</Label>
+                            <Label className="mb-3 block">{t('convert.outputOptions')}</Label>
                             <div className="flex gap-6">
                                 <div className="flex items-center">
                                     <Checkbox
@@ -406,7 +408,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                                         className="mr-2"
                                     />
                                     <Label htmlFor="vial-settings" className="text-sm">
-                                        Add Vial Settings
+                                        {t('convert.addVialSettings')}
                                     </Label>
                                 </div>
                                 <div className="flex items-center">
@@ -417,13 +419,13 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                                         className="mr-2"
                                     />
                                     <Label htmlFor="only-via" className="text-sm">
-                                        Only viaon
+                                        {t('convert.onlyVia')}
                                     </Label>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Matrix Configuration - only when not "Only viaon" */}
+                        {/* Matrix Configuration - only when not "{t('convert.onlyVia')}" */}
                         {state.convert.kle.option !== 2 && (
                             <>
                                 {/* Rows Configuration */}
@@ -431,7 +433,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                                     <Label 
                                         className={`mb-2 block ${rowsEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
                                     >
-                                        Matrix pins - rows *
+                                        {t('convert.matrixPinsRows')} *
                                     </Label>
                                     <Button
                                         color="light"
@@ -443,18 +445,18 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                                         <div className="text-left w-full">
                                             {pinRows.length > 0 ? (
                                                 <span className="text-gray-900 dark:text-white">
-                                                    Selected: {pinRows.join(', ')} ({pinRows.length} pins)
+{t('common.selected', { items: pinRows.join(', '), count: pinRows.length.toString() })}
                                                 </span>
                                             ) : (
                                                 <span className="text-gray-500 dark:text-gray-400">
-                                                    Select row pins...
+{t('convert.selectRowPins')}
                                                 </span>
                                             )}
                                         </div>
                                     </Button>
                                     {rowsEmptyError && (
                                         <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                            Please select row pins
+{t('validation.selectRowPins')}
                                         </HelperText>
                                     )}
                                 </div>
@@ -464,7 +466,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                                     <Label 
                                         className={`mb-2 block ${colsEmptyError ? 'text-red-600 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
                                     >
-                                        Matrix pins - cols *
+                                        {t('convert.matrixPinsCols')} *
                                     </Label>
                                     <Button
                                         color="light"
@@ -476,18 +478,18 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                                         <div className="text-left w-full">
                                             {pinCols.length > 0 ? (
                                                 <span className="text-gray-900 dark:text-white">
-                                                    Selected: {pinCols.join(', ')} ({pinCols.length} pins)
+{t('common.selected', { items: pinCols.join(', '), count: pinCols.length.toString() })}
                                                 </span>
                                             ) : (
                                                 <span className="text-gray-500 dark:text-gray-400">
-                                                    Select column pins...
+{t('convert.selectColumnPins')}
                                                 </span>
                                             )}
                                         </div>
                                     </Button>
                                     {colsEmptyError && (
                                         <HelperText className="mt-1 text-xs text-red-600 dark:text-red-500">
-                                            Please select column pins
+{t('validation.selectColumnPins')}
                                         </HelperText>
                                     )}
                                 </div>
@@ -505,7 +507,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                         onClick={disabledKleConvertButton ? (): void => {} : handleKleFileSubmit()}
                         disabled={false}
                     >
-                        Convert
+                        {t('convert.convertButton')}
                     </Button>
                 </div>
             </div>

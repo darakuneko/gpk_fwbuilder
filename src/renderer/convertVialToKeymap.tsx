@@ -3,6 +3,7 @@ import { Button, Label } from 'flowbite-react'
 
 import {useStateContext} from "../context"
 import FileUpload from "../components/FileUpload"
+import { useI18n } from '../hooks/useI18n'
 
 const {api} = window
 
@@ -13,6 +14,7 @@ interface ConvertVialToKeymapProps {
 
 const ConvertVialToKeymap: React.FC<ConvertVialToKeymapProps> = ({onShowLogModal, onOperationComplete}): React.ReactElement => {
     const {state, setState, setPageLog} = useStateContext()
+    const { t } = useI18n()
     const [vilObj, setVilObj] = useState({
         name : "",
         path : "",
@@ -37,7 +39,7 @@ const ConvertVialToKeymap: React.FC<ConvertVialToKeymapProps> = ({onShowLogModal
             if (onShowLogModal) {
                 onShowLogModal()
             }
-            setPageLog('convertVialToKeymap', 'Error: Please select a valid .vil file')
+            setPageLog('convertVialToKeymap', t('validation.selectValidVilFile'))
             return
         }
         
@@ -118,11 +120,11 @@ const ConvertVialToKeymap: React.FC<ConvertVialToKeymapProps> = ({onShowLogModal
                 <div className="border border-gray-300 dark:border-gray-600 rounded p-4">    
                     <div className="space-y-4">
                         <div>
-                            <Label className="mb-2 block" htmlFor="vil">Vial file (.vil)</Label>
+                            <Label className="mb-2 block" htmlFor="vil">{t('convert.vialFile')}</Label>
                             <div className="w-full">
                                 <FileUpload
                                     id="vil"
-                                    label="Choose File"
+                                    label={t('convert.chooseFile')}
                                     accept=".vil"
                                     onChange={handleVilFileUpload}
                                     filename={vilObj.name}
@@ -137,9 +139,9 @@ const ConvertVialToKeymap: React.FC<ConvertVialToKeymapProps> = ({onShowLogModal
                             style={(disabledVilCovertButton || !vilObj.path || !vilObj.name) ? { opacity: 0.5 } : {}}
                             onClick={(disabledVilCovertButton || !vilObj.path || !vilObj.name) ? (): void => {} : handleVilFileSubmit}
                             disabled={false}
-                            title={(!vilObj.path || !vilObj.name) ? 'Please select a .vil file first' : 'Convert Vial file to keymap.c'}
+                            title={(!vilObj.path || !vilObj.name) ? t('validation.selectVilFileFirst') : 'Convert Vial file to keymap.c'}
                         >
-                            Convert
+                            {t('convert.convertButton')}
                         </Button>
                     </div>
                 </div>

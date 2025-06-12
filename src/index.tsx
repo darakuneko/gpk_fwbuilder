@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import {StateProvider} from "./context"
 import Content from "./content"
 import { useTheme } from "./hooks/useTheme"
+import { I18nProvider } from "./components/I18nProvider"
 
 import 'flowbite/dist/flowbite.min.css'
 import "./globals.css"
@@ -33,9 +34,11 @@ const ThemeProvider = ({ children }: ThemeProviderProps): React.ReactElement => 
 const App = (): React.ReactElement => {
     return (
         <StateProvider>
-            <ThemeProvider>
-                <Content />
-            </ThemeProvider>
+            <I18nProvider>
+                <ThemeProvider>
+                    <Content />
+                </ThemeProvider>
+            </I18nProvider>
         </StateProvider>
     )
 }
