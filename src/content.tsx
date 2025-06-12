@@ -259,16 +259,16 @@ const Content = (): React.JSX.Element => {
                     pageKey: "image"
                 },
                 { 
-                    label: t('settings.languageSettings'), 
-                    component: (): React.ReactElement => <LanguageSettings/>,
-                    title: t('settings.languageSettingsTitle'),
-                    pageKey: "languageSettings"
-                },
-                { 
                     label: t('settings.externalServer'), 
                     component: (): React.ReactElement => <ExternalServer/>,
                     title: t('settings.externalServerTitle'),
                     pageKey: "externalServer"
+                },
+                { 
+                    label: t('settings.languageSettings'), 
+                    component: (): React.ReactElement => <LanguageSettings/>,
+                    title: t('settings.languageSettingsTitle'),
+                    pageKey: "languageSettings"
                 }
             ]
         }
