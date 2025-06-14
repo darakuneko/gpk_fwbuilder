@@ -63,7 +63,7 @@
   "build": {
     "productName": "GPK FWBuilder",
     "appId": "app.darakuneko.gpk_fwbuilder",
-    "afterSign": "notarize.cjs",
+    "afterSign": "notarize.ts",
     "npmRebuild": false,
     "files": [
       "dist/**/*",

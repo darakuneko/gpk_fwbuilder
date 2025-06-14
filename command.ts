@@ -18,7 +18,7 @@ import {
     CheckoutData, 
     KeyboardInfo 
 } from './types/index.ts'
-import { getTranslation } from './i18n-main.js'
+import { getTranslation } from './i18n-main.ts'
 
 const exec = util.promisify(execCallback)
 const store = new ElectronStore()

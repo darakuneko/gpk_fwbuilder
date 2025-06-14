@@ -1,5 +1,7 @@
-/** @type {import('tailwindcss').Config} */
-export default {
+import type { Config } from 'tailwindcss'
+import flowbitePlugin from 'flowbite/plugin'
+
+const config: Config = {
   content: [
     "./index.html",
     "./src/**/*.{js,jsx,ts,tsx}",
@@ -11,6 +13,8 @@ export default {
   },
   darkMode: 'class',
   plugins: [
-    require('flowbite/plugin')
+    flowbitePlugin
   ],
 }
+
+export default config
