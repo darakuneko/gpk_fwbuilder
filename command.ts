@@ -18,6 +18,7 @@ import {
     CheckoutData, 
     KeyboardInfo 
 } from './types/index.ts'
+import { getTranslation } from './i18n-main.js'
 
 const exec = util.promisify(execCallback)
 const store = new ElectronStore()
@@ -104,7 +105,6 @@ const command = {
                 }
                 const result = await appExe("docker images")
                 if (result === fwMakerUrlMassage) {
-                    console.log("Docker commands are disabled - not using local Docker URL")
                     return
                 }
                 const res = spawn(appSpawn(await cmd({ stdout: result })), { shell: true })
@@ -156,7 +156,7 @@ const command = {
             responseType: 'stream',
             data: obj
         }).catch(e => {
-            console.log(e)
+            console.error(e)
         })
         const channel = "streamBuildLog"
         mainWindow.webContents.send(channel, "@@@@init@@@@")
@@ -173,7 +173,7 @@ const command = {
             responseType: 'stream',
             data: obj
         }).catch(e => {
-            console.log(e)
+            console.error(e)
         })
         const channel = "streamBuildLog"
         mainWindow.webContents.send(channel, "@@@@init@@@@")
@@ -264,8 +264,10 @@ const command = {
         return res.data
     },
     updateRepository: async (fw: string, mainWindow: BrowserWindow): Promise<void> => {
-        const res = await axios(url(`/update/repository/${fw.toLowerCase()}`), { responseType: 'stream' })
-        await responseStreamLog(res, mainWindow, "streamLog")
+        const res = await axios(url(`/update/repository/${fw.toLowerCase()}`), { responseType: 'stream' }).catch(e => {
+            mainWindow.webContents.send("streamLog", `network error ${e}.\n${getTranslation('common.pleaseRestartApplication')}`)
+        })
+        if(res) await responseStreamLog(res, mainWindow, "streamLog")
     },
     updateRepositoryCustom: async (obj: UpdateRepositoryCustomData, mainWindow: BrowserWindow): Promise<void> => {
         const res = await axios({
@@ -277,6 +279,7 @@ const command = {
                 url: obj.url
             }
         }).catch(e => {
+            mainWindow.webContents.send("streamLog", `network error ${e}.\n${getTranslation('common.pleaseRestartApplication')}`)
         })
         if (res) await responseStreamLog(res, mainWindow, "streamLog")
     },

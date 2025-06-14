@@ -132,6 +132,7 @@ export const ja = {
 
   // Common
   common: {
+    pleaseRestartApplication: 'アプリケーションを再起動してください',
     required: '*',
     loading: '読み込み中...',
     selectMenuItem: 'メニュー項目を選択して開始してください',
@@ -147,7 +148,7 @@ export const ja = {
     cancel: 'キャンセル',
     selectKeyboard: 'キーボードを選択...',
     selectKeymap: 'キーマップを選択...',
-    connectionError: '長時間接続がうまくいかない場合は、再度起動するかDockerイメージを一度削除してください。',
+    connectionError: 'アプリケーションとDockerのネットワーク間でエラーが発生しました。\nアプリケーションを再起動してください。',
     keyboardName: 'キーボード名',
     username: 'ユーザー名',
     mcu: 'MCU',

@@ -132,6 +132,7 @@ export const en = {
 
   // Common
   common: {
+    pleaseRestartApplication: 'Please restart application',
     required: '*',
     loading: 'Loading...',
     selectMenuItem: 'Select a menu item to get started',
@@ -147,7 +148,7 @@ export const en = {
     cancel: 'Cancel',
     selectKeyboard: 'Select keyboard...',
     selectKeymap: 'Select keymap...',
-    connectionError: 'If the connection does not work for a long time, please start up again or delete the docker image once.',
+    connectionError: 'A network error occurred between the application and Docker. Please restart the application.',
     keyboardName: 'Keyboard Name',
     username: 'Username',
     mcu: 'MCU',
