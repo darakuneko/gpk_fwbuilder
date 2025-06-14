@@ -31,10 +31,14 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
             const globalLog = state?.logs
             
             // For build page, prioritize globalLog (real-time build logs) over pageLog (initial message)
-            if (pageKey === 'build') {
-                return globalLog || pageLog || ''
+            if (pageKey === 'build' || pageKey === 'repository' || pageKey === 'image') {
+                if(pageKey !== 'build' && globalLog?.includes("@@@@finish@@@@")){
+                    return pageLog || ''
+                } else {
+                    return globalLog || pageLog || ''
+                }
             }
-            
+        
             return pageLog || globalLog || ''
         }
         return state?.logs || ''

@@ -5,6 +5,7 @@ import fs from 'fs'
 import { Response } from 'express'
 
 import type { CommandModule, GitCheckoutResult } from './types'
+import { domainToASCII } from 'url'
 
 // Command execution result type
 interface ExecResult {
@@ -155,28 +156,21 @@ const cmd: CommandModule = {
     buildVialFirmware: async (res: Response, kb: string, km: string): Promise<void> => await buildCustomFW(res, dirVial, "vial", kb, km),
     buildCustomFirmware: async (res: Response, obj: GitCheckoutResult, kb: string, km: string): Promise<void> => await buildCustomFW(res, obj.dir, obj.branch, kb, km),
     updateRepositoryQmk: async (res: Response): Promise<void> => {
-        // Break down complex command into individual streaming steps
-        await streamWriteLine('/root', `rm -rf ${dirQMK}`, res)
-        await streamWriteLine('/root', `qmk setup -y`, res)
+        await exec(rmL(dirQMK))
+        const line = "cd /root && qmk setup -y"
+        streamLog(line, res)
     },
     updateRepositoryVial: async (res: Response): Promise<void> => {
-        // Break down complex command into individual streaming steps
-        await streamWriteLine('/root', `rm -rf ${dirVial}`, res)
-        await streamWriteLine('/root', `git clone https://github.com/vial-kb/vial-qmk.git`, res)
-        await streamWriteLine(dirVial, `/usr/bin/python3 -m pip install --break-system-packages -r ${dirVial}/requirements.txt`, res)
-        await streamWriteLine(dirVial, `make git-submodule`, res)
+        await exec(rmL(dirVial))
+        const line = `cd /root && git clone -v https://github.com/vial-kb/vial-qmk.git && cd ${dirVial} && /usr/bin/python3 -m pip install --break-system-packages -r /root/vial-qmk/requirements.txt && make git-submodule`
+        streamLog(line, res)
     },
     updateRepositoryCustom: async (res: Response, customDir: string, url: string): Promise<void> => {
         const dir = `${dirCustomRepo}/${customDir}`
         const match = url.match(/\/([^/]+)\.git$/)
         const cloneDir = `${dir}/${match ? match[1] : 'repository'}`
-        
-        // Break down complex command into individual streaming steps
-        await streamWriteLine('/root', `rm -rf ${dir}`, res)
-        await streamWriteLine('/root', `mkdir ${dir}`, res)
-        await streamWriteLine(dir, `git clone ${url}`, res)
-        await streamWriteLine(cloneDir, `/usr/bin/python3 -m pip install --break-system-packages -r ${cloneDir}/requirements.txt`, res)
-        await streamWriteLine(cloneDir, `make git-submodule`, res)
+        const line = `rm -rf ${dir} && mkdir ${dir} && cd ${dir} && git clone -v ${url} && cd ${cloneDir} && /usr/bin/python3 -m pip install --break-system-packages -r ${cloneDir}/requirements.txt && make git-submodule`
+        streamLog(line, res)
     },
     deleteRepositoryCustom: async (res: Response, customDir: string): Promise<void> => {
         const dir = `${dirCustomRepo}/${customDir}`
