@@ -1,13 +1,22 @@
-import { notarize } from '@electron/notarize'
-import dotenv from 'dotenv'
-import type { AfterPackContext } from 'electron-builder'
+import { notarize } from '@electron/notarize';
+import dotenv from 'dotenv';
 
-dotenv.config()
+dotenv.config();
 
-export default async function notarizing(context: AfterPackContext): Promise<void> {
-  const { electronPlatformName, appOutDir } = context
-  if (electronPlatformName !== 'darwin') return
-  const appName = context.packager.appInfo.productFilename
+interface NotarizeContext {
+  electronPlatformName: string;
+  appOutDir: string;
+  packager: {
+    appInfo: {
+      productFilename: string;
+    };
+  };
+}
+
+async function notarizing(context: NotarizeContext): Promise<void> {
+  const { electronPlatformName, appOutDir } = context;
+  if (electronPlatformName !== 'darwin') return;
+  const appName = context.packager.appInfo.productFilename;
 
   await notarize({
     appBundleId: "app.darakuneko.gpk_fwbuilder",
@@ -15,5 +24,7 @@ export default async function notarizing(context: AfterPackContext): Promise<voi
     appleId: process.env.APPLE_ID!,
     appleIdPassword: process.env.APPLE_APP_SPECIFIC_PASSWORD!,
     teamId: process.env.TEAM_ID!,
-  })
+  });
 }
+
+module.exports = notarizing;

@@ -64,6 +64,30 @@ const config: UserConfig = defineConfig({
             }
           }
         }
+      },
+      {
+        entry: 'notarize.ts',
+        vite: {
+          build: {
+            sourcemap: true,
+            minify: false,
+            outDir: 'dist-electron',
+            lib: {
+              entry: 'notarize.ts',
+              formats: ['cjs'],
+              fileName: (): string => 'notarize.cjs'
+            },
+            rollupOptions: {
+              external: [
+                '@electron/notarize',
+                'dotenv'
+              ],
+              output: {
+                format: 'cjs'
+              }
+            }
+          }
+        }
       }
     ])
   ],
