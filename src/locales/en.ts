@@ -189,5 +189,12 @@ export const en = {
     vil: '.vil',
     json: 'JSON',
     kle: 'KLE JSON'
+  },
+
+  // Update notifications
+  updatesNotification: {
+    title: 'Update Information',
+    noNotification: 'No update information available',
+    viewUpdates: 'Updates'
   }
 }

@@ -7,12 +7,46 @@ export interface WindowBounds {
     h: number;
 }
 
+export interface NotificationPayload {
+    id: string;
+    title: string;
+    body: string;
+    publishedAt: {
+        _seconds: number;
+        _nanoseconds?: number;
+    };
+}
+
+export interface NotificationQueryPayload {
+    deviceId: string;
+    type: string;
+    collection: string;
+    filters: Array<{
+        field: string;
+        op: string;
+        value: number | string;
+    }>;
+    orderBy: {
+        field: string;
+        direction: 'asc' | 'desc';
+    };
+    limit: number;
+}
+
+export interface StoreSchema {
+    window?: WindowBounds;
+    state?: AppState;
+    settings?: any;
+    notificationApiEndpoint?: string;
+}
+
 export interface AppState {
     version?: string;
     setting?: {
         fwMakerUrl?: string;
         fwDir?: string;
     };
+    savedNotifications?: NotificationPayload[];
 }
 
 export interface FileObject {
@@ -89,6 +123,10 @@ export interface ElectronAPI {
     getRemoteFWdir: () => Promise<string>;
     getLocalFWdir: () => Promise<string>;
     getStorePath: () => Promise<string>;
+    getSettings: () => Promise<any>;
+    setSettings: (settings: any) => Promise<boolean>;
+    getNotifications: () => Promise<{ notifications: NotificationPayload[] }>;
+    getCachedNotifications: () => Promise<NotificationPayload[]>;
     on: (channel: string, func: (...args: unknown[]) => void) => unknown;
     off: (channel: string, listener: unknown) => void;
     removeAllListeners: (channel: string) => void;

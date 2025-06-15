@@ -29,6 +29,8 @@ contextBridge.exposeInMainWorld(
         getRemoteFWdir: async () => await ipcRenderer.invoke('getRemoteFWdir'),
         getLocalFWdir: async () => await ipcRenderer.invoke('getLocalFWdir'),
         getStorePath: async () => await ipcRenderer.invoke('getStorePath'),
+        getNotifications: async () => await ipcRenderer.invoke('getNotifications'),
+        getCachedNotifications: async () => await ipcRenderer.invoke('getCachedNotifications'),
         on: (channel: string, func: (...args: unknown[]) => void) => {
             const listener = (event: unknown, ...args: unknown[]) => func(...args)
             ipcRenderer.on(channel, listener)
@@ -39,3 +41,36 @@ contextBridge.exposeInMainWorld(
     } as ElectronAPI)
     
 contextBridge.exposeInMainWorld('webUtils', webUtils)
+
+// Check for updates on startup
+window.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // Wait a moment to ensure the app is fully loaded
+        setTimeout(async () => {
+            const state = await ipcRenderer.invoke('getState')
+            const result = await ipcRenderer.invoke('getNotifications')
+            const latestNotification = result?.notifications?.[0]
+            const savedNotifications = state?.savedNotifications || []
+
+            if (latestNotification?.id) {
+                const isDifferent = !savedNotifications.length || 
+                    !savedNotifications.some((n: any) => n.id === latestNotification.id)
+                
+                if (isDifferent) {
+                    // Save the new notifications
+                    await ipcRenderer.invoke('setState', {
+                        ...state,
+                        savedNotifications: result.notifications
+                    })
+                    
+                    // Dispatch event to show the modal
+                    window.dispatchEvent(new CustomEvent('showUpdatesNotificationModal', {
+                        detail: { notifications: [latestNotification] }
+                    }))
+                }
+            }
+        }, 2000) // Wait 2 seconds after DOM is loaded
+    } catch (error) {
+        console.error('Failed to check for updates:', error)
+    }
+})

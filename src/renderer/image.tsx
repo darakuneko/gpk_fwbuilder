@@ -62,7 +62,7 @@ const Image: React.FC<ImageProps> = ({onShowLogModal, onOperationComplete}): Rea
                             className={`w-full ${state?.tabDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                             style={state?.tabDisabled ? { opacity: 0.5 } : {}}
                             disabled={false}
-                            onClick={state?.tabDisabled ? (): void => {} : handleUpdate("Building.....\n\n", "Rebuild!!", async (): Promise<unknown> => await api.rebuildImage({}))}
+                            onClick={state?.tabDisabled ? (): void => {} : handleUpdate("Building.....\n\n", "Rebuild!!", async (): Promise<unknown> => await api.rebuildImage())}
                         >
 {t('settings.rebuildDockerImage')}
                         </Button>

@@ -3,11 +3,15 @@ import Store from 'electron-store'
 import command from './command.ts'
 import { fileURLToPath } from "url"
 import path from "path"
-import { WindowBounds, AppState } from './types/index.ts'
+import { StoreSchema, NotificationPayload, NotificationQueryPayload } from './types/index.ts'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const store = new Store<{ window?: WindowBounds; state?: AppState }>()
+const store = new Store<StoreSchema>({
+    defaults: {
+        notificationApiEndpoint: 'https://getnotifications-svtx62766a-uc.a.run.app'
+    }
+})
 let mainWindow: BrowserWindow | null = null
 
 
@@ -123,3 +127,44 @@ ipcMain.handle('readJson', async (_e, path: string) => await command.readJson(pa
 ipcMain.handle('appVersion', () => app.getVersion())
 ipcMain.handle('getLocalFWdir', () => command.getLocalFWdir())
 ipcMain.handle('getStorePath', async (_event) => store.path)
+
+// Notification handlers
+ipcMain.handle('getNotifications', async () => {
+    try {
+        const now = Date.now()
+        const queryPayload: NotificationQueryPayload = {
+            deviceId: 'all',
+            type: 'notification',
+            collection: 'buildNotify',
+            filters: [
+                { field: "publishedAt", op: "<=", value: now }
+            ],
+            orderBy: { field: "publishedAt", direction: "desc" },
+            limit: 10,
+        }
+
+        const endpoint = store.get('notificationApiEndpoint')
+        if (!endpoint) {
+            throw new Error('Notification API endpoint not configured')
+        }
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(queryPayload)
+        })
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        return await response.json()
+    } catch (error) {
+        console.error('Failed to fetch notifications:', error)
+        return { notifications: [] }
+    }
+})
+
+ipcMain.handle('getCachedNotifications', async () => {
+    const state = store.get('state')
+    return state?.savedNotifications || []
+})

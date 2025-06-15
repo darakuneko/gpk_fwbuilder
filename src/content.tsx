@@ -4,6 +4,8 @@ import { HiCube, HiCollection, HiRefresh, HiCog, HiChevronRight, HiChevronDouble
 import type { IconType } from 'react-icons'
 import parse from 'html-react-parser'
 
+import type { NotificationPayload } from '../types/index'
+
 import {getState, useStateContext} from "./context"
 import type { AppState } from "./context"
 import { useI18n } from './hooks/useI18n'
@@ -17,6 +19,8 @@ import ConvertVialToKeymap from "./renderer/convertVialToKeymap"
 import ConvertKleToKeyboard from "./renderer/convertKleToKeyboard"
 import ExternalServer from "./renderer/externalServer"
 import LanguageSettings from "./renderer/languageSettings"
+import Updates from "./renderer/updates"
+import UpdatesNotificationModal from './components/UpdatesNotificationModal'
 import { isOperationComplete } from './utils/logParser'
 
 interface SubMenuItem {
@@ -50,6 +54,8 @@ const Content = (): React.JSX.Element => {
     const [showLogSidePeek, setShowLogSidePeek] = useState(false)
     const [operationInProgress, setOperationInProgress] = useState(false)
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+    const [isUpdatesNotificationModalOpen, setIsUpdatesNotificationModalOpen] = useState(false)
+    const [updates, setUpdates] = useState<NotificationPayload[]>([])
     const SIDEBAR_WIDTH = 240
 
     // ウィンドウサイズ変更の監視
@@ -61,6 +67,21 @@ const Content = (): React.JSX.Element => {
         window.addEventListener('resize', handleResize)
         return (): void => {
             window.removeEventListener('resize', handleResize)
+        }
+    }, [])
+
+    // Listen for update notifications
+    useEffect((): (() => void) => {
+        const handleShowUpdatesNotification = (event: CustomEvent<{ notifications: NotificationPayload[] }>): void => {
+            if (event.detail?.notifications?.length > 0) {
+                setUpdates(event.detail.notifications)
+                setIsUpdatesNotificationModalOpen(true)
+            }
+        }
+
+        window.addEventListener('showUpdatesNotificationModal', handleShowUpdatesNotification as EventListener)
+        return (): void => {
+            window.removeEventListener('showUpdatesNotificationModal', handleShowUpdatesNotification as EventListener)
         }
     }, [])
 
@@ -131,7 +152,8 @@ const Content = (): React.JSX.Element => {
     }, [])
 
     useEffect((): (() => void) => {
-        const streamLogHandler = async (log: string, init: boolean): Promise<void> => {
+        const streamLogHandler = async (...args: unknown[]): Promise<void> => {
+            const [log, init] = args as [string, boolean]
             const s = init ? state : await getState()
             if (s) {
                 s.logs = log
@@ -150,7 +172,8 @@ const Content = (): React.JSX.Element => {
     }, [setState, state])
 
     useEffect((): (() => void) => {
-        const streamBuildLogHandler = async (log: string): Promise<void> => {
+        const streamBuildLogHandler = async (...args: unknown[]): Promise<void> => {
+            const [log] = args as [string]
             const currentState = await getState()
             if (currentState) {
                 const processedLog = log.match(/@@@@init@@@@/m) ? '' : currentState.logs + log
@@ -263,6 +286,12 @@ const Content = (): React.JSX.Element => {
                     component: (): React.ReactElement => <ExternalServer/>,
                     title: t('settings.externalServerTitle'),
                     pageKey: "externalServer"
+                },
+                { 
+                    label: t('updatesNotification.viewUpdates'), 
+                    component: (): React.ReactElement => <Updates />,
+                    title: t('updatesNotification.title'),
+                    pageKey: "updates"
                 },
                 { 
                     label: t('settings.languageSettings'), 
@@ -429,7 +458,7 @@ const Content = (): React.JSX.Element => {
                                             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                                                 {currentTitle}
                                             </h2>
-                                            {currentPageKey !== 'externalServer' && currentPageKey !== 'languageSettings' && (
+                                            {currentPageKey !== 'externalServer' && currentPageKey !== 'languageSettings' && currentPageKey !== 'updates' && (
                                                 <Button
                                                     color="light"
                                                     className="cursor-pointer p-2"
@@ -482,6 +511,13 @@ const Content = (): React.JSX.Element => {
                     )
                 }
             })()}
+            
+            {/* Update Notification Modal */}
+            <UpdatesNotificationModal
+                isOpen={isUpdatesNotificationModalOpen}
+                onClose={(): void => setIsUpdatesNotificationModalOpen(false)}
+                notifications={updates}
+            />
         </div>
     )
 }
