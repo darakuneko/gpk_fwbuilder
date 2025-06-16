@@ -17,7 +17,7 @@
 GPK FWBuilderは、カスタムメカニカルキーボードのファームウェアビルドプロセスを簡素化する、使いやすいデスクトップアプリケーションです。
 QMKとVialファームウェアのコンパイルにグラフィカルインターフェースを提供し、コマンドライン知識は不要です。
 
-https://github.com/user-attachments/assets/a21afa5b-676f-4991-b8f5-3ff888800ba0
+https://github.com/user-attachments/assets/dcf499e6-8604-40dd-981c-61882ef3df7e
 
 ## 機能
 
