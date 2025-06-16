@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Event, Menu, clipboard } from "electron"
+import { app, BrowserWindow, ipcMain, Event, Menu, clipboard, globalShortcut } from "electron"
 import Store from 'electron-store'
 import command from './command.ts'
 import { fileURLToPath } from "url"
@@ -16,15 +16,35 @@ const store = new Store<StoreSchema>({
 // Check version compatibility and clear store if needed
 const currentVersion = app.getVersion()
 const storedVersion = store.get('appVersion')
+
+// Helper function to check if version is 0.x.x
+const isLegacyVersion = (version: string): boolean => {
+    return version.startsWith('0.')
+}
+
 if (storedVersion && storedVersion !== currentVersion) {
-    // Clear store when version mismatch
-    store.clear()
-    console.log(`Store cleared due to version change: ${storedVersion} -> ${currentVersion}`)
+    // Only clear store when upgrading from 0.x.x to 1.x.x or higher
+    if (isLegacyVersion(storedVersion) && !isLegacyVersion(currentVersion)) {
+        store.clear()
+    }
 }
 // Always update the stored version
 store.set('appVersion', currentVersion)
 
 let mainWindow: BrowserWindow | null = null
+let isDevToolsOpen = false
+
+const toggleDevTools = (): void => {
+    if (mainWindow) {
+        if (isDevToolsOpen) {
+            mainWindow.webContents.closeDevTools()
+            isDevToolsOpen = false
+        } else {
+            mainWindow.webContents.openDevTools()
+            isDevToolsOpen = true
+        }
+    }
+}
 
 
 const createWindow = (): void => {
@@ -62,7 +82,13 @@ app.on('ready', async () => {
         // Open DevTools only in development environment
         if (process.env.NODE_ENV === 'development') {
             mainWindow.webContents.openDevTools()
+            isDevToolsOpen = true
         }
+        
+        // Register global shortcut for toggling DevTools
+        globalShortcut.register('CommandOrControl+E', () => {
+            toggleDevTools()
+        })
         
         // Setup context menu for logs textarea and copyable text
         mainWindow.webContents.on('context-menu', (_e, params) => {
@@ -97,12 +123,30 @@ app.on('ready', async () => {
     }
 })
 
+app.on('window-all-closed', () => {
+    // Unregister global shortcuts when all windows are closed
+    globalShortcut.unregisterAll()
+    
+    if (process.platform !== 'darwin') {
+        app.quit()
+    }
+})
+
+app.on('will-quit', () => {
+    // Unregister all global shortcuts before app quits
+    globalShortcut.unregisterAll()
+})
+
 const closing = async (e: Event, mainWindow: BrowserWindow): Promise<void> => {
     e.preventDefault()
     const win = mainWindow.getBounds()
     store.set('window', {x: win.x, y: win.y, w: win.width, h: win.height})
     mainWindow.webContents.send("close", false)
     await command.stopImage()
+    
+    // Unregister global shortcuts
+    globalShortcut.unregisterAll()
+    
     app.isQuiting = true
     app.quit()
 }
@@ -121,8 +165,23 @@ ipcMain.handle('generateVialId', async () => await command.generateVialId())
 ipcMain.handle('updateRepository', async (_e, fw: string) => await command.updateRepository(fw, mainWindow!))
 ipcMain.handle('updateRepositoryCustom', async (_e, obj: any) => await command.updateRepositoryCustom(obj, mainWindow!))
 ipcMain.handle('getState', async () => store.get('state'))
-ipcMain.handle('setState', async (_e, obj: AppState) => {
-    store.set('state', obj)
+ipcMain.handle('setState', async (_e, obj: any) => {
+    // Get current state and merge with new data
+    const currentState = store.get('state') || {}
+    const newState = { ...currentState, ...obj }
+    
+    if (obj?.savedNotifications) {
+        // Ensure savedNotifications is included in state
+        newState.savedNotifications = obj.savedNotifications
+    }
+    
+    // Save the merged state
+    store.set('state', newState)
+    
+    // Also save notifications separately for reliability
+    if (obj?.savedNotifications) {
+        store.set('savedNotifications', obj.savedNotifications)
+    }
 })
 ipcMain.handle('getSettings', async () => store.get('settings') || {})
 ipcMain.handle('setSettings', async (_e, settings: any) => {
@@ -177,6 +236,17 @@ ipcMain.handle('getNotifications', async () => {
 })
 
 ipcMain.handle('getCachedNotifications', async () => {
+    // Try to get from state first, then fallback to direct store access
     const state = store.get('state')
-    return state?.savedNotifications || []
+    if (state?.savedNotifications) {
+        return state.savedNotifications
+    }
+    
+    // Fallback: check if notifications are stored directly in store
+    const directNotifications = store.get('savedNotifications')
+    if (directNotifications) {
+        return directNotifications
+    }
+    
+    return []
 })
