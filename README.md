@@ -16,10 +16,9 @@
 
 GPK FWBuilder is a user-friendly desktop application that simplifies the process of building custom mechanical keyboard firmware. It provides a graphical interface for QMK and Vial firmware compilation, eliminating the need for command-line knowledge.
 
+https://github.com/user-attachments/assets/dcf499e6-8604-40dd-981c-61882ef3df7e
 
 ## Features
-
-https://github.com/user-attachments/assets/a21afa5b-676f-4991-b8f5-3ff888800ba0
 
 ### Build Firmware
 - Support for both **QMK** and **Vial** firmware
