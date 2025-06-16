@@ -1,250 +1,149 @@
 # GPK FWBuilder
 
+<div align="center">
+
+**A desktop application for building QMK and Vial keyboard firmware with ease**
+
+[![Release](https://img.shields.io/github/v/release/darakuneko/gpk_fwbuilder)](https://github.com/darakuneko/gpk_fwbuilder/releases)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/darakuneko/gpk_fwbuilder)
+
 **English | [日本語](README_ja.md)**
 
-Application to create QMK/Vial firmware with modern Electron-based GUI.
+</div>
+
+## Overview
+
+GPK FWBuilder is a user-friendly desktop application that simplifies the process of building custom mechanical keyboard firmware. It provides a graphical interface for QMK and Vial firmware compilation, eliminating the need for command-line knowledge.
 
 https://github.com/darakuneko/gpk_fwbuilder/assets/5214078/70497d3d-4729-4b58-b9b3-c4626b0f21d9
 
-https://github.com/darakuneko/gpk_fwbuilder/assets/5214078/55f463ee-44eb-4aa6-bde4-87bfe379ebf0
+## Features
 
-## Tech Stack
+### Build Firmware
+- Support for both **QMK** and **Vial** firmware
+- Easy keyboard and keymap selection from dropdown menus
+- Tag/commit-based builds for version control
+- Support for up to 5 custom QMK/Vial fork repositories
+- Real-time build logs with side panel view
+- Automatic firmware output to `~/GPKFW/` directory
 
-- **Frontend**: React 18, Tailwind CSS 4
-- **Backend**: Electron 33, Node.js
-- **Build Tools**: Vite 6, TypeScript 5
-- **Firmware Tools**: Docker-based QMK/Vial build system
+### Generate Files
+- **QMK Keyboard Files**: Generate template keyboard configuration files
+  - Create info.json, rules.mk, config.h, and keymap files
+  - Support for various MCU types
+  - Customizable keyboard name and author
+- **Vial Unique ID**: Create unique identifiers for Vial-enabled keyboards
+  - Generate 8-byte unique ID required for Vial
 
-CUI version
--------
-GPK FWMaker  
-https://github.com/darakuneko/gpk_fwmaker
+### Convert Tools
+- **Vial to Keymap.c**: Convert Vial JSON files to QMK keymap.c format
+  - Import .vil files exported from Vial
+  - Automatic keymap generation
+- **KLE to Keyboard**: Transform KLE (Keyboard Layout Editor) JSON files into QMK/Vial keyboard files
+　- Base on [zykrah/firmware-scripts](https://github.com/zykrah/firmware-scripts) 
 
-Before use
--------
-Install Docker Desktop  
-link: https://www.docker.com  
-Note: Anything compatible is fine, as long as docker compose can be used.  
+### Settings
+- **Repository Management**: 
+  - Configure and update custom firmware repositories
+  - Support for GitHub URLs
+- **Docker Image**: 
+  - Rebuild and manage the Docker build environment
+- **External Server**: 
+  - Configure external GPK FWMaker server for remote builds
+- **Update Notifications**: 
+  - View update history
+- **Language Support**: 
+  - English and Japanese (日本語) interfaces
 
-![docker](https://user-images.githubusercontent.com/5214078/209291875-596663b3-71a5-4d22-8b4c-309c1edbcb61.jpg)
+## System Requirements
 
-Docker for Windows requires Hyper-V to be enabled. 
+### Prerequisites
+Install Docker Desktop from https://www.docker.com  
+*Note: Any Docker-compatible environment that supports docker compose will work*
 
-If you have GPK FWMaker on another server, set it up.    
-<img width="1015" alt="スクリーンショット 2023-05-05 11 16 11" src="https://user-images.githubusercontent.com/5214078/236365021-39ff4fb2-c74f-4b5c-9d0e-01b7201a075b.png">
+## Getting Started
 
+### 1. Initial Setup
+- Launch GPK FWBuilder
+- The application will initialize the Docker environment on first run
+- This may take several minutes as it downloads the build image
+- You can skip Docker check if needed (not recommended)
 
+### 2. Building Firmware
 
-Download
--------
+1. **Select Firmware Type**
+   - Choose between QMK or Vial from the dropdown
+   - The keyboard list will update based on your selection
 
-https://github.com/darakuneko/gpk_fwbuilder/releases
+2. **Select Keyboard**
+   - Choose your target keyboard from the list
+   - Use the search feature for faster navigation
+   - Copy keyboard files to local if needed
 
-Firmware Build
--------
-After the application is installed and initialized, "GPKFW" directory will be created.
+3. **Select Keymap**
+   - Choose from available keymaps
+   - Default keymap is usually a good starting point
 
-e.g.   
-windows: C:\Users\xxxx\GPKFW   
-mac: /Users/xxxx/GPKFW   
-ubuntu: /home/xxxx/GPKFW    
+4. **Configure Build Options** (Optional)
+   - Select specific tag or commit
+   - Choose custom repository if using forks
 
-Copy the keyboard files to "GPKFW" directory.   
-Firmware is also created here.   
+5. **Build**
+   - Click the "Build" button
+   - Monitor progress in the logs panel
+   - Firmware will be saved to `~/GPKFW/`
 
-Please refer to here when creating a new keyboard file.   
-https://github.com/qmk/qmk_firmware/tree/master/keyboards
+### 3. File Locations
 
-e.g.    
-Command  
-make reviung/reviung41:default  
-   
-Parameter  
-keyboard: reviung/reviung41  
-keymap: default 
+- **Firmware Output**: `~/GPKFW/`
+- **Keyboard Files**: Copy custom keyboards to `~/GPKFW/keyboards/`
+- **Build Logs**: Displayed in the application
 
-Vil(Export Vial File) to QMK keymap.c
--------
-I'm building on this great product👍    
-http://ymkn.github.io/vial2c/
+## Advanced Features
 
+### Custom Repositories
+You can add up to 5 fork repositories each for QMK and Vial:
+1. Go to Settings → Repository
+2. Enter the GitHub repository URL
+3. Click Update to sync
 
-Convert to via.json
--------
-QMK info.json and KLE json are used to create via.json.   
+### KLE to Keyboard Conversion
+1. Create your layout in [Keyboard Layout Editor](http://www.keyboard-layout-editor.com/)
+2. Export the JSON file
+3. Use Convert → KLE to Keyboard File
+4. Configure matrix settings and generate files
 
-info.json - required fields  
-```
-{
-  "keyboard_name": "Your Keyboard's Name",
-  "usb": {
-    "vid": "0xFEED",
-    "pid": "0x0001",
-  },
-  "matrix_size": {
-    "cols": 1,
-    "rows": 1
-  }
-}
- ```
+![KLE Guidelines](https://user-images.githubusercontent.com/5214078/212449850-e3fb4a3b-211d-4841-9128-7072bb05c7da.png)
 
-KLE json edited like VIA  
-https://www.caniusevia.com/docs/layouts 
+### Via.json Generation
+Generate Via configuration files from QMK info.json and KLE layouts:
+1. Select your info.json file
+2. Select your KLE layout file  
+3. Generate via.json for VIA configurator compatibility
 
+## Troubleshooting
 
-Convert (KLE json to QMK/Vial)
--------
-It is based on Firmware 'scripts'.   
-zykrah's Nice project👍      
-https://github.com/zykrah/firmware-scripts    
+### Docker Connection Issues
+- Ensure Docker Desktop is running before launching the app
+- Check Docker Desktop settings for resource allocation
+- On Windows, ensure Hyper-V is enabled
+- Try rebuilding the Docker image from Settings → Image
 
-https://user-images.githubusercontent.com/5214078/212449688-c9263962-5a9b-4e65-ae74-3c8a1c443887.mp4
+### Build Failures
+- Check the build logs for specific error messages
+- Ensure keyboard and keymap names are correct
+- Verify the repository is up to date
+- Check for sufficient disk space
 
-#### KLE Guidelines
-
-<img width="896" src="https://user-images.githubusercontent.com/5214078/212449850-e3fb4a3b-211d-4841-9128-7072bb05c7da.png">
-
-If Keyboard Name and Author are entered, keyboard and username will be automatically populated upon import.      
-
-![switch](https://user-images.githubusercontent.com/5214078/212447224-56b04aa8-387c-4bf9-a8d3-bf383770c18c.png)
-
-- 0: "label" in the info.json and layer 0 
-- 1: layer 1
-- 2: (VIAL only) If there is a 'u' here, the key is included as a key for the unlock combo （Same as Firmware 'scripts）
-- 3: Multilayout index （Same as Firmware 'scripts）
-- 4: (VIAL only) If there is an 'e' here, the key is an encoder （Same as Firmware 'scripts）
-- 5: Multilayout value （Same as Firmware 'scripts）
-- 6: Secondary Multilayout name （Same as Firmware 'scripts）
-- 7: Primary Multilayout name/label （Same as Firmware 'scripts）
-- 8: layer 2
-- 9: Row
-- 11: Col
-
-0 can use label.　　　　   
-If the label of keycodes matches the 0 value of KLE Json, it is converted to "aliases" or "key" at layer 0.     
-In info.json, it is used as is.    
-https://keyboards.qmk.fm/v1/constants/keycodes_0.0.3.json     
-In 0, 1, and 8, a blank space is KC_NO.    
-
-Please refer to these KLE and make it.    
-https://t.ly/bNH0    
-https://t.ly/Y3BEW      
-https://t.ly/xiJG8     
-
-Main labels   
-```
-A
-B
-C
-D
-E
-F
-G
-H
-I
-J
-K
-L
-M
-N
-O
-P
-Q
-R
-S
-T
-U
-V
-W
-X
-Y
-Z
-1
-2
-3
-4
-5
-6
-7
-8
-9
-0
-Enter
-Esc
-Backspace
-Tab
-Spacebar
--
-=
-]
-[
-\\
-#
-;
-'
-`
-,
-.
-/
-Caps Lock
-F1
-F2
-F3
-F4
-F5
-F6
-F7
-F8
-F9
-F10
-F11
-F12
-Print Screen
-Scroll Lock
-Pause
-Insert
-Home
-Page Up
-Delete
-End
-Page Down
-Right
-Left
-Down
-Up
-Num Lock
-Menu
-Mute
-Volume Up
-Volume Down
-Caps Lock
-Num Lock
-Left Control
-Left Shift
-Left Alt
-Left GUI
-Right Control
-Right Shift
-Right Alt
-Right GUI
-```
-
-Repository
--------
-You can add 5 fork repositories for QMK and Vial.
-If you get an error like this, please update the repository.     
-```
-error: branch 'x.x.x' not found.
-```
+### Missing Keyboards
+- Click "Refresh" to update the keyboard list
+- Update repositories from Settings → Repository
+- Verify the keyboard exists in the selected firmware type
 
 ## Development
 
-### Prerequisites
-- Node.js 18+
-- Docker Desktop
-- Git
-
-### Setup
+### Development Setup
 ```bash
 # Clone the repository
 git clone https://github.com/darakuneko/gpk_fwbuilder.git
@@ -256,29 +155,42 @@ npm install
 # Start development server
 npm run dev
 
-# Build for production
-npm run build
-
-# Start built application
+# In another terminal, start Electron
 npm run start
 ```
 
-### Project Structure
-```
-gpk_fwbuilder/
-├── src/                    # React frontend source
-│   ├── components/         # Reusable UI components
-│   ├── renderer/          # Tab content components
-│   ├── context.jsx        # Global state management
-│   └── globals.css        # Tailwind CSS styles
-├── gpk_fwmaker/           # Docker-based build system
-├── dist/                  # Built frontend assets
-└── dist-electron/         # Built Electron main process
+### Building from Source
+```bash
+# Build for all platforms
+npm run build
+
+# Platform-specific builds
+npm run dist:win    # Windows
+npm run dist:mac    # macOS  
+npm run dist:linux  # Linux
 ```
 
-### Build Commands
-- `npm run build` - Build for production
-- `npm run build:win` - Build for Windows
-- `npm run dist:win` - Create Windows installer
-- `npm run dist:mac` - Create macOS DMG
-- `npm run dist:linux` - Create Linux AppImage
+## Related Projects
+
+- **CUI Version**: [GPK FWMaker](https://github.com/darakuneko/gpk_fwmaker) - Command-line version
+- **Firmware Scripts**: Based on [zykrah/firmware-scripts](https://github.com/zykrah/firmware-scripts)
+- **Vial2C**: Uses [ymkn/vial2c](http://ymkn.github.io/vial2c/) for Vial conversions
+
+## Developer Support
+
+**Buy me a coffee**  
+[Amazon Wishlist](https://www.amazon.co.jp/hz/wishlist/ls/66VQJTRHISQT) | [Ko-fi](https://ko-fi.com/darakuneko)
+
+## License
+
+This project is released under the [MIT License](LICENSE).
+
+---
+
+<div align="center">
+
+**GPK FWBuilder - Making QMK/Vial firmware generation easier**
+
+Made with ❤ by [darakuneko](https://github.com/darakuneko)
+
+</div>

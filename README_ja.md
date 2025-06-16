@@ -1,231 +1,196 @@
 # GPK FWBuilder
 
+<div align="center">
+
+**QMKとVialキーボードファームウェアを簡単にビルドするデスクトップアプリケーション**
+
+[![Release](https://img.shields.io/github/v/release/darakuneko/gpk_fwbuilder)](https://github.com/darakuneko/gpk_fwbuilder/releases)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/darakuneko/gpk_fwbuilder)
+
 **[English](README.md) | 日本語**
 
-QMK/Vialファームウェアを作成するアプリケーション
+</div>
+
+## 概要
+
+GPK FWBuilderは、カスタムメカニカルキーボードのファームウェアビルドプロセスを簡素化する、使いやすいデスクトップアプリケーションです。QMKとVialファームウェアのコンパイルにグラフィカルインターフェースを提供し、コマンドライン知識は不要です。
 
 https://github.com/darakuneko/gpk_fwbuilder/assets/5214078/70497d3d-4729-4b58-b9b3-c4626b0f21d9
 
-https://github.com/darakuneko/gpk_fwbuilder/assets/5214078/55f463ee-44eb-4aa6-bde4-87bfe379ebf0
+## 機能
 
-CUI版
--------
-GPK FWMaker  
-https://github.com/darakuneko/gpk_fwmaker
+### ファームウェアビルド
+- **QMK**と**Vial**ファームウェアの両方をサポート
+- ドロップダウンメニューから簡単にキーボードとキーマップを選択
+- バージョン管理のためのタグ/コミットベースのビルド
+- 最大5つのカスタムQMK/Vialフォークリポジトリをサポート
+- サイドパネルビューでリアルタイムビルドログ表示
+- `~/GPKFW/`ディレクトリへの自動ファームウェア出力
 
-使用前の準備
--------
-Docker Desktopをインストールしてください  
-リンク: https://www.docker.com  
-注意：docker composeが使用できれば、互換性のあるものであれば何でも構いません。
+### ファイル生成
+- **QMKキーボードファイル**: テンプレートキーボード設定ファイルを生成
+  - info.json、rules.mk、config.h、keymapファイルを作成
+  - 各種MCUタイプをサポート
+  - キーボード名と作成者をカスタマイズ可能
+- **Vialユニークid**: Vial対応キーボード用のユニーク識別子を作成
+  - Vialに必要な8バイトのユニークIDを生成
 
-![docker](https://user-images.githubusercontent.com/5214078/209291875-596663b3-71a5-4d22-8b4c-309c1edbcb61.jpg)
+### 変換ツール
+- **Vial to Keymap.c**: Vial JSONファイルをQMK keymap.c形式に変換
+  - Vialからエクスポートした.vilファイルをインポート
+  - 自動キーマップ生成
+- **KLE to Keyboard**: KLE（Keyboard Layout Editor）JSONファイルをQMK/Vialキーボードファイルに変換
+　- [zykrah/firmware-scripts](https://github.com/zykrah/firmware-scripts)ベース
 
-Windows版DockerはHyper-Vが有効になっている必要があります。
+### 設定
+- **リポジトリ管理**: 
+  - カスタムファームウェアリポジトリの設定と更新
+  - GitHub URLをサポート
+- **Dockerイメージ**: 
+  - Dockerビルド環境の再構築と管理
+- **外部サーバー**: 
+  - リモートビルド用の外部GPK FWMakerサーバーを設定
+- **更新通知**: 
+  - 更新履歴の表示
+- **言語サポート**: 
+  - 英語と日本語のインターフェース
 
-別のサーバーにGPK FWMakerがある場合は、それを設定してください。    
-<img width="1015" alt="スクリーンショット 2023-05-05 11 16 11" src="https://user-images.githubusercontent.com/5214078/236365021-39ff4fb2-c74f-4b5c-9d0e-01b7201a075b.png">
+## システム要件
 
+### 前提条件
+Docker Desktopを https://www.docker.com からインストール  
+*注意：docker composeをサポートするDocker互換環境であれば動作します*
 
+## はじめに
 
-ダウンロード
--------
+### 1. 初期設定
+- GPK FWBuilderを起動
+- 初回実行時、アプリケーションはDocker環境を初期化します
+- ビルドイメージのダウンロードに数分かかる場合があります
+- 必要に応じてDockerチェックをスキップできます（推奨しません）
 
-https://github.com/darakuneko/gpk_fwbuilder/releases
+### 2. ファームウェアのビルド
 
-ファームウェアビルド
--------
-アプリケーションがインストールされ初期化された後、「GPKFW」ディレクトリが作成されます。
+1. **ファームウェアタイプを選択**
+   - ドロップダウンからQMKまたはVialを選択
+   - 選択に基づいてキーボードリストが更新されます
 
-例：   
-windows: C:\Users\xxxx\GPKFW   
-mac: /Users/xxxx/GPKFW   
-ubuntu: /home/xxxx/GPKFW    
+2. **キーボードを選択**
+   - リストからターゲットキーボードを選択
+   - 検索機能を使用して素早くナビゲート
+   - 必要に応じてキーボードファイルをローカルにコピー
 
-キーボードファイルを「GPKFW」ディレクトリにコピーしてください。   
-ファームウェアもここで作成されます。   
+3. **キーマップを選択**
+   - 利用可能なキーマップから選択
+   - 通常、デフォルトキーマップが良い出発点です
 
-新しいキーボードファイルを作成する際はこちらを参考にしてください。   
-https://github.com/qmk/qmk_firmware/tree/master/keyboards
+4. **ビルドオプションの設定**（オプション）
+   - 特定のタグまたはコミットを選択
+   - フォークを使用している場合はカスタムリポジトリを選択
 
-例：    
-コマンド  
-make reviung/reviung41:default  
-   
-パラメータ  
-keyboard: reviung/reviung41  
-keymap: default 
+5. **ビルド**
+   - 「Build」ボタンをクリック
+   - ログパネルで進行状況を監視
+   - ファームウェアは`~/GPKFW/`に保存されます
 
-Vial（Vialファイルのエクスポート）からQMK keymap.cへの変換
--------
-この素晴らしいプロダクトをベースに作成しています👍    
-http://ymkn.github.io/vial2c/
+### 3. ファイルの場所
 
+- **ファームウェア出力**: `~/GPKFW/`
+- **キーボードファイル**: カスタムキーボードを`~/GPKFW/keyboards/`にコピー
+- **ビルドログ**: アプリケーション内に表示
 
-via.jsonへの変換
--------
-QMK info.jsonとKLE jsonを使用してvia.jsonを作成します。   
+## 高度な機能
 
-info.json - 必須フィールド  
-```
-{
-  "keyboard_name": "Your Keyboard's Name",
-  "usb": {
-    "vid": "0xFEED",
-    "pid": "0x0001",
-  },
-  "matrix_size": {
-    "cols": 1,
-    "rows": 1
-  }
-}
- ```
+### カスタムリポジトリ
+QMKとVialそれぞれに最大5つのフォークリポジトリを追加できます：
+1. 設定 → リポジトリに移動
+2. GitHubリポジトリのURLを入力
+3. 更新をクリックして同期
 
-KLE jsonはVIAのように編集されています  
-https://www.caniusevia.com/docs/layouts 
+### KLEからキーボードへの変換
+1. [Keyboard Layout Editor](http://www.keyboard-layout-editor.com/)でレイアウトを作成
+2. JSONファイルをエクスポート
+3. 変換 → KLE to Keyboard Fileを使用
+4. マトリクス設定を構成してファイルを生成
 
+![KLEガイドライン](https://user-images.githubusercontent.com/5214078/212449850-e3fb4a3b-211d-4841-9128-7072bb05c7da.png)
 
-変換（KLE jsonからQMK/Vialへ）
--------
-Firmware 'scripts'をベースにしています。   
-zykrahの素晴らしいプロジェクト👍      
-https://github.com/zykrah/firmware-scripts    
+### Via.json生成
+QMK info.jsonとKLEレイアウトからVia設定ファイルを生成：
+1. info.jsonファイルを選択
+2. KLEレイアウトファイルを選択
+3. VIAコンフィギュレーター互換のvia.jsonを生成
 
-https://user-images.githubusercontent.com/5214078/212449688-c9263962-5a9b-4e65-ae74-3c8a1c443887.mp4
+## トラブルシューティング
 
-#### KLEガイドライン
+### Docker接続の問題
+- アプリ起動前にDocker Desktopが実行されていることを確認
+- Docker Desktopの設定でリソース割り当てを確認
+- WindowsではHyper-Vが有効になっていることを確認
+- 設定 → イメージからDockerイメージの再構築を試す
 
-<img width="896" src="https://user-images.githubusercontent.com/5214078/212449850-e3fb4a3b-211d-4841-9128-7072bb05c7da.png">
+### ビルドの失敗
+- ビルドログで具体的なエラーメッセージを確認
+- キーボードとキーマップ名が正しいことを確認
+- リポジトリが最新であることを確認
+- 十分なディスク容量があることを確認
 
-キーボード名と作成者が入力されている場合、インポート時にkeyboardとusernameが自動的に設定されます。      
+### キーボードが見つからない
+- 「更新」をクリックしてキーボードリストを更新
+- 設定 → リポジトリからリポジトリを更新
+- 選択したファームウェアタイプにキーボードが存在することを確認
 
-![switch](https://user-images.githubusercontent.com/5214078/212447224-56b04aa8-387c-4bf9-a8d3-bf383770c18c.png)
+## 開発
 
-- 0: info.jsonの「label」とレイヤー0 
-- 1: レイヤー1
-- 2: （VIAL専用）ここに「u」がある場合、そのキーはアンロックコンボのキーとして含まれます（Firmware 'scripts'と同様）
-- 3: マルチレイアウトインデックス（Firmware 'scripts'と同様）
-- 4: （VIAL専用）ここに「e」がある場合、そのキーはエンコーダーです（Firmware 'scripts'と同様）
-- 5: マルチレイアウトの値（Firmware 'scripts'と同様）
-- 6: セカンダリマルチレイアウト名（Firmware 'scripts'と同様）
-- 7: プライマリマルチレイアウト名/ラベル（Firmware 'scripts'と同様）
-- 8: レイヤー2
-- 9: 行
-- 11: 列
+### 開発セットアップ
+```bash
+# リポジトリをクローン
+git clone https://github.com/darakuneko/gpk_fwbuilder.git
+cd gpk_fwbuilder
 
-0にはラベルが使用できます。　　　　   
-キーコードのラベルがKLE Jsonの0の値と一致する場合、レイヤー0で「aliases」または「key」に変換されます。     
-info.jsonでは、そのまま使用されます。    
-https://keyboards.qmk.fm/v1/constants/keycodes_0.0.3.json     
-0、1、8で空白スペースはKC_NOです。    
+# 依存関係をインストール
+npm install
 
-これらのKLEを参考にして作成してください。    
-https://t.ly/bNH0    
-https://t.ly/Y3BEW      
-https://t.ly/xiJG8     
+# 開発サーバーを起動
+npm run dev
 
-主なラベル   
-```
-A
-B
-C
-D
-E
-F
-G
-H
-I
-J
-K
-L
-M
-N
-O
-P
-Q
-R
-S
-T
-U
-V
-W
-X
-Y
-Z
-1
-2
-3
-4
-5
-6
-7
-8
-9
-0
-Enter
-Esc
-Backspace
-Tab
-Spacebar
--
-=
-]
-[
-\\
-#
-;
-'
-`
-,
-.
-/
-Caps Lock
-F1
-F2
-F3
-F4
-F5
-F6
-F7
-F8
-F9
-F10
-F11
-F12
-Print Screen
-Scroll Lock
-Pause
-Insert
-Home
-Page Up
-Delete
-End
-Page Down
-Right
-Left
-Down
-Up
-Num Lock
-Menu
-Mute
-Volume Up
-Volume Down
-Caps Lock
-Num Lock
-Left Control
-Left Shift
-Left Alt
-Left GUI
-Right Control
-Right Shift
-Right Alt
-Right GUI
+# 別のターミナルでElectronを起動
+npm run start
 ```
 
-リポジトリ
--------
-QMKとVialのフォークリポジトリを最大5つまで追加できます。
-このようなエラーが出た場合は、リポジトリを更新してください。     
+### ソースからのビルド
+```bash
+# 全プラットフォーム用にビルド
+npm run build
+
+# プラットフォーム固有のビルド
+npm run dist:win    # Windows
+npm run dist:mac    # macOS
+npm run dist:linux  # Linux
 ```
-error: branch 'x.x.x' not found.
-```
+
+## 関連プロジェクト
+
+- **CUIバージョン**: [GPK FWMaker](https://github.com/darakuneko/gpk_fwmaker) - コマンドライン版
+- **Firmware Scripts**: [zykrah/firmware-scripts](https://github.com/zykrah/firmware-scripts)ベース
+- **Vial2C**: Vial変換に[ymkn/vial2c](http://ymkn.github.io/vial2c/)を使用
+
+## Developer Support
+
+**Buy me a coffee**  
+[Amazon Wishlist](https://www.amazon.co.jp/hz/wishlist/ls/66VQJTRHISQT) | [Ko-fi](https://ko-fi.com/darakuneko)
+
+## License
+
+This project is released under the [MIT License](LICENSE).
+
+---
+
+<div align="center">
+
+**GPK FWBuilder - Making QMK/Vial firmware generation easier**
+
+Made with ❤ by [darakuneko](https://github.com/darakuneko)
+
+</div>
