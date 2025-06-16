@@ -63,7 +63,6 @@
   "build": {
     "productName": "GPK FWBuilder",
     "appId": "app.darakuneko.gpk_fwbuilder",
-    "afterSign": "dist-electron/notarize.cjs",
     "npmRebuild": false,
     "files": [
       "dist/**/*",
@@ -85,7 +84,8 @@
       "gatekeeperAssess": false,
       "category": "public.app-category.productivity",
       "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist"
+      "entitlementsInherit": "entitlements.mac.plist",
+      "afterSign": "dist-electron/notarize.cjs"
     },
     "linux": {
       "target": [
