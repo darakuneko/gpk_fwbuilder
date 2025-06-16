@@ -177,11 +177,6 @@ ipcMain.handle('setState', async (_e, obj: any) => {
     
     // Save the merged state
     store.set('state', newState)
-    
-    // Also save notifications separately for reliability
-    if (obj?.savedNotifications) {
-        store.set('savedNotifications', obj.savedNotifications)
-    }
 })
 ipcMain.handle('getSettings', async () => store.get('settings') || {})
 ipcMain.handle('setSettings', async (_e, settings: any) => {
@@ -236,17 +231,7 @@ ipcMain.handle('getNotifications', async () => {
 })
 
 ipcMain.handle('getCachedNotifications', async () => {
-    // Try to get from state first, then fallback to direct store access
+    // Only get from state - no fallback to root level
     const state = store.get('state')
-    if (state?.savedNotifications) {
-        return state.savedNotifications
-    }
-    
-    // Fallback: check if notifications are stored directly in store
-    const directNotifications = store.get('savedNotifications')
-    if (directNotifications) {
-        return directNotifications
-    }
-    
-    return []
+    return state?.savedNotifications || []
 })
