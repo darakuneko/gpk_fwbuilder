@@ -25,6 +25,7 @@ const UpdatesNotificationModal: React.FC<UpdatesNotificationModalProps> = ({
         return `${year}/${month}/${day}`
     }
 
+
     return (
         <Modal show={isOpen} onClose={onClose} size="4xl">
             <ModalHeader>
@@ -55,7 +56,13 @@ const UpdatesNotificationModal: React.FC<UpdatesNotificationModalProps> = ({
                                         {formatDate(notification.publishedAt)}
                                     </span>
                                 </div>
-                                <div className="text-base text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+                                <div 
+                                    className="text-base text-gray-700 dark:text-gray-300 leading-relaxed copyable-text"
+                                    style={{ 
+                                        whiteSpace: 'pre-wrap',
+                                        userSelect: 'text'
+                                    }}
+                                >
                                     {notification.body}
                                 </div>
                             </div>

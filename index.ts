@@ -64,16 +64,16 @@ app.on('ready', async () => {
             mainWindow.webContents.openDevTools()
         }
         
-        // Setup context menu for logs textarea only
+        // Setup context menu for logs textarea and copyable text
         mainWindow.webContents.on('context-menu', (_e, params) => {
-            // Only show context menu if right-clicking in logs textarea
+            // Show context menu if right-clicking in logs textarea or copyable text
             mainWindow.webContents.executeJavaScript(`
                 (function() {
                     const element = document.elementFromPoint(${params.x}, ${params.y});
-                    return element && element.classList.contains('logs-textarea');
+                    return element && (element.classList.contains('logs-textarea') || element.classList.contains('copyable-text'));
                 })()
-            `).then((isLogsTextarea) => {
-                if (isLogsTextarea) {
+            `).then((isCopyableElement) => {
+                if (isCopyableElement) {
                     const menuTemplate = [
                         {
                             label: 'Copy',

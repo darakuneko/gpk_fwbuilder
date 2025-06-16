@@ -17,6 +17,7 @@ const Updates: React.FC = (): React.ReactElement => {
         return `${year}/${month}/${day}`
     }
 
+
     const loadNotifications = async (): Promise<void> => {
         try {
             const result = await api.getCachedNotifications()
@@ -55,7 +56,13 @@ const Updates: React.FC = (): React.ReactElement => {
                                             {formatDate(notification.publishedAt)}
                                         </span>
                                     </div>
-                                    <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+                                    <div 
+                                        className="text-gray-700 dark:text-gray-300 leading-relaxed copyable-text"
+                                        style={{ 
+                                            whiteSpace: 'pre-wrap',
+                                            userSelect: 'text'
+                                        }}
+                                    >
                                         {notification.body}
                                     </div>
                                 </div>
