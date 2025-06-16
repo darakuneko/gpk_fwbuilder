@@ -6,6 +6,15 @@ export interface Firmware {
     commit: string;
 }
 
+export interface BuildData {
+    tag: string;
+    tags: string[];
+    kb: string;
+    km: string;
+    commit: string;
+    useRepo: boolean;
+}
+
 export interface AppState {
     version: string;
     storePath: string;
@@ -17,6 +26,9 @@ export interface AppState {
         km: string;
         commit: string;
         useRepo: boolean;
+    };
+    buildDataPerFirmware: {
+        [firmwareId: string]: BuildData;
     };
     keyboardList: {
         kb: string[];
@@ -105,6 +117,7 @@ export function StateProvider({children}: StateProviderProps): React.ReactElemen
             commit: '',
             useRepo: false,
         },
+        buildDataPerFirmware: {},
         keyboardList: {
             kb: [],
             km: [],
@@ -194,6 +207,7 @@ export function StateProvider({children}: StateProviderProps): React.ReactElemen
                 commit: obj.build.commit,
                 useRepo: obj.build.useRepo,
             },
+            buildDataPerFirmware: obj.buildDataPerFirmware || {},
             keyboardList: {
                 kb: obj.keyboardList.kb,
                 km: obj.keyboardList.km,

@@ -101,6 +101,7 @@ const Content = (): React.JSX.Element => {
                         if (reStoreState && typeof reStoreState === 'object') {
                             const typedState = reStoreState as Partial<AppState>
                             if (typedState.build) state.build = typedState.build
+                            if (typedState.buildDataPerFirmware) state.buildDataPerFirmware = typedState.buildDataPerFirmware
                             if (typedState.generate) state.generate = typedState.generate
                             if (typedState.convert) state.convert = typedState.convert
                             if (typedState.repository) state.repository = typedState.repository
@@ -390,7 +391,18 @@ const Content = (): React.JSX.Element => {
                                         {t('common.skipDockerCheck')}
                                     </Button>
                                 </div>
-                                <div className="text-left text-sm max-h-40 overflow-y-auto">{parse((state?.logs || '').replace(/\n/g, "<br>"))}</div>
+                                {state?.logs && state.logs.trim() !== '' && (
+                                    <div className="flex justify-center">
+                                        <div 
+                                            className="text-left text-sm overflow-y-auto bg-gray-900 dark:bg-gray-800 border-gray-600 rounded-lg p-3 font-mono"
+                                            style={{ height: '320px', minHeight: '320px', maxHeight: '320px', 
+                                                width: '480px', minWidth: '480px', maxWidth: '480px'
+                                            }}
+                                        >
+                                            {parse(state.logs.replace(/\n/g, "<br>"))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )

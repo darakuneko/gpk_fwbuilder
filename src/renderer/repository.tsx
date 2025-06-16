@@ -96,20 +96,21 @@ const Repository: React.FC<RepositoryProps> = ({onShowLogModal, onOperationCompl
                             </Select>
                         </div>
                         
-                        <div>
-                            <Label className="mb-2 block" htmlFor="repository-custom-url">
+                        {!isStaticFirmware(state.repository?.firmware) && (
+                            <div>
+                                <Label className="mb-2 block" htmlFor="repository-custom-url">
 {t('settings.repositoryUrl')}
-                            </Label>
-                            <TextInput
-                                type="text"
-                                id="repository-custom-url"
-                                placeholder={t('settings.gitCloneUrlPlaceholder')}
-                                onChange={handleTextChange}
-                                value={state.repository?.firmwares?.find((v): boolean => v.id === state.repository?.firmware)?.url || ''}
-                                disabled={isStaticFirmware(state.repository?.firmware)}
-                                required
-                            />
-                        </div>
+                                </Label>
+                                <TextInput
+                                    type="text"
+                                    id="repository-custom-url"
+                                    placeholder={t('settings.gitCloneUrlPlaceholder')}
+                                    onChange={handleTextChange}
+                                    value={state.repository?.firmwares?.find((v): boolean => v.id === state.repository?.firmware)?.url || ''}
+                                    required
+                                />
+                            </div>
+                        )}
                         
                         <div className="text-center pt-4">
                             <Button

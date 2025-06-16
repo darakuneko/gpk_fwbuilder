@@ -103,6 +103,7 @@ const command = {
                     }
                     else return "docker compose up -d --build --force-recreate"
                 }
+
                 const result = await appExe("docker images")
                 if (result === fwMakerUrlMassage) {
                     return

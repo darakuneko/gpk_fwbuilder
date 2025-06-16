@@ -12,6 +12,18 @@ const store = new Store<StoreSchema>({
         notificationApiEndpoint: 'https://getnotifications-svtx62766a-uc.a.run.app'
     }
 })
+
+// Check version compatibility and clear store if needed
+const currentVersion = app.getVersion()
+const storedVersion = store.get('appVersion')
+if (storedVersion && storedVersion !== currentVersion) {
+    // Clear store when version mismatch
+    store.clear()
+    console.log(`Store cleared due to version change: ${storedVersion} -> ${currentVersion}`)
+}
+// Always update the stored version
+store.set('appVersion', currentVersion)
+
 let mainWindow: BrowserWindow | null = null
 
 

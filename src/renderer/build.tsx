@@ -57,9 +57,34 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
     }
 
     const findFirmware = (state: AppState): Firmware | undefined => state.repository.firmwares.find((r): boolean => r.id === state.build.fw)
-    const getCommit = (state: AppState): string | undefined => findFirmware(state)?.commit
+    const getCommit = (state: AppState): string | undefined => {
+        // First check if there's saved data for this firmware
+        const savedData = state.buildDataPerFirmware[state.build.fw]
+        if (savedData && savedData.commit) {
+            return savedData.commit
+        }
+        // Fallback to current build commit or firmware default
+        return state.build.commit || findFirmware(state)?.commit
+    }
     const setCommit = (state: AppState, commit: string): void => {
         state.build.commit = commit
+        // Also update the saved data for this firmware
+        if (!state.buildDataPerFirmware) {
+            state.buildDataPerFirmware = {}
+        }
+        if (!state.buildDataPerFirmware[state.build.fw]) {
+            state.buildDataPerFirmware[state.build.fw] = {
+                tag: state.build.tag,
+                tags: state.build.tags,
+                kb: state.build.kb,
+                km: state.build.km,
+                commit: commit,
+                useRepo: state.build.useRepo
+            }
+        } else {
+            state.buildDataPerFirmware[state.build.fw]!.commit = commit
+        }
+        // Keep firmware repository commit in sync for backward compatibility
         const firmware = findFirmware(state)
         if (firmware) {
             firmware.commit = commit
@@ -71,32 +96,68 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
         // Create a new state object to avoid mutation
         const newState = { ...state }
         newState.build = { ...state.build }
-        newState.build.fw = selectedFw
+        newState.buildDataPerFirmware = { ...state.buildDataPerFirmware }
         
-        // Handle tags based on firmware type
-        if (selectedFw === "QMK") {
-            // Load tags for QMK
-            try {
-                const tags = await api.tags()
-                newState.build.tags = tags
-                newState.build.tag = newState.build.tag || (tags.length > 0 ? tags[0]! : '')
-            } catch {
-                // If tags fail to load, fallback to empty
-                newState.build.tags = []
-                newState.build.tag = ''
-            }
-        } else {
-            // For non-QMK firmwares, clear tags and use commit
-            newState.build.tags = []
-            newState.build.tag = ''
-            
-            const commit = getCommit(newState)
-            if (commit) {
-                setCommit(newState, commit)
+        // Save current firmware data
+        if (state.build.fw) {
+            newState.buildDataPerFirmware[state.build.fw] = {
+                tag: state.build.tag,
+                tags: state.build.tags,
+                kb: state.build.kb,
+                km: state.build.km,
+                commit: state.build.commit,
+                useRepo: state.build.useRepo
             }
         }
         
+        newState.build.fw = selectedFw
+        
+        // Load data for selected firmware
+        const savedData = state.buildDataPerFirmware[selectedFw]
+        if (savedData) {
+            // Restore saved data
+            newState.build = {
+                ...newState.build,
+                ...savedData
+            }
+            
+            // Update keymap list if keyboard is selected
+            if (savedData.kb && keyboardDataRef.current.length > 0) {
+                const obj = keyboardDataRef.current.find((v): boolean => v.kb === savedData.kb)
+                newState.keyboardList.km = obj ? obj.km : []
+            }
+        } else {
+            // Initialize new firmware data
+            if (selectedFw === "QMK") {
+                // Load tags for QMK
+                try {
+                    const tags = await api.tags()
+                    newState.build.tags = tags
+                    newState.build.tag = tags.length > 0 ? tags[0]! : ''
+                } catch {
+                    // If tags fail to load, fallback to empty
+                    newState.build.tags = []
+                    newState.build.tag = ''
+                }
+            } else {
+                // For non-QMK firmwares, clear tags and set default commit from firmware config
+                newState.build.tags = []
+                newState.build.tag = ''
+                
+                // Get the default commit for this specific firmware from repository
+                const firmware = newState.repository.firmwares.find((f): boolean => f.id === selectedFw)
+                const defaultCommit = firmware?.commit || ''
+                newState.build.commit = defaultCommit
+            }
+            
+            // Reset keyboard and keymap for new firmware
+            newState.build.kb = ''
+            newState.build.km = ''
+            newState.keyboardList.km = []
+        }
+        
         void setState(newState)
+        validBuildButton(newState.build)
     }
 
     const validBuildButton = (buildState?: typeof state.build): void => {

@@ -38,6 +38,7 @@ export interface StoreSchema {
     state?: AppState;
     settings?: any;
     notificationApiEndpoint?: string;
+    appVersion?: string;
 }
 
 export interface AppState {
