@@ -45,32 +45,29 @@ contextBridge.exposeInMainWorld('webUtils', webUtils)
 // Check for updates on startup
 window.addEventListener('DOMContentLoaded', async () => {
     try {
-        // Wait a moment to ensure the app is fully loaded
-        setTimeout(async () => {
-            const state = await ipcRenderer.invoke('getState')
-            const result = await ipcRenderer.invoke('getNotifications')
-            const latestNotification = result?.notifications?.[0]
-            const savedNotifications = state?.savedNotifications
+        const state = await ipcRenderer.invoke('getState')
+        const result = await ipcRenderer.invoke('getNotifications')
+        const latestNotification = result?.notifications?.[0]
+        const savedNotifications = state?.savedNotifications
 
-            if (latestNotification?.id) {
-                const isDifferent = !savedNotifications || 
-                    !savedNotifications.some((n: any) => n.id === latestNotification.id)
+        if (latestNotification?.id) {
+            const isDifferent = !savedNotifications || 
+                !savedNotifications.some((n: any) => n.id === latestNotification.id)
                 
-                if (isDifferent) {
-                    // Save the new notifications
-                    const newState = {
-                        ...state,
-                        savedNotifications: result.notifications
-                    }
-                    await ipcRenderer.invoke('setState', newState)
-                                        
-                    // Dispatch event to show the modal
-                    window.dispatchEvent(new CustomEvent('showUpdatesNotificationModal', {
-                        detail: { notifications: [latestNotification] }
-                    }))
+            if (isDifferent) {
+                // Save the new notifications
+                const newState = {
+                    ...state,
+                    savedNotifications: result.notifications
                 }
+                await ipcRenderer.invoke('setState', newState)
+                                        
+                // Dispatch event to show the modal
+                window.dispatchEvent(new CustomEvent('showUpdatesNotificationModal', {
+                    detail: { notifications: [latestNotification] }
+                }))
             }
-        }, 5000) // Wait 5 seconds after DOM is loaded
+        }
     } catch (error) {
         console.error('Failed to check for updates:', error)
     }
