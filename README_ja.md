@@ -4,9 +4,12 @@
 
 **QMKとVialキーボードファームウェアを簡単にビルドするデスクトップアプリケーション**
 
-[![Release](https://img.shields.io/github/v/release/darakuneko/gpk_fwbuilder)](https://github.com/darakuneko/gpk_fwbuilder/releases)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/darakuneko/gpk_fwbuilder)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![QMK](https://img.shields.io/badge/QMK-1e88e5?style=flat&logo=qmk&logoColor=white)](https://qmk.fm/)
+[![Vial](https://img.shields.io/badge/Vial-purple?style=flat)](https://get.vial.today/)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/darakuneko/gpk_fwmaker)
 
 **[English](README.md) | 日本語**
 
