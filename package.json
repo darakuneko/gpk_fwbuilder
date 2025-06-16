@@ -84,8 +84,7 @@
       "gatekeeperAssess": false,
       "category": "public.app-category.productivity",
       "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist",
-      "afterSign": "dist-electron/notarize.cjs"
+      "entitlementsInherit": "entitlements.mac.plist"
     },
     "linux": {
       "target": [
