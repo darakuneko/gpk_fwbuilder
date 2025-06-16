@@ -9,7 +9,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![QMK](https://img.shields.io/badge/QMK-1e88e5?style=flat&logo=qmk&logoColor=white)](https://qmk.fm/)
 [![Vial](https://img.shields.io/badge/Vial-purple?style=flat)](https://get.vial.today/)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/darakuneko/gpk_fwmaker)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/darakuneko/gpk_fwbuilder)
 
 **[English](README.md) | 日本語**
 
