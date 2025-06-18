@@ -1,4 +1,3 @@
-const { notarize } = require('@electron/notarize');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -16,6 +15,8 @@ interface NotarizeContext {
 async function notarizing(context: NotarizeContext): Promise<void> {
   const { electronPlatformName, appOutDir } = context;
   if (electronPlatformName !== 'darwin') return;
+  
+  const { notarize } = await import('@electron/notarize');
   const appName = context.packager.appInfo.productFilename;
 
   await notarize({
