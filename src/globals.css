@@ -63,6 +63,26 @@ button[data-modal-hide],
   cursor: not-allowed !important;
 }
 
+/* Fix for Windows focus issues with modals */
+.fixed.inset-0.z-40 {
+  pointer-events: none !important;
+}
+
+.fixed.inset-0.z-40 > * {
+  pointer-events: auto !important;
+}
+
+/* Ensure modal backdrop doesn't block other windows on Windows */
+[data-testid="modal-backdrop"],
+.bg-gray-900.bg-opacity-50.dark\:bg-opacity-80 {
+  z-index: 40 !important;
+}
+
+/* Ensure modal content is properly layered */
+[role="dialog"] {
+  z-index: 50 !important;
+}
+
 /* Select boxes - ensure cursor-pointer */
 select,
 [data-testid="flowbite-select"],

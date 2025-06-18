@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Event, Menu, clipboard, globalShortcut } from "electron"
+import { app, BrowserWindow, ipcMain, Event, Menu, clipboard } from "electron"
 import Store from 'electron-store'
 import command from './command.ts'
 import { fileURLToPath } from "url"
@@ -62,6 +62,9 @@ const createWindow = (): void => {
             preload: __dirname + '/preload.js',
             backgroundThrottling: false,
         },
+        // Prevent window from being always on top
+        alwaysOnTop: false,
+        skipTaskbar: false,
     })
 
     mainWindow.loadURL(`file://${path.join(__dirname, '../dist/public/index.html')}`)
@@ -85,9 +88,31 @@ app.on('ready', async () => {
             isDevToolsOpen = true
         }
         
-        // Register global shortcut for toggling DevTools
-        globalShortcut.register('CommandOrControl+E', () => {
-            toggleDevTools()
+        // Register local shortcut for toggling DevTools (avoid global shortcuts on Windows)
+        mainWindow.webContents.on('before-input-event', (event, input) => {
+            if ((input.control || input.meta) && input.key.toLowerCase() === 'e') {
+                event.preventDefault()
+                toggleDevTools()
+            }
+        })
+        
+        // Add focus/blur event handlers to ensure proper window activation on Windows
+        mainWindow.on('blur', () => {
+            // When window loses focus, ensure it doesn't interfere with other windows
+            if (process.platform === 'win32') {
+                mainWindow.setAlwaysOnTop(false)
+            }
+        })
+        
+        mainWindow.on('focus', () => {
+            // When window gains focus, ensure proper activation
+            if (process.platform === 'win32') {
+                // Force window to properly activate
+                mainWindow.setAlwaysOnTop(true)
+                setTimeout(() => {
+                    mainWindow.setAlwaysOnTop(false)
+                }, 10)
+            }
         })
         
         // Setup context menu for logs textarea and copyable text
@@ -124,17 +149,13 @@ app.on('ready', async () => {
 })
 
 app.on('window-all-closed', () => {
-    // Unregister global shortcuts when all windows are closed
-    globalShortcut.unregisterAll()
-    
     if (process.platform !== 'darwin') {
         app.quit()
     }
 })
 
 app.on('will-quit', () => {
-    // Unregister all global shortcuts before app quits
-    globalShortcut.unregisterAll()
+    // Cleanup before app quits
 })
 
 const closing = async (e: Event, mainWindow: BrowserWindow): Promise<void> => {
@@ -143,9 +164,6 @@ const closing = async (e: Event, mainWindow: BrowserWindow): Promise<void> => {
     store.set('window', {x: win.x, y: win.y, w: win.width, h: win.height})
     mainWindow.webContents.send("close", false)
     await command.stopImage()
-    
-    // Unregister global shortcuts
-    globalShortcut.unregisterAll()
     
     app.isQuiting = true
     app.quit()
