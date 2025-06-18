@@ -394,7 +394,7 @@ const Content = (): React.JSX.Element => {
                                 {state?.logs && state.logs.trim() !== '' && (
                                     <div className="flex justify-center">
                                         <div 
-                                            className="text-left text-sm overflow-y-auto bg-gray-900 dark:bg-gray-800 border-gray-600 rounded-lg p-3 font-mono"
+                                            className="text-left text-sm overflow-y-auto bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 font-mono"
                                             style={{ height: '320px', minHeight: '320px', maxHeight: '320px', 
                                                 width: '480px', minWidth: '480px', maxWidth: '480px'
                                             }}
