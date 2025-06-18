@@ -214,11 +214,11 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                     ref={divRef}
                     onClick={(): void => { if (!isProcessing) setIsTextareaMode(true) }}
                     className={`logs-div border-0 flex-1
-                    w-full font-mono text-sm bg-gray-900 text-white 
+                    w-full font-mono text-sm bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white 
                     transition-colors overflow-y-auto overflow-x-hidden ${
                         isProcessing 
                             ? 'cursor-not-allowed opacity-75' 
-                            : 'cursor-pointer hover:bg-gray-800'
+                            : 'cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800'
                     }`}
                     style={{ 
                         padding: '16px',
@@ -232,17 +232,17 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                     {getCurrentLogs() ? (
                         <div dangerouslySetInnerHTML={coloredLogContent} />
                     ) : (
-                        <div className="text-gray-400">{t('logs.logsWillAppear')}</div>
+                        <div className="text-gray-500 dark:text-gray-400">{t('logs.logsWillAppear')}</div>
                     )}
                     {getCurrentLogs() && !isProcessing && (
-                        <div className="text-xs text-gray-500 mt-4 text-center">
+                        <div className="text-xs text-gray-600 dark:text-gray-500 mt-4 text-center">
 {t('logs.clickToEnableSelection')}
                         </div>
                     )}
                 </div>
             ) : (
                 <div className="flex-1 flex flex-col">
-                    <div className="flex justify-between items-center p-2 bg-gray-800 text-gray-300">
+                    <div className="flex justify-between items-center p-2 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                         <div className="flex items-center gap-3">
                             <span className="text-sm">{t('logs.textSelectionMode')}</span>
                             <Button
@@ -268,7 +268,7 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                         </div>
                         <button
                             onClick={(): void => setIsTextareaMode(false)}
-                            className="text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded transition-colors cursor-pointer"
+                            className="text-sm px-3 py-1 bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 rounded transition-colors cursor-pointer"
                         >
 {t('logs.backToViewMode')}
                         </button>
@@ -276,7 +276,7 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                     
                     {/* Collapsible Search section */}
                     {showSearchPanel && (
-                        <div className="p-3 bg-gray-700 border-b border-gray-600 relative transition-all duration-200 ease-in-out">
+                        <div className="p-3 bg-gray-300 dark:bg-gray-700 border-b border-gray-400 dark:border-gray-600 relative transition-all duration-200 ease-in-out">
                             <div className="flex items-center gap-2">
                                 <div className="flex-1 relative">
                                     <TextInput
@@ -294,16 +294,16 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                                     {/* Search history dropdown */}
                                     {showSearchHistory && searchHistory.length > 0 && (
                                         <div 
-                                            className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto"
+                                            className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto"
                                         >
-                                            <div className="px-3 py-1 text-xs text-gray-500 border-b border-gray-600">
+                                            <div className="px-3 py-1 text-xs text-gray-600 dark:text-gray-500 border-b border-gray-300 dark:border-gray-600">
 {t('logs.recentSearches')}
                                             </div>
                                             {searchHistory.map((historyItem, index): React.ReactElement => (
                                                 <button
                                                     key={index}
                                                     onClick={(): void => handleHistorySelect(historyItem)}
-                                                    className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 font-mono cursor-pointer border-b border-gray-700 last:border-b-0"
+                                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-mono cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-b-0"
                                                 >
                                                     {historyItem}
                                                 </button>
@@ -326,7 +326,7 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                             
                             {/* Search results info */}
                             {searchQuery && (
-                                <div className="mt-2 text-xs text-gray-400">
+                                <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
 {filteredLogs && filteredLogs.trim() ? 
                                         t('logs.showingMatches', { 
                                             query: searchQuery, 
@@ -344,7 +344,7 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                         value={searchQuery ? filteredLogs : logContent}
                         readOnly
                         className="logs-textarea border-0 focus:outline-none focus:ring-0 
-                        w-full font-mono text-sm bg-gray-900 resize-none text-white flex-1"
+                        w-full font-mono text-sm bg-gray-100 dark:bg-gray-900 resize-none text-gray-900 dark:text-white flex-1"
                         style={{ 
                             whiteSpace: 'pre',
                             overflowWrap: 'normal',
