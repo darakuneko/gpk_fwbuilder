@@ -1,5 +1,5 @@
-import { notarize } from '@electron/notarize';
-import dotenv from 'dotenv';
+const { notarize } = require('@electron/notarize');
+const dotenv = require('dotenv');
 
 dotenv.config();
 

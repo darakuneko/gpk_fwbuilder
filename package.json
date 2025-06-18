@@ -64,6 +64,7 @@
     "productName": "GPK FWBuilder",
     "appId": "app.darakuneko.gpk_fwbuilder",
     "npmRebuild": false,
+    "afterSign": "dist-electron/notarize.cjs",
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
