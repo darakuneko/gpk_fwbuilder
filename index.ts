@@ -58,6 +58,8 @@ const createWindow = (): void => {
         width: isRestored ? win.w : 1024,
         height: isRestored ? win.h : 1024,
         icon: `${__dirname}/icons/256x256.png`,
+        // Set background color to match dark mode - prevents white line artifact on Wayland
+        backgroundColor: '#111827',
         webPreferences: {
             preload: __dirname + '/preload.js',
             backgroundThrottling: false,
