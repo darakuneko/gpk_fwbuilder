@@ -30,12 +30,16 @@ const GenerateVialId: React.FC<GenerateVialIdProps> = ({onShowLogModal, onOperat
         }
         
         setPageLog('generateVialId', generateMsg)
-        state.tabDisabled = true
-        void setState(state)
+        void setState({
+            ...state,
+            tabDisabled: true
+        })
         const logs = await api.generateVialId()
         setPageLog('generateVialId', logs as string)
-        state.tabDisabled = false
-        void setState(state)
+        void setState({
+            ...state,
+            tabDisabled: false
+        })
         
         if (onOperationComplete) {
             onOperationComplete()

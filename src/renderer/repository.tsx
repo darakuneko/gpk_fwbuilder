@@ -23,15 +23,25 @@ const Repository: React.FC<RepositoryProps> = ({onShowLogModal, onOperationCompl
     const isStaticFirmware = (firmware: string): boolean => firmware === "QMK" || firmware === "Vial"
     const handleSelectFW = (e: React.ChangeEvent<HTMLSelectElement>): void => {
         if (!state || !state.repository) return
-        state.repository.firmware = e.target.value
-        void setState(state)
+        void setState({
+            ...state,
+            repository: {
+                ...state.repository,
+                firmware: e.target.value
+            }
+        })
     }
 
     const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
         if (!state || !state.repository?.firmwares) return
-        state.repository.firmwares = state.repository.firmwares
-            .map((v): typeof v => v.id === state.repository.firmware ? { ...v, url: e.target.value } : v);
-        void setState(state)
+        void setState({
+            ...state,
+            repository: {
+                ...state.repository,
+                firmwares: state.repository.firmwares
+                    .map((v): typeof v => v.id === state.repository.firmware ? { ...v, url: e.target.value } : v)
+            }
+        })
     }
 
     const handleUpdate = (msg1: string, msg2: string): (() => Promise<void>) => async (): Promise<void> => {
@@ -42,8 +52,10 @@ const Repository: React.FC<RepositoryProps> = ({onShowLogModal, onOperationCompl
         
         if (!state) return
         setPageLog('repository', msg1)
-        state.tabDisabled = true
-        void setState(state)
+        void setState({
+            ...state,
+            tabDisabled: true
+        })
         if(isStaticFirmware(state.repository?.firmware)) {
             await api.updateRepository(state.repository.firmware)
         } else {
@@ -56,13 +68,19 @@ const Repository: React.FC<RepositoryProps> = ({onShowLogModal, onOperationCompl
             const buildCompleted = await api.buildCompleted()
             const exist = await api.existSever()
             if (buildCompleted && exist) {
-                state.build.tags = await api.tags()
-                state.build.tag = state.build.tags[0] || ''
+                const tags = await api.tags()
                 setPageLog('repository', msg2)
-                state.tabDisabled = false
-                void setState(state)
+                void setState({
+                    ...state,
+                    build: {
+                        ...state.build,
+                        tags: tags,
+                        tag: tags[0] || ''
+                    },
+                    tabDisabled: false
+                })
                 clearInterval(id)
-                
+
                 // Operation complete
                 if (onOperationComplete) {
                     onOperationComplete()

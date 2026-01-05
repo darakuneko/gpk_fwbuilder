@@ -130,8 +130,17 @@ const Convert: React.FC = (): React.ReactElement => {
 
     const handleSelectMCU = (e: React.ChangeEvent<HTMLSelectElement>): void => {
         if (!state) return
-        state.convert.kle.mcu = e.target.value
-        void setState(state)
+        const newState = {
+            ...state,
+            convert: {
+                ...state.convert,
+                kle: {
+                    ...state.convert.kle,
+                    mcu: e.target.value
+                }
+            }
+        }
+        void setState(newState)
         setPinRows([])
         setPinCols([])
     }
@@ -157,15 +166,28 @@ const Convert: React.FC = (): React.ReactElement => {
     const handleKleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
         const file = e.target.files?.[0]
         if (file){
-            kleObj.name = file.name
-            kleObj.path = (window as unknown as {webUtils: {getPathForFile: (file: File) => string}}).webUtils.getPathForFile(file)
-            setKleObj({...kleObj})
+            const newKleObj = {
+                name: file.name,
+                path: (window as unknown as {webUtils: {getPathForFile: (file: File) => string}}).webUtils.getPathForFile(file)
+            }
+            setKleObj(newKleObj)
 
-            const json = await api.readJson(kleObj.path)
+            const json = await api.readJson(newKleObj.path)
             const obj = (json as unknown[]).filter((v): boolean => !Array.isArray(v))[0] as {name?: string; author?: string}
-            if (obj.name && state) state.convert.kle.kb = obj.name
-            if (obj.author && state) state.convert.kle.user = obj.author
-            if (state) void setState(state)
+            if (state) {
+                const newState = {
+                    ...state,
+                    convert: {
+                        ...state.convert,
+                        kle: {
+                            ...state.convert.kle,
+                            kb: obj.name ?? state.convert.kle.kb,
+                            user: obj.author ?? state.convert.kle.user
+                        }
+                    }
+                }
+                void setState(newState)
+            }
             validKleConvertButton()
         }
     }
@@ -197,14 +219,18 @@ const Convert: React.FC = (): React.ReactElement => {
 
     const handleVilFileSubmit = async (): Promise<void> => {
         if (!state) return
-        state.logs = convertMsg
-        state.tabDisabled = true
-        void setState(state)
+        void setState({
+            ...state,
+            logs: convertMsg,
+            tabDisabled: true
+        })
         setDisabledVilCovertButton(true)
         const log = await api.convertVilJson(vilObj)
-        state.logs = log as string
-        state.tabDisabled = false
-        void setState(state)
+        void setState({
+            ...state,
+            logs: log as string,
+            tabDisabled: false
+        })
         setDisabledVilCovertButton(false)
     }
 
@@ -212,11 +238,13 @@ const Convert: React.FC = (): React.ReactElement => {
     const handleVilFileUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
         const file = e.target.files?.[0]
         if (file){
-            vilObj.name = file.name
-            vilObj.path = (window as unknown as {webUtils: {getPathForFile: (file: File) => string}}).webUtils.getPathForFile(file)
-            setVilObj({...vilObj})
+            const newVilObj = {
+                name: file.name,
+                path: (window as unknown as {webUtils: {getPathForFile: (file: File) => string}}).webUtils.getPathForFile(file)
+            }
+            setVilObj(newVilObj)
+            if (newVilObj.name.length > 0) setDisabledVilCovertButton(false)
         }
-        if (vilObj.name.length > 0) setDisabledVilCovertButton(false)
     }
 
     return (

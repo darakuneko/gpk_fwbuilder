@@ -18,19 +18,17 @@ const Updates: React.FC = (): React.ReactElement => {
     }
 
 
-    const loadNotifications = async (): Promise<void> => {
-        try {
-            const result = await api.getCachedNotifications()
-            setNotifications(result || [])
-        } catch (error) {
-            console.error('Failed to load notifications:', error)
-            setNotifications([])
-        }
-    }
-
-
     useEffect((): void => {
-        void loadNotifications()
+        const fetchNotifications = async (): Promise<void> => {
+            try {
+                const result = await api.getCachedNotifications()
+                setNotifications(result || [])
+            } catch (error) {
+                console.error('Failed to load notifications:', error)
+                setNotifications([])
+            }
+        }
+        void fetchNotifications()
     }, [])
 
     return (

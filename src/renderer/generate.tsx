@@ -48,21 +48,34 @@ const Generate = (): React.ReactElement => {
 
     const handleTextChange = (inputName: string): ((e: React.ChangeEvent<HTMLInputElement>) => void) => (e: React.ChangeEvent<HTMLInputElement>): void => {
         if (!state) return
-        if (inputName === 'kb') {
-            state.generate.qmkFile.kb = e.target.value
-        } else {
-            state.generate.qmkFile.user = e.target.value
+        const newQmkFile = {
+            ...state.generate.qmkFile,
+            ...(inputName === 'kb' ? { kb: e.target.value } : { user: e.target.value })
         }
-        setKeyboardError(!state.generate.qmkFile.kb)
-        setUsernameEmptyError(!state.generate.qmkFile.user)
+        setKeyboardError(!newQmkFile.kb)
+        setUsernameEmptyError(!newQmkFile.user)
         validBuildButton()
-        void setState(state)
+        void setState({
+            ...state,
+            generate: {
+                ...state.generate,
+                qmkFile: newQmkFile
+            }
+        })
     }
 
     const handleSelectMCU = (e: React.ChangeEvent<HTMLSelectElement>): void => {
         if (!state) return
-        state.generate.qmkFile.mcu = e.target.value
-        void setState(state)
+        void setState({
+            ...state,
+            generate: {
+                ...state.generate,
+                qmkFile: {
+                    ...state.generate.qmkFile,
+                    mcu: e.target.value
+                }
+            }
+        })
     }
 
     const generateMsg =  "Generating...."
@@ -71,29 +84,37 @@ const Generate = (): React.ReactElement => {
         setDisabledBuildText(true)
         setDisabledVialID(true)
         if (!state) return
-        state.logs = generateMsg
-        state.tabDisabled = true
-        void setState(state)
+        void setState({
+            ...state,
+            logs: generateMsg,
+            tabDisabled: true
+        })
 
         const logs = await api.generateQMKFile(state.generate.qmkFile)
 
         setDisabledBuildButton(false)
         setDisabledBuildText(false)
         setDisabledVialID(false)
-        state.logs = logs as string
-        state.tabDisabled = false
-        void setState(state)
+        void setState({
+            ...state,
+            logs: logs as string,
+            tabDisabled: false
+        })
     }
 
     const handleVailIdSubmit = (): (() => Promise<void>) => async (): Promise<void> => {
         if (!state) return
-        state.logs = generateMsg
-        state.tabDisabled = true
-        void setState(state)
+        void setState({
+            ...state,
+            logs: generateMsg,
+            tabDisabled: true
+        })
         const logs = await api.generateVialId()
-        state.logs = logs as string
-        state.tabDisabled = false
-        void setState(state)
+        void setState({
+            ...state,
+            logs: logs as string,
+            tabDisabled: false
+        })
     }
 
     

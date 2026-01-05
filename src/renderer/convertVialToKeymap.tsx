@@ -49,8 +49,10 @@ const ConvertVialToKeymap: React.FC<ConvertVialToKeymapProps> = ({onShowLogModal
         }
         
         setPageLog('convertVialToKeymap', convertMsg)
-        state.tabDisabled = true
-        void setState(state)
+        void setState({
+            ...state,
+            tabDisabled: true
+        })
         setDisabledVilCovertButton(true)
         
         try {
@@ -68,8 +70,10 @@ const ConvertVialToKeymap: React.FC<ConvertVialToKeymapProps> = ({onShowLogModal
             console.error('Conversion failed:', error)
             setPageLog('convertVialToKeymap', `Error: ${error instanceof Error ? error.message : 'Conversion failed'}`)
         } finally {
-            state.tabDisabled = false
-            void setState(state)
+            void setState({
+                ...state,
+                tabDisabled: false
+            })
             setDisabledVilCovertButton(false)
             
             if (onOperationComplete) {
@@ -84,29 +88,24 @@ const ConvertVialToKeymap: React.FC<ConvertVialToKeymapProps> = ({onShowLogModal
         if (file){
             try {
                 const filePath = (window as unknown as {webUtils: {getPathForFile: (file: File) => string}}).webUtils.getPathForFile(file)
-                
+
                 if (filePath && typeof filePath === 'string' && filePath.length > 0) {
-                    vilObj.name = file.name
-                    vilObj.path = filePath
-                    setVilObj({...vilObj})
+                    setVilObj({
+                        name: file.name,
+                        path: filePath
+                    })
                     setDisabledVilCovertButton(false)
                 } else {
-                    vilObj.name = ""
-                    vilObj.path = ""
-                    setVilObj({...vilObj})
+                    setVilObj({ name: "", path: "" })
                     setDisabledVilCovertButton(true)
                 }
             } catch (error) {
                 console.error('Failed to get file path:', error)
-                vilObj.name = ""
-                vilObj.path = ""
-                setVilObj({...vilObj})
+                setVilObj({ name: "", path: "" })
                 setDisabledVilCovertButton(true)
             }
         } else {
-            vilObj.name = ""
-            vilObj.path = ""
-            setVilObj({...vilObj})
+            setVilObj({ name: "", path: "" })
             setDisabledVilCovertButton(true)
         }
     }

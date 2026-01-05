@@ -1,4 +1,4 @@
-import React, {useRef, useEffect, useState, useCallback} from 'react'
+import React, {useRef, useEffect, useState, useCallback, useMemo} from 'react'
 import { TextInput, Button } from 'flowbite-react'
 
 import {useStateContext} from "../context"
@@ -15,10 +15,19 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const divRef = useRef<HTMLDivElement>(null)
     const [isTextareaMode, setIsTextareaMode] = useState(false)
-    const [isProcessing, setIsProcessing] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
-    const [filteredLogs, setFilteredLogs] = useState('')
-    const [searchHistory, setSearchHistory] = useState<string[]>([])
+    const [searchHistory, setSearchHistory] = useState<string[]>((): string[] => {
+        // Initialize from localStorage
+        const savedHistory = localStorage.getItem('logSearchHistory')
+        if (savedHistory) {
+            try {
+                return JSON.parse(savedHistory)
+            } catch {
+                return []
+            }
+        }
+        return []
+    })
     const [showSearchHistory, setShowSearchHistory] = useState(false)
     const [showSearchPanel, setShowSearchPanel] = useState(false)
     const [copySuccess, setCopySuccess] = useState(false)
@@ -44,21 +53,14 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
         return state?.logs || ''
     }, [pageKey, getPageLog, state?.logs])
 
-    // Initialize filteredLogs when component mounts or logs change
-    useEffect((): void => {
-        if (!searchQuery) {
-            setFilteredLogs(cleanLogText(getCurrentLogs()) || '')
-        }
-    }, [getCurrentLogs, searchQuery])
-
-
-    // Check if processing is complete
-    useEffect((): void => {
+    // Compute if processing is complete using useMemo
+    const isProcessing = useMemo((): boolean => {
         const currentLogs = getCurrentLogs()
         if (currentLogs) {
             const isFinished = isOperationComplete(currentLogs)
-            setIsProcessing(!isFinished && (state?.tabDisabled || false))
+            return !isFinished && (state?.tabDisabled || false)
         }
+        return false
     }, [getCurrentLogs, state?.tabDisabled])
 
     // Auto-scroll to bottom when logs update
@@ -84,18 +86,6 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
         }
     }, [state?.logs, isTextareaMode, getCurrentLogs])
 
-    // Load search history from localStorage on component mount
-    useEffect((): void => {
-        const savedHistory = localStorage.getItem('logSearchHistory')
-        if (savedHistory) {
-            try {
-                setSearchHistory(JSON.parse(savedHistory))
-            } catch (e) {
-                console.warn('Failed to parse search history:', e)
-            }
-        }
-    }, [])
-
     // Save search history to localStorage whenever it changes
     useEffect((): void => {
         if (searchHistory.length > 0) {
@@ -103,32 +93,30 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
         }
     }, [searchHistory])
 
-    // Filter logs based on search query
-    useEffect((): void => {
+    // Compute filtered logs using useMemo instead of useEffect + setState
+    const filteredLogs = useMemo((): string => {
         const logContent = cleanLogText(getCurrentLogs())
-        
+
         if (!searchQuery) {
-            setFilteredLogs(logContent || '')
-            return
+            return logContent || ''
         }
 
         if (!logContent) {
-            setFilteredLogs('')
-            return
+            return ''
         }
 
         try {
             const regex = new RegExp(searchQuery, 'gi')
             const lines = logContent.split('\n')
             const filteredLines = lines.filter((line): boolean => Boolean(line.trim() && regex.test(line)))
-            setFilteredLogs(filteredLines.join('\n'))
+            return filteredLines.join('\n')
         } catch {
             // If regex is invalid, fall back to simple string search
             const lines = logContent.split('\n')
-            const filteredLines = lines.filter((line): boolean => 
+            const filteredLines = lines.filter((line): boolean =>
                 Boolean(line.trim() && line.toLowerCase().includes(searchQuery.toLowerCase()))
             )
-            setFilteredLogs(filteredLines.join('\n'))
+            return filteredLines.join('\n')
         }
     }, [searchQuery, getCurrentLogs])
 

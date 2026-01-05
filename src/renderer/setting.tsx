@@ -10,18 +10,30 @@ const Setting = (): React.ReactElement => {
 
     const handleDockeUrlChange = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
         if (!state) return
-        state.setting.fwMakerUrl = e.target.value
-        if(state.setting.fwMakerUrl.length === 0) {
-            const fwDir = await api.getLocalFWdir()
-            state.setting.fwDir = fwDir
+        const newFwMakerUrl = e.target.value
+        let newFwDir = state.setting.fwDir
+        if(newFwMakerUrl.length === 0) {
+            newFwDir = await api.getLocalFWdir()
         }
-        void setState(state)
+        void setState({
+            ...state,
+            setting: {
+                ...state.setting,
+                fwMakerUrl: newFwMakerUrl,
+                fwDir: newFwDir
+            }
+        })
     }
 
     const handleFwDirChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
         if (!state) return
-        state.setting.fwDir = e.target.value
-        void setState(state)
+        void setState({
+            ...state,
+            setting: {
+                ...state.setting,
+                fwDir: e.target.value
+            }
+        })
     }
 
     return (

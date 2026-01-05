@@ -25,24 +25,32 @@ const Image: React.FC<ImageProps> = ({onShowLogModal, onOperationComplete}): Rea
         if (onShowLogModal) {
             onShowLogModal()
         }
-        
+
         if (!state) return
         setPageLog('image', msg1)
-        state.tabDisabled = true
-        void setState(state)
+        void setState({
+            ...state,
+            tabDisabled: true
+        })
         await fn()
         let id: ReturnType<typeof setInterval>
         const checkFn = async (): Promise<void> => {
             const buildCompleted = await api.buildCompleted()
             const exist = await api.existSever()
             if (buildCompleted && exist) {
-                state.build.tags = await api.tags()
-                state.build.tag = state.build.tags[0] || ''
+                const tags = await api.tags()
                 setPageLog('image', msg2)
-                state.tabDisabled = false
-                void setState(state)
+                void setState({
+                    ...state,
+                    build: {
+                        ...state.build,
+                        tags: tags,
+                        tag: tags[0] || ''
+                    },
+                    tabDisabled: false
+                })
                 clearInterval(id)
-                
+
                 // Operation complete
                 if (onOperationComplete) {
                     onOperationComplete()

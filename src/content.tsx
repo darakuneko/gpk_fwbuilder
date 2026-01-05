@@ -52,11 +52,20 @@ const Content = (): React.JSX.Element => {
     const [currentTitle, setCurrentTitle] = useState('')
     const [currentPageKey, setCurrentPageKey] = useState('')
     const [showLogSidePeek, setShowLogSidePeek] = useState(false)
-    const [operationInProgress, setOperationInProgress] = useState(false)
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
     const [isUpdatesNotificationModalOpen, setIsUpdatesNotificationModalOpen] = useState(false)
     const [updates, setUpdates] = useState<NotificationPayload[]>([])
     const SIDEBAR_WIDTH = 240
+
+    // Compute operationInProgress from state instead of using useState to avoid cascading renders
+    const tabDisabled = state?.tabDisabled
+    const logs = state?.logs
+    const operationInProgress = useMemo((): boolean => {
+        if (logs && tabDisabled) {
+            return !isOperationComplete(logs)
+        }
+        return false
+    }, [tabDisabled, logs])
 
     // ウィンドウサイズ変更の監視
     useEffect((): (() => void) => {
@@ -159,13 +168,9 @@ const Content = (): React.JSX.Element => {
             if (s) {
                 s.logs = log
                 void setState(s)
-                
-                // Check if operation is in progress
-                const isFinished = isOperationComplete(log)
-                setOperationInProgress(s.tabDisabled && !isFinished)
             }
         }
-        
+
         const listener = api.on("streamLog", streamLogHandler)
         return (): void => {
             api.off("streamLog", listener)
@@ -180,28 +185,15 @@ const Content = (): React.JSX.Element => {
                 const processedLog = log.match(/@@@@init@@@@/m) ? '' : currentState.logs + log
                 currentState.logs = processedLog
                 void setState(currentState)
-                
-                // Check if operation is in progress
-                const isFinished = isOperationComplete(log)
-                setOperationInProgress(currentState.tabDisabled && !isFinished)
             }
         }
-        
+
         const listener = api.on("streamBuildLog", streamBuildLogHandler)
         return (): void => {
             api.off("streamBuildLog", listener)
         }
     }, [setState])
 
-    // Monitor tabDisabled state changes
-    useEffect((): void => {
-        if (state?.logs) {
-            const isFinished = isOperationComplete(state.logs)
-            setOperationInProgress(state.tabDisabled && !isFinished)
-        } else {
-            setOperationInProgress(false)
-        }
-    }, [state?.tabDisabled, state?.logs])
 
     const handleSkipDockerCheck = async (): Promise<void> => {
         await api.setSkipCheckDocker(true)
@@ -209,11 +201,11 @@ const Content = (): React.JSX.Element => {
 
     const handleShowLogSidePeek = useCallback((): void => {
         setShowLogSidePeek(true)
-        setOperationInProgress(true)
     }, [])
 
     const handleOperationComplete = useCallback((): void => {
-        setOperationInProgress(false)
+        // operationInProgress is now computed from state via useMemo
+        // This callback is kept for API compatibility with child components
     }, [])
 
 
