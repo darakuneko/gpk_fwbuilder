@@ -8,5 +8,6 @@ docs/
 CLAUDE.md
 build.log
 dist-electron
+.antigravitycli/
 # Keep the external gpk_fwmaker library's lockfile out of version control
 /gpk_fwmaker/server/package-lock.json
