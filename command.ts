@@ -23,7 +23,7 @@ import { getTranslation } from './i18n-main.ts'
 const exec = util.promisify(execCallback)
 const store = new ElectronStore()
 
-const dockerVersion = /gpk_fwmaker_0007/
+const dockerVersion = /gpk_fwmaker_0008/
 const cmdVersion = 8
 
 if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`
@@ -128,7 +128,7 @@ const command = {
         }
     },
     rebuildImage: async (mainWindow: BrowserWindow): Promise<void> => {
-        const res = spawn(appSpawn("docker compose rm -f -s -v && docker compose build --no-cache && docker compose up -d"), { shell: true })
+        const res = spawn(appSpawn("docker compose down -v && docker compose build --no-cache && docker compose up -d"), { shell: true })
         streamLog(res, mainWindow)
     },
     setSkipCheckDocker: async (skip: boolean): Promise<void> => {

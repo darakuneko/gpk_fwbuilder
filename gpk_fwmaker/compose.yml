@@ -1,7 +1,7 @@
 services:
   gpk_fwmaker:
     build: .
-    image: gpk_fwmaker_0007
+    image: gpk_fwmaker_0008
     volumes:
       - ~/GPKFW:/root/keyboards
     tty: true

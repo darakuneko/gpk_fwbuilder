@@ -12,6 +12,14 @@ RUN apt-get -y install \
     nodejs\
     npm
 
+RUN apt-get -y install \
+    gcc-arm-none-eabi \
+    binutils-arm-none-eabi \
+    libnewlib-arm-none-eabi \
+    gcc-avr \
+    avr-libc \
+    binutils-avr
+
 RUN pip install qmk --break-system-packages
 
 RUN echo 'PATH="$HOME/.local/bin:$PATH"' >> $HOME/.bashrc
