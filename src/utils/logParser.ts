@@ -2,6 +2,17 @@ import Convert from "ansi-to-html"
 
 const convert = new Convert({ newline: true })
 
+const MAX_LOG_CHARS = 256_000
+
+// Keep only the tail of a streamed log so long builds don't exhaust memory.
+export const capLog = (str: string): string => {
+    if (str.length <= MAX_LOG_CHARS) return str
+    const sliced = str.slice(str.length - MAX_LOG_CHARS)
+    const newlineIndex = sliced.indexOf('\n')
+    const tail = newlineIndex >= 0 ? sliced.slice(newlineIndex + 1) : sliced
+    return `…(earlier output truncated)\n${tail}`
+}
+
 export const cleanLogText = (str: string): string => {
     if (!str) return ''
     

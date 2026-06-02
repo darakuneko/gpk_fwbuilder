@@ -69,8 +69,9 @@ const streamLog = (res: ChildProcess, mainWindow: BrowserWindow, init?: boolean)
     buildCompleted = false
     res.stdout?.on('data', (data) => mainWindow.webContents.send("streamLog", data.toString(), init))
     res.stderr?.on('data', (data) => mainWindow.webContents.send("streamLog", data.toString(), init))
-    res.on('close', () => {
-        mainWindow.webContents.send("streamLog", 'finish!!', init)
+    res.on('close', (code) => {
+        const failed = typeof code === 'number' && code !== 0
+        mainWindow.webContents.send("streamLog", failed ? `Process exited with code ${code}\nfinish!!` : 'finish!!', init)
         isDockerUp = true
         buildCompleted = true
     })

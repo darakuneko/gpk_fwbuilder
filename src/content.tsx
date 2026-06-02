@@ -21,7 +21,7 @@ import ExternalServer from "./renderer/externalServer"
 import LanguageSettings from "./renderer/languageSettings"
 import Updates from "./renderer/updates"
 import UpdatesNotificationModal from './components/UpdatesNotificationModal'
-import { isOperationComplete } from './utils/logParser'
+import { isOperationComplete, capLog } from './utils/logParser'
 
 interface SubMenuItem {
     label: string;
@@ -41,6 +41,9 @@ interface MenuItem {
 }
 
 const {api} = window
+
+// Coalesce rapid streamed-log updates to at most one state update per interval.
+const LOG_FLUSH_MS = 100
 
 const Content = (): React.JSX.Element => {
     const {state, setState} = useStateContext()
@@ -161,37 +164,75 @@ const Content = (): React.JSX.Element => {
     }, [])
 
     useEffect((): (() => void) => {
-        const streamLogHandler = async (...args: unknown[]): Promise<void> => {
-            const [log, init] = args as [string, boolean]
-            const s = init ? state : await getState()
+        let pending: string | null = null
+        let timer: ReturnType<typeof setTimeout> | null = null
+        const flush = async (): Promise<void> => {
+            timer = null
+            if (pending === null) return
+            const text = pending
+            pending = null
+            const s = await getState()
             if (s) {
-                s.logs = log
+                s.logs = capLog(text)
                 void setState(s)
+            }
+        }
+        const streamLogHandler = (...args: unknown[]): void => {
+            const [log] = args as [string]
+            pending = log
+            if (!timer) {
+                timer = setTimeout((): void => { void flush() }, LOG_FLUSH_MS)
             }
         }
 
         const listener = api.on("streamLog", streamLogHandler)
         return (): void => {
             api.off("streamLog", listener)
+            if (timer) clearTimeout(timer)
         }
-    }, [setState, state])
+    // Subscribe once; setState writes through to the shared module-level state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps, @eslint-react/exhaustive-deps
+    }, [])
 
     useEffect((): (() => void) => {
-        const streamBuildLogHandler = async (...args: unknown[]): Promise<void> => {
-            const [log] = args as [string]
+        let buffer = ''
+        let timer: ReturnType<typeof setTimeout> | null = null
+        const flush = async (): Promise<void> => {
+            timer = null
+            const chunk = buffer
+            buffer = ''
+            if (!chunk) return
             const currentState = await getState()
             if (currentState) {
-                const processedLog = log.match(/@@@@init@@@@/m) ? '' : currentState.logs + log
-                currentState.logs = processedLog
+                currentState.logs = capLog(currentState.logs + chunk)
                 void setState(currentState)
+            }
+        }
+        const streamBuildLogHandler = async (...args: unknown[]): Promise<void> => {
+            const [log] = args as [string]
+            if (log.match(/@@@@init@@@@/m)) {
+                buffer = ''
+                const currentState = await getState()
+                if (currentState) {
+                    currentState.logs = ''
+                    void setState(currentState)
+                }
+                return
+            }
+            buffer += log
+            if (!timer) {
+                timer = setTimeout((): void => { void flush() }, LOG_FLUSH_MS)
             }
         }
 
         const listener = api.on("streamBuildLog", streamBuildLogHandler)
         return (): void => {
             api.off("streamBuildLog", listener)
+            if (timer) clearTimeout(timer)
         }
-    }, [setState])
+    // Subscribe once; setState writes through to the shared module-level state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps, @eslint-react/exhaustive-deps
+    }, [])
 
 
     const handleSkipDockerCheck = async (): Promise<void> => {
