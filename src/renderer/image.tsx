@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button } from 'flowbite-react'
 
-import {useStateContext} from "../context"
+import {useStateContext, getState} from "../context"
 import {useI18n} from "../hooks/useI18n"
 
 const {api} = window
@@ -39,10 +39,11 @@ const Image: React.FC<ImageProps> = ({onShowLogModal, onOperationComplete}): Rea
             if (buildCompleted && exist) {
                 const tags = await api.tags()
                 setPageLog('image', msg2)
+                const current = getState() ?? state
                 void setState({
-                    ...state,
+                    ...current,
                     build: {
-                        ...state.build,
+                        ...current.build,
                         tags: tags,
                         tag: tags[0] || ''
                     },

@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useRef} from 'react'
 import { Button, Label, TextInput, Select, HelperText } from 'flowbite-react'
 
-import {useStateContext} from "../context"
+import {useStateContext, getState} from "../context"
 import type { AppState, Firmware } from "../context"
 import { useI18n } from '../hooks/useI18n'
 
@@ -273,7 +273,8 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
             if (buildCompleted) {
                 setDisabledBuildButton(false)
                 setDisabledBuildText(false)
-                void setState({ ...state, tabDisabled: false })
+                const current = getState() ?? state
+                void setState({ ...current, tabDisabled: false })
                 clearInterval(id)
                 if (onCompleteCallback) {
                     onCompleteCallback()
