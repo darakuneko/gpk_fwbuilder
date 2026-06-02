@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 
+import { useSyncedState } from '../hooks/useSyncedState'
+
 interface AutocompleteOption {
     label: string;
     value: string;
@@ -35,18 +37,10 @@ const Autocomplete: React.FC<AutocompleteProps> = ({
     inputClassName = ''
 }): React.ReactElement => {
     const [isOpen, setIsOpen] = useState(false)
-    const [inputValue, setInputValue] = useState(value || '')
-    const [filteredOptions, setFilteredOptions] = useState<AutocompleteOption[]>(options)
+    const [inputValue, setInputValue] = useSyncedState(value || '')
+    const [filteredOptions, setFilteredOptions] = useSyncedState<AutocompleteOption[]>(options)
     const wrapperRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
-
-    useEffect((): void => {
-        setInputValue(value || '')
-    }, [value])
-
-    useEffect((): void => {
-        setFilteredOptions(options)
-    }, [options])
 
     useEffect((): (() => void) => {
         const handleClickOutside = (event: MouseEvent): void => {
@@ -120,9 +114,9 @@ const Autocomplete: React.FC<AutocompleteProps> = ({
             />
             {isOpen && filteredOptions.length > 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-600 rounded shadow-lg max-h-60 overflow-auto">
-                    {filteredOptions.map((option, index): React.ReactElement => (
+                    {filteredOptions.map((option): React.ReactElement => (
                         <div
-                            key={index}
+                            key={option.value}
                             className="px-3 py-2.5 text-base cursor-pointer hover:bg-gray-700 text-gray-100"
                             onMouseDown={(): void => handleOptionClick(option)}
                         >

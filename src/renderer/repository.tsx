@@ -63,7 +63,6 @@ const Repository: React.FC<RepositoryProps> = ({onShowLogModal, onOperationCompl
             if (obj) await api.updateRepositoryCustom(obj)
         }
 
-        let id: ReturnType<typeof setInterval>
         const checkFn = async (): Promise<void> => {
             const buildCompleted = await api.buildCompleted()
             const exist = await api.existSever()
@@ -87,7 +86,7 @@ const Repository: React.FC<RepositoryProps> = ({onShowLogModal, onOperationCompl
                 }
             }
         }
-        id = setInterval(checkFn, 1000)
+        const id = setInterval(checkFn, 1000)
     }
 
     return (

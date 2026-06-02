@@ -96,7 +96,6 @@ const Content = (): React.JSX.Element => {
 
     useEffect((): void => {
         const fn = async (): Promise<void> => {
-            let id: ReturnType<typeof setInterval> | undefined
             const checkFn = async (): Promise<void> => {
                 const exist = await api.existSever()
                 if (exist === 200 || exist === 503) {
@@ -141,7 +140,7 @@ const Content = (): React.JSX.Element => {
                     void setState(state)
                 }
             }
-            id = setInterval(checkFn, 1000)
+            const id = setInterval(checkFn, 1000)
         }
         void fn()
     }, [setState, state, initServer, t])
@@ -346,175 +345,177 @@ const Content = (): React.JSX.Element => {
         // No need to prevent default anymore
     }
 
+    const renderServerStatus = (): React.ReactElement => {
+        if (closeServer) {
+            return (
+                <div className="flex justify-center items-center h-screen">
+                    <div className="text-center">
+                        <div className="text-blue-400 animate-pulse text-lg font-medium">{t('common.terminating')}</div>
+                    </div>
+                </div>
+            )
+        } else if (initServer) {
+            return (
+                <div className="flex justify-center items-center h-screen">
+                    <div className="text-center max-w-md w-full px-4">
+                        <div className="mb-6">
+                            <Spinner size="lg" className="mb-4" />
+                            <div className="text-blue-400 animate-pulse text-lg font-medium mb-2">{t('common.initializing')}</div>
+                            <div className="text-blue-400 animate-pulse text-sm mb-4">{t('common.mayTakeTime')}</div>
+                        </div>
+                        <div className="flex justify-center mb-6">
+                            <Button 
+                                color="light"
+                                className="cursor-pointer"
+                                onClick={handleSkipDockerCheck}
+                            >
+                                {t('common.skipDockerCheck')}
+                            </Button>
+                        </div>
+                        {state?.logs && state.logs.trim() !== '' && (
+                            <div className="flex justify-center">
+                                <div 
+                                    className="text-left text-sm overflow-y-auto bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 font-mono"
+                                    style={{ height: '320px', minHeight: '320px', maxHeight: '320px', 
+                                        width: '480px', minWidth: '480px', maxWidth: '480px'
+                                    }}
+                                >
+                                    {parse(state.logs.replace(/\n/g, "<br>"))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )
+        } else {
+            return (
+                <div className="flex h-screen">
+                    {/* Sidebar Navigation */}
+                    <Sidebar 
+                        className="h-screen bg-gray-50 dark:bg-gray-800" 
+                        style={{ width: '240px' }}
+                        onClick={(): void => {
+                            // Close logs when clicking anywhere in sidebar (only if operation is complete)
+                            if (!operationInProgress) {
+                                setShowLogSidePeek(false)
+                            }
+                        }}
+                    >
+                        <SidebarItems>
+                            <SidebarItemGroup>
+                                {menuStructure.map((menu, index): React.ReactElement => (
+                                    <div key={menu.label}>
+                                        <div className="relative">
+                                            <SidebarItem
+                                                icon={menu.icon as React.FC<React.SVGProps<SVGSVGElement>>}
+                                                active={false}
+                                                onClick={(): void => handleMenuClick(menu, index)}
+                                                className={`${state?.tabDisabled || operationInProgress ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} !h-12 !flex !items-center`}
+                                            >
+                                                <span className="flex-1">{menu.label}</span>
+                                            </SidebarItem>
+                                            {menu.hasSubmenu && menu.subItems && menu.subItems.length > 1 && (
+                                                <HiChevronRight 
+                                                    className={`absolute right-6 top-1/2 transform -translate-y-1/2 transition-transform ${expandedMenu === index.toString() ? 'rotate-90' : ''} pointer-events-none text-gray-400`}
+                                                />
+                                            )}
+                                        </div>
+                                        {menu.hasSubmenu && menu.subItems && menu.subItems.length > 1 && expandedMenu === index.toString() && (
+                                            <div className="ml-6">
+                                                {menu.subItems.map((subItem): React.ReactElement => (
+                                                    <SidebarItem
+                                                        key={subItem.label}
+                                                        active={false}
+                                                        onClick={(): void => handleSubMenuClick(index, subItem)}
+                                                        className={`${state?.tabDisabled || operationInProgress ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} text-sm flex items-center h-10`}
+                                                    >
+                                                        <span className="ml-3">{subItem.label}</span>
+                                                    </SidebarItem>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </SidebarItemGroup>
+                        </SidebarItems>
+                    </Sidebar>
+                    
+                    {/* Main Content Area */}
+                    <div 
+                        className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 transition-all duration-300"
+                        style={showLogSidePeek ? { width: `${(windowWidth - SIDEBAR_WIDTH)}px` } : {}}
+                    >
+                        {currentContent ? (
+                            <div className="p-4">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                        {currentTitle}
+                                    </h2>
+                                    {currentPageKey !== 'externalServer' && currentPageKey !== 'languageSettings' && currentPageKey !== 'updates' && (
+                                        <Button
+                                            color="light"
+                                            className="cursor-pointer p-2"
+                                            onClick={(): void => setShowLogSidePeek(!showLogSidePeek)}
+                                            title={showLogSidePeek ? t('logs.hideLogs') : t('logs.showLogs')}
+                                        >
+                                            {showLogSidePeek ? <HiChevronDoubleRight className="w-4 h-4" /> : <HiChevronDoubleLeft className="w-4 h-4" />}
+                                        </Button>
+                                    )}
+                                </div>
+                                {currentContent}
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center h-full">
+                                <p className="text-gray-500 dark:text-gray-400">
+                                    {t('common.selectMenuItem')}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* Log Side Peek Panel */}
+                    {showLogSidePeek && (
+                        <div 
+                            className="fixed right-0 top-0 h-full bg-white dark:bg-gray-800 shadow-xl border-l border-gray-200 dark:border-gray-700 overflow-hidden z-40"
+                            style={{ width: `${(windowWidth - SIDEBAR_WIDTH - 10)}px` }}
+                        >
+                            <div className="h-full flex flex-col">
+                                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('logs.title')}</h3>
+                                    <Button
+                                        color="light"
+                                        size="sm"
+                                        className={operationInProgress ? 'cursor-not-allowed p-2' : 'cursor-pointer p-2'}
+                                        style={operationInProgress ? { opacity: 0.5 } : {}}
+                                        onClick={operationInProgress ? (): void => {} : (): void => setShowLogSidePeek(false)}
+                                        disabled={false}
+                                        title={operationInProgress ? t('logs.cannotCloseDuringOperation') : t('logs.closeLogs')}
+                                    >
+                                        <HiChevronDoubleRight className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                                <div className="flex-1 overflow-hidden">
+                                    <Logs pageKey={currentPageKey}/>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )
+        }
+    }
+
     return (
-        <div 
-            className="min-h-screen" 
-            style={{ 
-                backgroundColor: 'var(--color-background)', 
+        <div
+            className="min-h-screen"
+            style={{
+                backgroundColor: 'var(--color-background)',
                 color: 'var(--color-text-primary)',
                 userSelect: 'none'
             }}
             onContextMenu={handleContextMenu}
         >
-            {((): React.ReactElement => {
-                if (closeServer) {
-                    return (
-                        <div className="flex justify-center items-center h-screen">
-                            <div className="text-center">
-                                <div className="text-blue-400 animate-pulse text-lg font-medium">{t('common.terminating')}</div>
-                            </div>
-                        </div>
-                    )
-                } else if (initServer) {
-                    return (
-                        <div className="flex justify-center items-center h-screen">
-                            <div className="text-center max-w-md w-full px-4">
-                                <div className="mb-6">
-                                    <Spinner size="lg" className="mb-4" />
-                                    <div className="text-blue-400 animate-pulse text-lg font-medium mb-2">{t('common.initializing')}</div>
-                                    <div className="text-blue-400 animate-pulse text-sm mb-4">{t('common.mayTakeTime')}</div>
-                                </div>
-                                <div className="flex justify-center mb-6">
-                                    <Button 
-                                        color="light"
-                                        className="cursor-pointer"
-                                        onClick={handleSkipDockerCheck}
-                                    >
-                                        {t('common.skipDockerCheck')}
-                                    </Button>
-                                </div>
-                                {state?.logs && state.logs.trim() !== '' && (
-                                    <div className="flex justify-center">
-                                        <div 
-                                            className="text-left text-sm overflow-y-auto bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 font-mono"
-                                            style={{ height: '320px', minHeight: '320px', maxHeight: '320px', 
-                                                width: '480px', minWidth: '480px', maxWidth: '480px'
-                                            }}
-                                        >
-                                            {parse(state.logs.replace(/\n/g, "<br>"))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )
-                } else {
-                    return (
-                        <div className="flex h-screen">
-                            {/* Sidebar Navigation */}
-                            <Sidebar 
-                                className="h-screen bg-gray-50 dark:bg-gray-800" 
-                                style={{ width: '240px' }}
-                                onClick={(): void => {
-                                    // Close logs when clicking anywhere in sidebar (only if operation is complete)
-                                    if (!operationInProgress) {
-                                        setShowLogSidePeek(false)
-                                    }
-                                }}
-                            >
-                                <SidebarItems>
-                                    <SidebarItemGroup>
-                                        {menuStructure.map((menu, index): React.ReactElement => (
-                                            <div key={menu.label}>
-                                                <div className="relative">
-                                                    <SidebarItem
-                                                        icon={menu.icon as React.FC<React.SVGProps<SVGSVGElement>>}
-                                                        active={false}
-                                                        onClick={(): void => handleMenuClick(menu, index)}
-                                                        className={`${state?.tabDisabled || operationInProgress ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} !h-12 !flex !items-center`}
-                                                    >
-                                                        <span className="flex-1">{menu.label}</span>
-                                                    </SidebarItem>
-                                                    {menu.hasSubmenu && menu.subItems && menu.subItems.length > 1 && (
-                                                        <HiChevronRight 
-                                                            className={`absolute right-6 top-1/2 transform -translate-y-1/2 transition-transform ${expandedMenu === index.toString() ? 'rotate-90' : ''} pointer-events-none text-gray-400`}
-                                                        />
-                                                    )}
-                                                </div>
-                                                {menu.hasSubmenu && menu.subItems && menu.subItems.length > 1 && expandedMenu === index.toString() && (
-                                                    <div className="ml-6">
-                                                        {menu.subItems.map((subItem): React.ReactElement => (
-                                                            <SidebarItem
-                                                                key={subItem.label}
-                                                                active={false}
-                                                                onClick={(): void => handleSubMenuClick(index, subItem)}
-                                                                className={`${state?.tabDisabled || operationInProgress ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} text-sm flex items-center h-10`}
-                                                            >
-                                                                <span className="ml-3">{subItem.label}</span>
-                                                            </SidebarItem>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </SidebarItemGroup>
-                                </SidebarItems>
-                            </Sidebar>
-                            
-                            {/* Main Content Area */}
-                            <div 
-                                className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 transition-all duration-300"
-                                style={showLogSidePeek ? { width: `${(windowWidth - SIDEBAR_WIDTH)}px` } : {}}
-                            >
-                                {currentContent ? (
-                                    <div className="p-4">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                                {currentTitle}
-                                            </h2>
-                                            {currentPageKey !== 'externalServer' && currentPageKey !== 'languageSettings' && currentPageKey !== 'updates' && (
-                                                <Button
-                                                    color="light"
-                                                    className="cursor-pointer p-2"
-                                                    onClick={(): void => setShowLogSidePeek(!showLogSidePeek)}
-                                                    title={showLogSidePeek ? t('logs.hideLogs') : t('logs.showLogs')}
-                                                >
-                                                    {showLogSidePeek ? <HiChevronDoubleRight className="w-4 h-4" /> : <HiChevronDoubleLeft className="w-4 h-4" />}
-                                                </Button>
-                                            )}
-                                        </div>
-                                        {currentContent}
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-center h-full">
-                                        <p className="text-gray-500 dark:text-gray-400">
-                                            {t('common.selectMenuItem')}
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                            
-                            {/* Log Side Peek Panel */}
-                            {showLogSidePeek && (
-                                <div 
-                                    className="fixed right-0 top-0 h-full bg-white dark:bg-gray-800 shadow-xl border-l border-gray-200 dark:border-gray-700 overflow-hidden z-40"
-                                    style={{ width: `${(windowWidth - SIDEBAR_WIDTH - 10)}px` }}
-                                >
-                                    <div className="h-full flex flex-col">
-                                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('logs.title')}</h3>
-                                            <Button
-                                                color="light"
-                                                size="sm"
-                                                className={operationInProgress ? 'cursor-not-allowed p-2' : 'cursor-pointer p-2'}
-                                                style={operationInProgress ? { opacity: 0.5 } : {}}
-                                                onClick={operationInProgress ? (): void => {} : (): void => setShowLogSidePeek(false)}
-                                                disabled={false}
-                                                title={operationInProgress ? t('logs.cannotCloseDuringOperation') : t('logs.closeLogs')}
-                                            >
-                                                <HiChevronDoubleRight className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                        <div className="flex-1 overflow-hidden">
-                                            <Logs pageKey={currentPageKey}/>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )
-                }
-            })()}
+            {renderServerStatus()}
             
             {/* Update Notification Modal */}
             <UpdatesNotificationModal

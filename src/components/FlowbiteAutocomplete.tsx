@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, CSSProperties } from 'react'
 import { Label } from 'flowbite-react'
 
+import { useSyncedState } from '../hooks/useSyncedState'
+
 interface FlowbiteAutocompleteOption {
     label: string;
     value: string;
@@ -38,18 +40,10 @@ const FlowbiteAutocomplete: React.FC<FlowbiteAutocompleteProps> = ({
     style = {}
 }): React.ReactElement => {
     const [isOpen, setIsOpen] = useState(false)
-    const [inputValue, setInputValue] = useState(value || '')
-    const [filteredOptions, setFilteredOptions] = useState<FlowbiteAutocompleteOption[]>(options)
+    const [inputValue, setInputValue] = useSyncedState(value || '')
+    const [filteredOptions, setFilteredOptions] = useSyncedState<FlowbiteAutocompleteOption[]>(options)
     const wrapperRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
-
-    useEffect((): void => {
-        setInputValue(value || '')
-    }, [value])
-
-    useEffect((): void => {
-        setFilteredOptions(options)
-    }, [options])
 
     useEffect((): (() => void) => {
         const handleClickOutside = (event: MouseEvent): void => {
@@ -127,9 +121,9 @@ const FlowbiteAutocomplete: React.FC<FlowbiteAutocompleteProps> = ({
             />
             {isOpen && filteredOptions.length > 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto dark:bg-gray-700 dark:border-gray-600">
-                    {filteredOptions.map((option, index): React.ReactElement => (
+                    {filteredOptions.map((option): React.ReactElement => (
                         <div
-                            key={index}
+                            key={option.value}
                             className="px-4 py-2.5 text-sm cursor-pointer hover:bg-gray-100 text-gray-900 dark:hover:bg-gray-600 dark:text-gray-200"
                             onMouseDown={(): void => handleOptionClick(option)}
                         >

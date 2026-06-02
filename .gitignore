@@ -3,9 +3,10 @@ node_modules
 /dist
 yarn.lock
 .github
-package-lock.json
 .claude/
 docs/
 CLAUDE.md
 build.log
 dist-electron
+# Keep the external gpk_fwmaker library's lockfile out of version control
+/gpk_fwmaker/server/package-lock.json

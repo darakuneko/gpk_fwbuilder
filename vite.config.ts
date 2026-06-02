@@ -103,8 +103,11 @@ const config: UserConfig = defineConfig({
         main: resolve(__dirname, 'public/index.html')
       },
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom']
+        manualChunks: (id: string): string | undefined => {
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            return 'vendor';
+          }
+          return undefined;
         }
       }
     }

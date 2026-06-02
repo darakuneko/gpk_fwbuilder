@@ -85,9 +85,9 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
                     <span className="text-gray-500 dark:text-gray-400">{t('common.selectOptions')}</span>
                 ) : (
                     <div className="flex flex-wrap gap-1">
-                        {value.map((item, index): React.ReactElement => (
+                        {value.map((item): React.ReactElement => (
                             <span
-                                key={index}
+                                key={item}
                                 className="inline-flex items-center px-2 py-1 text-sm bg-blue-600 text-white rounded"
                             >
                                 {item}
@@ -112,9 +112,9 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
                 <div className={`absolute z-50 w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto ${
                     placement === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'
                 }`}>
-                    {options.map((option, index): React.ReactElement => (
+                    {options.map((option): React.ReactElement => (
                         <div
-                            key={index}
+                            key={option}
                             className={`px-3 py-2.5 text-base cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 ${
                                 value.includes(option) ? 'bg-blue-600 text-white hover:bg-blue-700' : ''
                             }`}

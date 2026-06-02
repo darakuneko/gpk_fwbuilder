@@ -48,7 +48,7 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
         }
         
         void initializeStoredValues()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps, @eslint-react/exhaustive-deps
     }, []) // Dependencies intentionally omitted to prevent infinite loop
 
     // Guard against uninitialized state
@@ -264,26 +264,23 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
         setDisabledBuildButton(true)
         setDisabledBuildText(true)
         setPageLog('build', log)
-        state.tabDisabled = true
-        void setState(state)
-        
+        void setState({ ...state, tabDisabled: true })
+
         await start()
-        
-        let id: ReturnType<typeof setInterval>
+
         const checkFn = async (): Promise<void> => {
             const buildCompleted = await end()
             if (buildCompleted) {
                 setDisabledBuildButton(false)
                 setDisabledBuildText(false)
-                state.tabDisabled = false
-                void setState(state)
+                void setState({ ...state, tabDisabled: false })
                 clearInterval(id)
                 if (onCompleteCallback) {
                     onCompleteCallback()
                 }
             }
         }
-        id = setInterval(checkFn, 1000)
+        const id = setInterval(checkFn, 1000)
     }
 
 
@@ -334,8 +331,8 @@ const Build: React.FC<BuildProps> = ({onShowLogModal, onOperationComplete}): Rea
                                 onChange={handleSelectTags}
                                 required
                             >
-                                {(state.build.tags || []).map((tag, i): React.ReactElement => (
-                                    <option key={`tags-${i}`} value={tag}>{tag}</option>
+                                {(state.build.tags || []).map((tag): React.ReactElement => (
+                                    <option key={tag} value={tag}>{tag}</option>
                                 ))}
                             </Select>
                         </div>

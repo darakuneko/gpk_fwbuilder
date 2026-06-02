@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useState, ReactNode} from 'react'
+import React, {createContext, use, useState, ReactNode} from 'react'
 
 export interface Firmware {
     id: string;
@@ -86,11 +86,11 @@ interface StateContextType {
     getPageLog: (page: string) => string;
 }
 
-const stateContext = createContext<StateContextType | undefined>(undefined)
+const StateContext = createContext<StateContextType | undefined>(undefined)
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useStateContext(): StateContextType {
-    const context = useContext(stateContext);
+    const context = use(StateContext);
     if (!context) {
         throw new Error('useStateContext must be used within StateProvider');
     }
@@ -105,6 +105,7 @@ interface StateProviderProps {
 
 export function StateProvider({children}: StateProviderProps): React.ReactElement {
 
+    // eslint-disable-next-line @eslint-react/use-state -- `_setState` is the raw setter; the public async `setState` wrapper is exposed via context
     const [state, _setState] = useState<AppState>({
         version: '',
         storePath: '',
@@ -298,7 +299,7 @@ export function StateProvider({children}: StateProviderProps): React.ReactElemen
     }
 
     return (
-        <stateContext.Provider value={value}>{children}</stateContext.Provider>
+        <StateContext value={value}>{children}</StateContext>
     )
 }
 

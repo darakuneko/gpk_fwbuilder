@@ -84,9 +84,9 @@ const FlowbiteMultiSelect: React.FC<FlowbiteMultiSelectProps> = ({
                     <span className="text-gray-500 dark:text-gray-400 text-sm">Select options...</span>
                 ) : (
                     <div className="flex flex-wrap gap-1">
-                        {value.map((item, index): React.ReactElement => (
+                        {value.map((item): React.ReactElement => (
                             <span
-                                key={index}
+                                key={item}
                                 className="inline-flex items-center px-2 py-1 me-2 text-xs font-medium text-blue-800 bg-blue-100 rounded dark:bg-blue-900 dark:text-blue-300"
                             >
                                 {item}
@@ -111,9 +111,9 @@ const FlowbiteMultiSelect: React.FC<FlowbiteMultiSelectProps> = ({
             </div>
             {isOpen && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto dark:bg-gray-700 dark:border-gray-600">
-                    {options.map((option, index): React.ReactElement => (
+                    {options.map((option): React.ReactElement => (
                         <div
-                            key={index}
+                            key={option}
                             className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-gray-100 text-gray-900 dark:hover:bg-gray-600 dark:text-gray-200 ${
                                 value.includes(option) ? 'bg-blue-50 dark:bg-blue-900/30' : ''
                             }`}

@@ -52,8 +52,8 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({
     }
 
     return (
-        <I18nContext.Provider value={value}>
+        <I18nContext value={value}>
             {children}
-        </I18nContext.Provider>
+        </I18nContext>
     )
 }

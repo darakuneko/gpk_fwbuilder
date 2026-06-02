@@ -33,7 +33,6 @@ const Image: React.FC<ImageProps> = ({onShowLogModal, onOperationComplete}): Rea
             tabDisabled: true
         })
         await fn()
-        let id: ReturnType<typeof setInterval>
         const checkFn = async (): Promise<void> => {
             const buildCompleted = await api.buildCompleted()
             const exist = await api.existSever()
@@ -57,7 +56,7 @@ const Image: React.FC<ImageProps> = ({onShowLogModal, onOperationComplete}): Rea
                 }
             }
         }
-        id = setInterval(checkFn, 1000)
+        const id = setInterval(checkFn, 1000)
     }
 
     return (

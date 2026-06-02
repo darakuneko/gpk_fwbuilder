@@ -24,6 +24,7 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
     const { t } = useI18n()
     const [tempSelectedPins, setTempSelectedPins] = useState([...selectedPins])
     const [animatingIndex, setAnimatingIndex] = useState<number | null>(null)
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
 
     const handlePinToggle = (pin: string): void => {
         if (tempSelectedPins.includes(pin)) {
@@ -85,13 +86,14 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
         onClose()
     }
 
-    // Reset when modal opens
-    React.useEffect((): void => {
+    // Reset when modal opens (render-time; replaces open->state effect)
+    if (isOpen !== prevIsOpen) {
+        setPrevIsOpen(isOpen)
         if (isOpen) {
             setTempSelectedPins([...selectedPins])
             setAnimatingIndex(null)
         }
-    }, [isOpen, selectedPins])
+    }
 
     return (
         <Modal show={isOpen} onClose={handleCancel} size="3xl">
@@ -146,7 +148,7 @@ const PinSelectorModal: React.FC<PinSelectorModalProps> = ({
                                 >
                                     {tempSelectedPins.map((pin, index): React.ReactElement => (
                                         <div 
-                                            key={`${pin}-${index}`}
+                                            key={pin}
                                             className={`flex items-center justify-between p-3 mx-1 my-1 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 transition-all duration-300 ${
                                                 animatingIndex === index 
                                                     ? 'transform scale-105 bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900 dark:to-cyan-900 border-blue-400 dark:border-blue-500 shadow-xl ring-2 ring-blue-300 dark:ring-blue-600 ring-opacity-50' 

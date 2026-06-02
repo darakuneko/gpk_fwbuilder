@@ -64,13 +64,14 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
     }, [getCurrentLogs, state?.tabDisabled])
 
     // Auto-scroll to bottom when logs update
-    useEffect((): void => {
+    useEffect((): (() => void) => {
+        let timeoutId: ReturnType<typeof setTimeout> | undefined
         if (isTextareaMode && textareaRef.current) {
             const textarea = textareaRef.current
             // Only auto-scroll if user is already at or near the bottom
             const isAtBottom = textarea.scrollHeight - textarea.scrollTop <= textarea.clientHeight + 50
             if (isAtBottom) {
-                setTimeout((): void => {
+                timeoutId = setTimeout((): void => {
                     textarea.scrollTop = textarea.scrollHeight
                 }, 0)
             }
@@ -79,10 +80,13 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
             // Only auto-scroll if user is already at or near the bottom
             const isAtBottom = div.scrollHeight - div.scrollTop <= div.clientHeight + 50
             if (isAtBottom) {
-                setTimeout((): void => {
+                timeoutId = setTimeout((): void => {
                     div.scrollTop = div.scrollHeight
                 }, 0)
             }
+        }
+        return (): void => {
+            if (timeoutId) clearTimeout(timeoutId)
         }
     }, [state?.logs, isTextareaMode, getCurrentLogs])
 
@@ -218,6 +222,7 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                     title={isProcessing ? t('logs.processingCannotSelect') : t('logs.clickToEnableSelection')}
                 >
                     {getCurrentLogs() ? (
+                        // eslint-disable-next-line @eslint-react/dom-no-dangerously-set-innerhtml -- renders ansi-to-html converted log output (core feature)
                         <div dangerouslySetInnerHTML={coloredLogContent} />
                     ) : (
                         <div className="text-gray-500 dark:text-gray-400">{t('logs.logsWillAppear')}</div>
@@ -287,9 +292,9 @@ const Logs: React.FC<LogsProps> = ({pageKey}): React.ReactElement => {
                                             <div className="px-3 py-1 text-xs text-gray-600 dark:text-gray-500 border-b border-gray-300 dark:border-gray-600">
 {t('logs.recentSearches')}
                                             </div>
-                                            {searchHistory.map((historyItem, index): React.ReactElement => (
+                                            {searchHistory.map((historyItem): React.ReactElement => (
                                                 <button
-                                                    key={index}
+                                                    key={historyItem}
                                                     onClick={(): void => handleHistorySelect(historyItem)}
                                                     className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-mono cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-b-0"
                                                 >
