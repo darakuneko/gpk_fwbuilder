@@ -52,6 +52,8 @@ export interface AppState {
             cols: string;
             rows: string;
             option: number;
+            fileName: string;
+            filePath: string;
         };
         pins: {
             rp2040: string[];
@@ -141,6 +143,8 @@ export function StateProvider({children}: StateProviderProps): React.ReactElemen
                 cols: '',
                 rows: '',
                 option: 0,
+                fileName: '',
+                filePath: '',
             },
             pins: {
                 rp2040: ["GP0", "GP1", "GP2", "GP3", "GP4", "GP5", "GP6", "GP7", "GP8", "GP9", "GP10", "GP11", "GP12", "GP13", "GP14", "GP15", "GP16", "GP17", "GP18", "GP19", "GP20", "GP21", "GP22", "GP23", "GP24", "GP25", "GP26", "GP27", "GP28", "GP29"],
@@ -231,6 +235,8 @@ export function StateProvider({children}: StateProviderProps): React.ReactElemen
                     cols: obj.convert.kle.cols,
                     rows: obj.convert.kle.rows,
                     option: obj.convert.kle.option,
+                    fileName: obj.convert.kle.fileName ?? '',
+                    filePath: obj.convert.kle.filePath ?? '',
                 },
                 pins: {
                     rp2040: obj.convert.pins.rp2040,

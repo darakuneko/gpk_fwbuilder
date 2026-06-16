@@ -17,12 +17,6 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
     const {state, setState, setPageLog} = useStateContext()
     const { t } = useI18n()
     
-    const [kleObj, setKleObj] = useState({
-        name : "",
-        path : "",
-    })
-    const [pinCols, setPinCols] = React.useState<string[]>([]);
-    const [pinRows, setPinRows] = React.useState<string[]>([]);
     const [showRowsModal, setShowRowsModal] = useState(false);
     const [showColsModal, setShowColsModal] = useState(false);
 
@@ -33,12 +27,6 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
     const [colsEmptyError, setColsEmptyError] = useState(false)
     const [rowsEmptyError, setRowsEmptyError] = useState(false)
 
-    const [keyboardStrError, setKeyboardStrError] = useState(false)
-    const [usernameStrError, setUsernameStrError] = useState(false)
-    const [vidStrError, setVidStrError] = useState(false)
-    const [pidStrError, setPidStrError] = useState(false)
-
-    const [pidSameError, setPidSameError] = useState(false)
     const [kleFileError, setKleFileError] = useState(false)
     const [kleFileErrorMessage, setKleFileErrorMessage] = useState("")
 
@@ -46,7 +34,6 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
         vial : false,
         via : false
     })
-    const [disabledKleConvertButton, setDisabledKleConvertButton] = useState(true)
     const [disabledConvertText, setDisabledConvertText] = useState(false)
 
     // Guard against uninitialized state
@@ -54,45 +41,28 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
         return <div>Loading...</div>
     }
 
-    const validKleConvertButton = (): void => {
-        const kle = state.convert.kle
-        const reg1 = /^[A-Za-z0-9 _/-]+$/
-        const reg2 = /^[A-Z0-9x]+$/
-        const isViaObj = state.convert.kle.option === 2
-        let validKeyboardStrError = false
-        let validUsernameStrError = false
-        let validVidStrError = false
-        let validPidStrError = false
-        let validPidSameError = false
-
-        if(kle.kb.length > 0){
-            validKeyboardStrError = (reg1).test(kle.kb)
-            setKeyboardStrError(!validKeyboardStrError)
-        }
-        if(kle.user.length > 0){
-            validUsernameStrError = (reg1).test(kle.user)
-            setUsernameStrError(!validUsernameStrError)
-        }
-        if(kle.vid.length > 0){
-            validVidStrError = (reg2).test(kle.vid)
-            setVidStrError(!validVidStrError)
-        }
-        if(kle.pid.length > 0){
-            validPidStrError = (reg2).test(kle.pid)
-            setPidStrError(!validPidStrError)
-            validPidSameError = kle.pid !== "0x0000"
-            setPidSameError(!validPidSameError)
-        }
-        const uploadedKleFile = kleObj.name.length > 0
-
-        const validDisableButton = (m2: boolean): boolean => {
-            const m1 = Boolean(kle.kb && kle.user && kle.vid && kle.pid && validKeyboardStrError && validUsernameStrError && validVidStrError
-                && validPidStrError && validPidSameError && uploadedKleFile)
-            return m1 && m2
-        }
-
-        setDisabledKleConvertButton(isViaObj ? !validDisableButton(true) : !validDisableButton(Boolean(kle.rows && kle.cols)))
-    }
+    // Derived validation: computed each render from the committed values, so the
+    // Convert button and format errors always reflect the latest field/file
+    // inputs without an effect (avoids the stale "set state in effect" pattern).
+    const kle = state.convert.kle
+    // File selection and pin selections are derived from global state so they
+    // survive this tab being unmounted/remounted (local state would reset).
+    const kleObj = { name: kle.fileName, path: kle.filePath }
+    const pinRows = kle.rows ? kle.rows.split(',') : []
+    const pinCols = kle.cols ? kle.cols.split(',') : []
+    const reg1 = /^[A-Za-z0-9 _/-]+$/
+    const reg2 = /^[A-Z0-9x]+$/
+    const keyboardStrError = kle.kb.length > 0 && !reg1.test(kle.kb)
+    const usernameStrError = kle.user.length > 0 && !reg1.test(kle.user)
+    const vidStrError = kle.vid.length > 0 && !reg2.test(kle.vid)
+    const pidStrError = kle.pid.length > 0 && !reg2.test(kle.pid)
+    const pidSameError = kle.pid.length > 0 && kle.pid === "0x0000"
+    const uploadedKleFile = kleObj.name.length > 0
+    const isViaObj = kle.option === 2
+    const allFieldsValid = Boolean(kle.kb && kle.user && kle.vid && kle.pid && !keyboardStrError && !usernameStrError
+        && !vidStrError && !pidStrError && !pidSameError && uploadedKleFile)
+    const matrixValid = isViaObj ? true : Boolean(kle.rows && kle.cols)
+    const disabledKleConvertButton = disabledConvertText || !(allFieldsValid && matrixValid)
 
     const validKleEmpty = (): void => {
         setKeyboardError(!state.convert.kle.kb)
@@ -117,15 +87,12 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
         if(inputName === 'pid') newKle.pid = v as string
         if(inputName === 'rows') {
             newKle.rows = Array.isArray(v) && v.length > 0 ? v.join(',') : ''
-            setPinRows(Array.isArray(v) ? v : [])
         }
         if(inputName === 'cols') {
             newKle.cols = Array.isArray(v) && v.length > 0 ? v.join(',') : ''
-            setPinCols(Array.isArray(v) ? v : [])
         }
 
         validKleEmpty()
-        validKleConvertButton()
         void setState({
             ...state,
             convert: {
@@ -148,9 +115,6 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                 }
             }
         })
-        setPinRows([])
-        setPinCols([])
-        validKleConvertButton()
     }
 
     const convertMsg =  "Convert...."
@@ -160,7 +124,6 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
             onShowLogModal()
         }
         
-        setDisabledKleConvertButton(true)
         setDisabledConvertText(true)
         if (!state) return
         setPageLog('convertKleToKeyboard', convertMsg)
@@ -170,7 +133,6 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
         })
         const logs = await api.convertKleJson({params: state.convert.kle, file: kleObj})
 
-        setDisabledKleConvertButton(false)
         setDisabledConvertText(false)
         setPageLog('convertKleToKeyboard', logs as string)
         void setState({
@@ -181,6 +143,16 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
         if (onOperationComplete) {
             onOperationComplete()
         }
+    }
+
+    const clearKleFile = (): void => {
+        void setState({
+            ...state,
+            convert: {
+                ...state.convert,
+                kle: { ...state.convert.kle, fileName: '', filePath: '' }
+            }
+        })
     }
 
     const handleKleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -195,6 +167,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
             if (!file.name.toLowerCase().endsWith('on')) {
                 setKleFileError(true)
                 setKleFileErrorMessage(t('validation.selectValidJsonFile'))
+                clearKleFile()
                 return
             }
             
@@ -202,6 +175,7 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
             if (file.size > 10 * 1024 * 1024) {
                 setKleFileError(true)
                 setKleFileErrorMessage(t('validation.fileSizeLimit', { size: '10MB' }))
+                clearKleFile()
                 return
             }
             
@@ -209,7 +183,6 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                 name: file.name,
                 path: (window as unknown as {webUtils: {getPathForFile: (file: File) => string}}).webUtils.getPathForFile(file)
             }
-            setKleObj(newKleObj)
 
             try {
                 const json = await api.readJson(newKleObj.path)
@@ -218,12 +191,14 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                 if (!Array.isArray(json)) {
                     setKleFileError(true)
                     setKleFileErrorMessage(t('validation.invalidKleFormat'))
+                    clearKleFile()
                     return
                 }
 
-                // Extract metadata from KLE JSON
+                // Extract metadata from KLE JSON and persist the file selection
+                // into global state so it survives this tab being remounted.
                 const obj = json.filter((v): v is Record<string, unknown> => !Array.isArray(v))[0]
-                const newKle = { ...state.convert.kle }
+                const newKle = { ...state.convert.kle, fileName: newKleObj.name, filePath: newKleObj.path }
                 if (obj) {
                     if (obj.name && typeof obj.name === 'string') newKle.kb = obj.name
                     if (obj.author && typeof obj.author === 'string') newKle.user = obj.author
@@ -236,18 +211,17 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                         kle: newKle
                     }
                 })
-                validKleConvertButton()
             } catch (jsonError) {
                 console.error("JSON parsing error:", jsonError)
                 setKleFileError(true)
                 setKleFileErrorMessage(t('validation.invalidJsonFormat'))
-                setKleObj({ name: "", path: "" })
+                clearKleFile()
             }
         } catch (error) {
             console.error("File upload error:", error)
             setKleFileError(true)
             setKleFileErrorMessage(t('validation.fileReadError'))
-            setKleObj({ name: "", path: "" })
+            clearKleFile()
         }
     }
 
@@ -281,7 +255,6 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
             }
         })
         validKleEmpty()
-        validKleConvertButton()
     }
 
     return (
@@ -554,7 +527,6 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                 availablePins={state?.convert.kle.mcu === 'promicro' ? state?.convert.pins.promicro || [] : state?.convert.pins.rp2040 || []}
                 selectedPins={pinRows}
                 onConfirm={(pins): void => {
-                    setPinRows(pins)
                     if (state) {
                         void setState({
                             ...state,
@@ -568,7 +540,6 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                         })
                     }
                     setRowsEmptyError(pins.length === 0)
-                    validKleConvertButton()
                 }}
             />
 
@@ -579,7 +550,6 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                 availablePins={state?.convert.kle.mcu === 'promicro' ? state?.convert.pins.promicro || [] : state?.convert.pins.rp2040 || []}
                 selectedPins={pinCols}
                 onConfirm={(pins): void => {
-                    setPinCols(pins)
                     if (state) {
                         void setState({
                             ...state,
@@ -593,7 +563,6 @@ const ConvertKleToKeyboard: React.FC<ConvertKleToKeyboardProps> = ({onShowLogMod
                         })
                     }
                     setColsEmptyError(pins.length === 0)
-                    validKleConvertButton()
                 }}
             />
         </div>
