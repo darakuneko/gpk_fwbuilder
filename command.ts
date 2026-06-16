@@ -24,7 +24,7 @@ const exec = util.promisify(execCallback)
 const store = new ElectronStore()
 
 const dockerVersion = /gpk_fwmaker_0008/
-const cmdVersion = 8
+const cmdVersion = 9
 
 if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`
 const instance = axios.create()
@@ -94,22 +94,29 @@ const command = {
     upImage: async (mainWindow: BrowserWindow): Promise<void> => {
         if (!skipCheckDocker) {
             try {
-                const cmd = async (result: { stdout: string }): Promise<string> => {
-                    const isDockerVersion = dockerVersion.test(result.stdout)
-                    const stateCmdVersion = store.get('cmdVersion')
-                    if (isDockerVersion && stateCmdVersion === cmdVersion) return "docker compose start"
-                    else if (isDockerVersion && stateCmdVersion !== cmdVersion) {
-                        await store.set('cmdVersion', cmdVersion)
-                        return "docker compose up -d --build"
-                    }
-                    else return "docker compose up -d --build --force-recreate"
-                }
-
                 const result = await appExe("docker images")
                 if (result === fwMakerUrlMassage) {
                     return
                 }
-                const res = spawn(appSpawn(await cmd({ stdout: result })), { shell: true })
+
+                const isDockerVersion = dockerVersion.test(result)
+                const stateCmdVersion = store.get('cmdVersion')
+                const needsVersionBump = isDockerVersion && stateCmdVersion !== cmdVersion
+
+                let dockerCmd: string
+                if (isDockerVersion && stateCmdVersion === cmdVersion) dockerCmd = "docker compose start"
+                else if (needsVersionBump) dockerCmd = "docker compose up -d --build"
+                else dockerCmd = "docker compose up -d --build --force-recreate"
+
+                const res = spawn(appSpawn(dockerCmd), { shell: true })
+                // Persist the bumped cmdVersion only after the rebuild exits
+                // cleanly, so a failed build is retried on next launch instead
+                // of being skipped by the "docker compose start" branch.
+                if (needsVersionBump) {
+                    res.on('close', (code) => {
+                        if (code === 0) store.set('cmdVersion', cmdVersion)
+                    })
+                }
                 streamLog(res, mainWindow, true)
             } catch (error) {
                 console.error("Error starting Docker container:", error)
