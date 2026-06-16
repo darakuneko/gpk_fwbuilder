@@ -23,7 +23,7 @@ import { getTranslation } from './i18n-main.ts'
 const exec = util.promisify(execCallback)
 const store = new ElectronStore()
 
-const dockerVersion = /gpk_fwmaker_0008/
+const dockerVersion = /gpk_fwmaker_0009/
 const cmdVersion = 9
 
 if (process.platform === 'darwin') process.env.PATH = `/usr/local/bin:${process.env.PATH}`

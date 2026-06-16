@@ -18,7 +18,11 @@ RUN apt-get -y install \
     libnewlib-arm-none-eabi \
     gcc-avr \
     avr-libc \
-    binutils-avr
+    binutils-avr \
+    gcc-riscv64-unknown-elf \
+    binutils-riscv64-unknown-elf \
+    picolibc-riscv64-unknown-elf \
+    dfu-util
 
 RUN pip install qmk --break-system-packages
 
